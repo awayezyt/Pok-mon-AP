@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Pokémon RPG - Gerenciador de Fichas"
+version = "1.0.0"
+id = "artifacts/pokedex-rpg"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21488
+
+[services.development]
+run = "pnpm --filter @workspace/pokedex-rpg run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pokedex-rpg", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/pokedex-rpg/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21488"
+BASE_PATH = "/"

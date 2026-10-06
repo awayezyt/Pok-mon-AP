@@ -1,0 +1,100 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+paths:
+  /auth/session:
+    get:
+      operationId: getCampaignSession
+      summary: Restore persistent campaign access
+      responses:
+        "200":
+          description: Current access, or public when signed out
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [role, activeCharacterId]
+                properties:
+                  role:
+                    type: string
+                    enum: [public, player, gm]
+                  activeCharacterId:
+                    type: [string, "null"]
+  /auth/player:
+    post:
+      operationId: loginCampaignPlayer
+      summary: Sign in to a character and remember this browser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [characterId, password]
+              properties:
+                characterId: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Signed in
+        "401":
+          description: Incorrect access code
+  /auth/gm:
+    post:
+      operationId: loginCampaignGM
+      summary: Sign in as GM and remember this browser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string }
+      responses:
+        "200":
+          description: Signed in
+        "401":
+          description: Incorrect password
+        "503":
+          description: GM access not configured
+  /auth/logout:
+    post:
+      operationId: logoutCampaign
+      summary: Revoke current browser session
+      responses:
+        "200":
+          description: Signed out
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
