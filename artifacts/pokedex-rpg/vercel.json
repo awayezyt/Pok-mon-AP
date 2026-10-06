@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://onrender.com" },
+    { "source": "/auth/(.*)", "destination": "https://onrender.com" },
+    { "source": "/socket.io/(.*)", "destination": "https://onrender.com" },
+    { "source": "/ws/(.*)", "destination": "https://onrender.com" }
+  ]
+}
