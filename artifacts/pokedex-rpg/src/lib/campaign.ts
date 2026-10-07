@@ -284,7 +284,11 @@ function notifySessionListeners() {
 
 export async function restoreSession() {
   const response = await fetch('/api/auth/session', { cache: 'no-store', credentials: 'include' });
-  if (!response.ok) throw new Error('Não foi possível verificar o acesso.');
+  if (!response.ok) {
+    const error = new Error('Não foi possível verificar o acesso.');
+    Object.assign(error, { retryable: response.status === 408 || response.status === 429 || response.status >= 500 });
+    throw error;
+  }
   const session = await response.json();
   currentSessionRole = session.role;
   currentActiveCharacterId = session.activeCharacterId;

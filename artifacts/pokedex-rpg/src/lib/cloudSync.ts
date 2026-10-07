@@ -41,7 +41,11 @@ function stateEtag(revision: number) {
 
 async function requestState() {
   const response = await fetch('/api/state', { cache: 'no-store' });
-  if (!response.ok) throw new Error(`State read failed with status ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(`State read failed with status ${response.status}`);
+    Object.assign(error, { retryable: response.status === 408 || response.status === 429 || response.status >= 500 });
+    throw error;
+  }
   return {
     state: await response.json() as GameState,
     revision: getRevision(response, 0),

@@ -20,8 +20,25 @@ import { hydrateGameState, startRealtimeSync } from './lib/cloudSync';
 import { seedImportedCampaignData } from './lib/campaignSeed';
 import { ThemeProvider } from './lib/theme';
 import { ThemeFooter } from './components/ThemeFooter';
+import { ServerStartupScreen, type StartupPhase } from './components/ServerStartupScreen';
 
 const queryClient = new QueryClient();
+
+async function checkApiHealth() {
+  const response = await fetch('/api/healthz', { cache: 'no-store' });
+  if (!response.ok) {
+    const error = new Error(`API health check failed with status ${response.status}`);
+    Object.assign(error, { retryable: response.status === 408 || response.status === 429 || response.status >= 500 });
+    throw error;
+  }
+  const health = await response.json() as { status?: unknown };
+  if (health.status !== 'ok') throw new Error('Resposta de saúde da API inválida.');
+}
+
+function canRetryStartup(error: unknown) {
+  return error instanceof TypeError
+    || (error instanceof Error && 'retryable' in error && error.retryable === true);
+}
 
 function Router() {
   const [location, setLocation] = useLocation();
@@ -64,39 +81,84 @@ function Router() {
 function App() {
   const [cloudReady, setCloudReady] = useState(false);
   const [cloudError, setCloudError] = useState(false);
+  const [startupPhase, setStartupPhase] = useState<StartupPhase>('server');
+  const [startupElapsed, setStartupElapsed] = useState(0);
+  const [startupRetryCount, setStartupRetryCount] = useState(0);
+  const [retryToken, setRetryToken] = useState(0);
   useEffect(() => {
     let cancelled = false;
     let stopSync: (() => void) | undefined;
-    void restoreSession().then(() => hydrateGameState())
-      .then(() => seedImportedCampaignData())
-      .then(() => {
+    let retryTimeout: number | undefined;
+    const startedAt = Date.now();
+    setCloudReady(false);
+    setCloudError(false);
+    setStartupElapsed(0);
+    setStartupRetryCount(0);
+    const elapsedTimer = window.setInterval(() => {
+      setStartupElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+
+    const runStartupStep = async (phase: StartupPhase, task: () => Promise<unknown>) => {
+      let attempt = 0;
+      while (!cancelled) {
+        setStartupPhase(phase);
+        try {
+          await task();
+          return;
+        } catch (error) {
+          if (!canRetryStartup(error)) throw error;
+          attempt += 1;
+          setStartupRetryCount(count => count + 1);
+          await new Promise<void>(resolve => {
+            const delayMs = Math.min(1000 * (2 ** Math.min(attempt - 1, 3)), 8000);
+            retryTimeout = window.setTimeout(resolve, delayMs);
+          });
+          retryTimeout = undefined;
+        }
+      }
+    };
+
+    void (async () => {
+      try {
+        await runStartupStep('server', checkApiHealth);
+        await runStartupStep('session', restoreSession);
+        await runStartupStep('campaign', hydrateGameState);
+        await runStartupStep('prepare', seedImportedCampaignData);
         if (cancelled) return;
         stopSync = startRealtimeSync();
-        setCloudError(false);
         setCloudReady(true);
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) setCloudError(true);
-      });
+      }
+    })();
+
     return () => {
       cancelled = true;
+      window.clearInterval(elapsedTimer);
+      if (retryTimeout !== undefined) window.clearTimeout(retryTimeout);
       stopSync?.();
     };
-  }, []);
+  }, [retryToken]);
   if (cloudError) {
     return (
-      <div className="min-h-screen grid place-items-center bg-background text-foreground p-6">
-        <div className="max-w-md text-center space-y-4">
-          <h1 className="text-xl font-semibold">Servidor indisponível</h1>
-          <p className="text-muted-foreground">Os dados só ficam no servidor. Conecte-se novamente para abrir a mesa.</p>
-          <button className="rounded-md bg-primary px-4 py-2 text-primary-foreground" onClick={() => window.location.reload()}>
-            Tentar novamente
-          </button>
-        </div>
-      </div>
+      <ServerStartupScreen
+        phase={startupPhase}
+        elapsedSeconds={startupElapsed}
+        retryCount={startupRetryCount}
+        error
+        onRetry={() => setRetryToken(token => token + 1)}
+      />
     );
   }
-  if (!cloudReady) return <div className="min-h-screen grid place-items-center bg-background text-muted-foreground">Abrindo a mesa...</div>;
+  if (!cloudReady) {
+    return (
+      <ServerStartupScreen
+        phase={startupPhase}
+        elapsedSeconds={startupElapsed}
+        retryCount={startupRetryCount}
+      />
+    );
+  }
   return (
     <QueryClientProvider client={queryClient}>
       <DiceHistoryProvider>

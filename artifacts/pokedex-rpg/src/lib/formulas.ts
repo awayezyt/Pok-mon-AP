@@ -232,7 +232,7 @@ export const ORIGINAL_PRESET: FormulaPreset = {
   schemaVersion: 2,
   diceMode: 'iv',
   ppMode: 'individual',
-  ppFreeThreshold: 5,
+  ppFreeThreshold: 40,
   ppStep: 5,
   ivValues: { SS: 100, S: 80, A: 60, B: 40, C: 20, D: 0 },
   formulas: {

@@ -303,11 +303,11 @@ export default function FormulaEditor({ pokemon, onClose }: {
             <div className="grid gap-3 rounded-xl border border-primary/25 bg-primary/5 p-3 sm:grid-cols-2">
               <label className="text-sm font-semibold">PP inicial sem custo
                 <Input type="number" min={0} step={1} disabled={readOnly} value={Number.isFinite(draft.ppFreeThreshold) ? draft.ppFreeThreshold : ''} onChange={e => setDraft(d => ({ ...d, ppFreeThreshold: e.target.value === '' ? NaN : Math.max(0, Math.floor(Number(e.target.value))) }))} className="mt-1 h-9 font-mono" data-testid="input-pp-free-threshold" />
-                <span className="mt-1 block text-xs font-normal text-muted-foreground">Ataques com PP igual ou abaixo deste valor custam zero pontos.</span>
+                <span className="mt-1 block text-xs font-normal text-muted-foreground">Ataques com PP igual ou acima deste valor custam zero pontos. Abaixo dele, o custo aumenta a cada intervalo.</span>
               </label>
               <label className="text-sm font-semibold">Média para cada ponto de custo
                 <Input type="number" min={1} step={1} disabled={readOnly} value={Number.isFinite(draft.ppStep) ? draft.ppStep : ''} onChange={e => setDraft(d => ({ ...d, ppStep: e.target.value === '' ? NaN : Math.max(1, Math.floor(Number(e.target.value))) }))} className="mt-1 h-9 font-mono" data-testid="input-pp-step" />
-                <span className="mt-1 block text-xs font-normal text-muted-foreground">Acima do valor inicial, cada bloco deste tamanho acrescenta 1 ponto ao custo do ataque.</span>
+                <span className="mt-1 block text-xs font-normal text-muted-foreground">A cada intervalo abaixo do valor inicial, acrescenta 1 ponto ao custo. Ex.: inicial 40 e média 5: PP 35 custa 1; PP 1 custa 8.</span>
               </label>
             </div>
           )}

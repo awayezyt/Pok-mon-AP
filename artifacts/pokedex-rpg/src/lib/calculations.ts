@@ -85,8 +85,8 @@ export function getPpPoolMax(stats: AllStats, natureId: number, level: number, p
 
 export function getAttackPpCost(attackPp: number, preset: FormulaPreset = getActivePreset()): number {
   const pp = Math.max(0, Math.floor(Number(attackPp) || 0));
-  if (pp <= preset.ppFreeThreshold) return 0;
-  return Math.ceil((pp - preset.ppFreeThreshold) / preset.ppStep);
+  if (pp >= preset.ppFreeThreshold) return 0;
+  return Math.ceil((preset.ppFreeThreshold - pp) / preset.ppStep);
 }
 
 export function getStatDiceNotation(statKey: string, stat: StatEntry, natureId: number, level = 1, preset: FormulaPreset = getActivePreset()): { dice: number, logical: number, keepWorst: boolean, bonus: number, final: number, str: string } {
