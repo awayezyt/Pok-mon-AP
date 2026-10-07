@@ -114,11 +114,6 @@ const GROWTH_VALUES: Record<PokemonGrowthRate, number> = {
   'Errático': 1, 'Rápido': 2, 'Meio rápido': 3,
   'Meio devagar': 4, 'Devagar': 5, 'Muito devagar': 6,
 };
-const POKEMON_STAT_KEYS: Array<keyof Pokemon['stats']> = ['hp', 'atk', 'def', 'spAtk', 'spDef', 'spe'];
-const POKEMON_STAT_LABELS: Record<keyof Pokemon['stats'], string> = {
-  hp: 'HP', atk: 'ATK', def: 'DEF', spAtk: 'Sp. Atk', spDef: 'Sp. Def', spe: 'Speed',
-};
-
 function xpCap(pokemon: { level: number; growthRate?: PokemonGrowthRate }) {
   return Math.max(1, Math.floor(pokemon.level) * GROWTH_VALUES[pokemon.growthRate || 'Meio rápido']);
 }
@@ -415,8 +410,6 @@ function SettingsPanel({ pokemon, onExport, onImport, summary }: { pokemon: Poke
 
 function PokemonPanel({ pokemon, selectedPokemon, selectedPokemonId, setSelectedPokemonId, search, setSearch, updatePokemon }: { pokemon: ReturnType<typeof usePokemonData>['pokemon']; selectedPokemon?: ReturnType<typeof usePokemonData>['pokemon'][number]; selectedPokemonId: string; setSelectedPokemonId: (id: string) => void; search: string; setSearch: (value: string) => void; updatePokemon: ReturnType<typeof usePokemonData>['updatePokemon'] }) {
   const [xpGain, setXpGain] = useState(1);
-  const [evGain, setEvGain] = useState(1);
-  const [evStat, setEvStat] = useState<keyof Pokemon['stats']>('hp');
   const applyXp = () => {
     if (!selectedPokemon) return;
     let level = Math.max(1, Math.floor(selectedPokemon.level));
@@ -438,31 +431,6 @@ function PokemonPanel({ pokemon, selectedPokemon, selectedPokemonId, setSelected
   };
   const requiredXp = selectedPokemon ? xpCap(selectedPokemon) : 0;
   const remainingXp = selectedPokemon ? Math.max(0, requiredXp - Math.max(0, Math.floor(selectedPokemon.xp))) : 0;
-  const evsUsed = selectedPokemon
-    ? POKEMON_STAT_KEYS.reduce((total, key) => total + (Number(selectedPokemon.stats[key].ev) || 0), 0)
-    : 0;
-  const evsAvailable = Math.max(0, 510 - evsUsed);
-  const applyEv = () => {
-    if (!selectedPokemon) return;
-    const requested = Math.floor(Number(evGain) || 0);
-    if (requested <= 0) return;
-    if (evsAvailable <= 0) {
-      toast.error('Este Pokémon já atingiu o limite de 510 EVs.');
-      return;
-    }
-    const amount = Math.min(requested, evsAvailable);
-    updatePokemon(selectedPokemon.id, {
-      stats: {
-        ...selectedPokemon.stats,
-        [evStat]: {
-          ...selectedPokemon.stats[evStat],
-          ev: selectedPokemon.stats[evStat].ev + amount,
-        },
-      },
-    });
-    setEvGain(1);
-    toast.success(`${amount} EV${amount === 1 ? '' : 's'} adicionado${amount === 1 ? '' : 's'} em ${POKEMON_STAT_LABELS[evStat]}.`);
-  };
   return (
     <Card className="paper-panel mb-5">
       <CardHeader className="flex flex-row items-center justify-between gap-3">
@@ -511,20 +479,6 @@ function PokemonPanel({ pokemon, selectedPokemon, selectedPokemonId, setSelected
                   <div className="flex gap-2">
                     <Input type="number" min={1} value={xpGain} onChange={event => setXpGain(Math.max(1, Number(event.target.value) || 1))} aria-label="EXP para adicionar" />
                     <Button onClick={applyXp}>Adicionar EXP</Button>
-                  </div>
-                  <div className="rounded-lg border border-primary/25 bg-background/40 p-3">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <p className="text-xs font-bold text-muted-foreground">ADICIONAR EV</p>
-                      <span className="font-mono text-xs text-muted-foreground">{evsUsed} / 510</span>
-                    </div>
-                    <div className="grid gap-2 sm:grid-cols-[.8fr_1.2fr]">
-                      <Input type="number" min={1} max={Math.max(1, evsAvailable)} value={evGain} onChange={event => setEvGain(Math.max(1, Number(event.target.value) || 1))} aria-label="Quantidade de EV" />
-                      <select value={evStat} onChange={event => setEvStat(event.target.value as keyof Pokemon['stats'])} className="h-9 rounded-md border border-input bg-background px-2 text-sm">
-                        {POKEMON_STAT_KEYS.map(key => <option key={key} value={key}>{POKEMON_STAT_LABELS[key]}</option>)}
-                      </select>
-                    </div>
-                    <Button className="mt-2 w-full" variant="outline" onClick={applyEv} disabled={evsAvailable <= 0}>Enviar EV para a ficha</Button>
-                    <p className="mt-2 text-[11px] text-muted-foreground">Escolha a quantidade e o status. Restam {evsAvailable} EVs disponíveis.</p>
                   </div>
                   <label className="text-xs font-bold text-muted-foreground">AFEIÇÃO — {affectionLabel(selectedPokemon.affection)}<Input type="number" min={-6} max={31} value={selectedPokemon.affection} onChange={event => updatePokemon(selectedPokemon.id, { affection: Math.max(-6, Math.min(31, Number(event.target.value) || 0)) })} /></label>
                   <p className="text-xs text-muted-foreground">De -6 a 31: Péssima, Ruim, Neutro, Bom, Amigo e Inquebrável.</p>

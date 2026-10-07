@@ -1,5 +1,5 @@
 import { IVRank, StatEntry, PokemonStages, defaultStages } from "./types";
-import { evaluate, getActivePreset, IV_DICE, baseStatDice, physicalRoll, STAT_KEYS, STAT_SUFFIX, type FormulaPreset, type DamageRow } from "./formulas";
+import { evaluate, getActivePreset, IV_DICE, baseStatDice, physicalRoll, STAT_KEYS, STAT_SUFFIX, type FormulaKey, type FormulaPreset, type DamageRow } from "./formulas";
 
 export const RAW_NATURE_TABLE: Record<number, { name: string, b: string, p: string }> = {
   1: { name: "Árduo", b: "atk", p: "atk" },
@@ -54,7 +54,7 @@ export function getLogicalDice(statKey: string, stat: StatEntry, natureId: numbe
 
 function statVars(stat: StatEntry, level: number, dice: number, preset: FormulaPreset) {
   return {
-    N: level, Bs: Number(stat.base) || 0, Pns: Number(stat.levelPoints) || 0, EVs: Number(stat.ev) || 0,
+    N: level, Bs: Number(stat.base) || 0, EVs: Number(stat.evPoints ?? stat.levelPoints) || 0,
     IVs: preset.ivValues[stat.iv] ?? 0, Ds: dice,
   };
 }
@@ -65,8 +65,28 @@ export function calculateStatFinal(stat: StatEntry, level = 1, statKey = '', nat
 }
 
 export function calculateStatBonus(final: number, stat?: StatEntry, level = 1, statKey = '', natureId = 21, preset: FormulaPreset = getActivePreset()): number {
-  const base = stat ? statVars(stat, level, getLogicalDice(statKey, stat, natureId, preset), preset) : { N: level, Bs: 0, Pns: 0, EVs: 0, IVs: 0, Ds: 0 };
+  const base = stat ? statVars(stat, level, getLogicalDice(statKey, stat, natureId, preset), preset) : { N: level, Bs: 0, EVs: 0, IVs: 0, Ds: 0 };
   return Math.round(evaluate(preset.formulas.statBonus, { ...base, F: final }));
+}
+
+const EV_CAP_FORMULA: Record<StatKey, FormulaKey> = {
+  hp: 'evCapHp', atk: 'evCapAtk', def: 'evCapDef', spAtk: 'evCapSpAtk', spDef: 'evCapSpDef', spe: 'evCapSpe',
+};
+
+export function getStatEvCap(statKey: StatKey, stat: StatEntry, level: number, natureId: number, preset: FormulaPreset = getActivePreset()): number {
+  const dice = getLogicalDice(statKey, stat, natureId, preset);
+  const cap = evaluate(preset.formulas[EV_CAP_FORMULA[statKey]], statVars(stat, level, dice, preset));
+  return Math.max(0, Math.floor(cap));
+}
+
+export function getPpPoolMax(stats: AllStats, natureId: number, level: number, preset: FormulaPreset = getActivePreset()): number {
+  return Math.max(0, Math.floor(evaluate(preset.formulas.ppPool, buildDerivedVars(stats, natureId, level, preset))));
+}
+
+export function getAttackPpCost(attackPp: number, preset: FormulaPreset = getActivePreset()): number {
+  const pp = Math.max(0, Math.floor(Number(attackPp) || 0));
+  if (pp <= preset.ppFreeThreshold) return 0;
+  return Math.ceil((pp - preset.ppFreeThreshold) / preset.ppStep);
 }
 
 export function getStatDiceNotation(statKey: string, stat: StatEntry, natureId: number, level = 1, preset: FormulaPreset = getActivePreset()): { dice: number, logical: number, keepWorst: boolean, bonus: number, final: number, str: string } {
@@ -79,7 +99,7 @@ export function getStatDiceNotation(statKey: string, stat: StatEntry, natureId: 
   return { dice, logical, keepWorst, bonus, final, str };
 }
 
-/** Variables for derived formulas: N, Bx, Pnx, EVx, IVx, Dx, Fx, BNx per stat suffix. */
+/** Variables for derived formulas: N, Bx, EVx, IVx, Dx, Fx and BNx per stat suffix. */
 export function buildDerivedVars(stats: AllStats, natureId: number, level: number, preset: FormulaPreset = getActivePreset()) {
   const vars: Record<string, number> = { N: level };
   STAT_KEYS.forEach(k => {
@@ -87,8 +107,7 @@ export function buildDerivedVars(stats: AllStats, natureId: number, level: numbe
     const st = stats[k as StatKey];
     const n = getStatDiceNotation(k, st, natureId, level, preset);
     vars[`B${s}`] = Number(st.base) || 0;
-    vars[`Pn${s}`] = Number(st.levelPoints) || 0;
-    vars[`EV${s}`] = Number(st.ev) || 0;
+    vars[`EV${s}`] = Number(st.evPoints ?? st.levelPoints) || 0;
     vars[`IV${s}`] = preset.ivValues[st.iv] ?? 0;
     vars[`D${s}`] = n.logical;
     vars[`F${s}`] = n.final;
@@ -226,12 +245,34 @@ export function computeDerivedStats(
   };
 }
 
-/** Recomputes max HP for a Pokémon preserving damage taken. */
-export function recalcPokemonHp<T extends { stats: AllStats; natureNumber: number; stages: PokemonStages; level: number; hp: number; hpMax: number }>(p: T, preset: FormulaPreset = getActivePreset()): T {
+/** Recomputes max HP and the PP pool while preserving damage and spent PP. */
+export function recalcPokemonResources<T extends {
+  stats: AllStats;
+  natureNumber: number;
+  stages: PokemonStages;
+  level: number;
+  hp: number;
+  hpMax: number;
+  ppCurrent?: number;
+  ppMax?: number;
+}>(p: T, preset: FormulaPreset = getActivePreset()): T {
   const hpMax = Math.max(1, computeDerivedStats(p.stats, p.natureNumber, p.stages || defaultStages, p.level || 1, preset).hp);
   const damage = Math.max(0, (p.hpMax || 0) - (p.hp || 0));
-  return { ...p, hpMax, hp: Math.max(0, Math.min(hpMax, hpMax - damage)) };
+  const ppMax = getPpPoolMax(p.stats, p.natureNumber, p.level || 1, preset);
+  const previousMax = Number.isFinite(p.ppMax) ? Math.max(0, Number(p.ppMax)) : ppMax;
+  const previousCurrent = Number.isFinite(p.ppCurrent) ? Math.max(0, Number(p.ppCurrent)) : previousMax;
+  const ppSpent = Math.max(0, previousMax - previousCurrent);
+  return {
+    ...p,
+    hpMax,
+    hp: Math.max(0, Math.min(hpMax, hpMax - damage)),
+    ppMax,
+    ppCurrent: Math.max(0, Math.min(ppMax, ppMax - ppSpent)),
+  };
 }
+
+/** Backward-compatible name used by existing HP recalculation call sites. */
+export const recalcPokemonHp = recalcPokemonResources;
 
 /** Runs every formula against every given Pokémon (all stages -6..6, powers 0..300). Returns error messages. */
 export function validatePresetAgainstPokemon(preset: FormulaPreset, pokemon: Array<{ name?: string; stats: AllStats; natureNumber: number; stages?: PokemonStages; level: number }>): string[] {
@@ -244,6 +285,16 @@ export function validatePresetAgainstPokemon(preset: FormulaPreset, pokemon: Arr
     try {
       const d = computeDerivedStats(p.stats, p.natureNumber, p.stages || defaultStages, p.level || 1, preset);
       if (d.hp < 1) throw new Error(`HP calculado ${d.hp} (< 1)`);
+      const vars = buildDerivedVars(p.stats, p.natureNumber, p.level || 1, preset);
+      const ppMaximum = evaluate(preset.formulas.ppPool, vars);
+      if (ppMaximum < 0) throw new Error(`Barra máxima de PP não pode ser negativa (${ppMaximum})`);
+      getPpPoolMax(p.stats, p.natureNumber, p.level || 1, preset);
+      STAT_KEYS.forEach(key => {
+        const stat = p.stats[key as StatKey];
+        const cap = evaluate(preset.formulas[EV_CAP_FORMULA[key as StatKey]], statVars(stat, p.level || 1, getLogicalDice(key, stat, p.natureNumber, preset), preset));
+        if (cap < 0) throw new Error(`Cap de EV de ${key.toUpperCase()} não pode ser negativo (${cap})`);
+        getStatEvCap(key as StatKey, stat, p.level || 1, p.natureNumber, preset);
+      });
       for (let e = -6; e <= 6; e++) {
         computeDerivedStats(p.stats, p.natureNumber, { atk: e, spAtk: e, def: e, spDef: e, spe: e, accuracy: e, evasion: e, crit: e }, p.level || 1, preset);
         applyStageFormula('stageAccuracy', 0, e, p.level || 1, preset);

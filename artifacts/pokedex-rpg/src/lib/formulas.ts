@@ -198,7 +198,8 @@ export function evaluate(expr: string, vars: Record<string, number>): number {
 export type FormulaKey =
   | 'statFinal' | 'statBonus' | 'hp' | 'rdPhys' | 'rdSpec' | 'dodge' | 'initiative' | 'dmgPhys' | 'dmgSpec'
   | 'stageAtk' | 'stageSpAtk' | 'stageDef' | 'stageSpDef' | 'stageSpe' | 'stageAccuracy' | 'stageEvasion' | 'stageCrit'
-  | 'physOverflow' | 'specOverflow';
+  | 'physOverflow' | 'specOverflow'
+  | 'evCapHp' | 'evCapAtk' | 'evCapDef' | 'evCapSpAtk' | 'evCapSpDef' | 'evCapSpe' | 'ppPool';
 
 export interface DamageRow { max: number; dice: number; sides: number; bonus: number }
 
@@ -206,7 +207,11 @@ export interface FormulaPreset {
   id: string;
   name: string;
   builtin?: boolean;
+  schemaVersion: number;
   diceMode: 'iv' | 'base';
+  ppMode: 'individual' | 'pool';
+  ppFreeThreshold: number;
+  ppStep: number;
   ivValues: Record<IVRank, number>;
   formulas: Record<FormulaKey, string>;
   physTable: DamageRow[];
@@ -224,10 +229,14 @@ export const ORIGINAL_PRESET: FormulaPreset = {
   id: 'original',
   name: 'Original',
   builtin: true,
+  schemaVersion: 2,
   diceMode: 'iv',
+  ppMode: 'individual',
+  ppFreeThreshold: 5,
+  ppStep: 5,
   ivValues: { SS: 100, S: 80, A: 60, B: 40, C: 20, D: 0 },
   formulas: {
-    statFinal: 'Bs + Pns + EVs',
+    statFinal: 'Bs + EVs',
     statBonus: 'floor(F / 10) + (F % 10 > 5 ? 1 : 0)',
     hp: 'floor(Fhp / 2) + 10 * Dhp',
     rdPhys: 'BNdef + Ddef',
@@ -246,6 +255,13 @@ export const ORIGINAL_PRESET: FormulaPreset = {
     stageCrit: 'X - E',
     physOverflow: 'Bt + 2 * (P - Pt)',
     specOverflow: 'Bt + 2 * (P - Pt)',
+    evCapHp: 'max(1, ceil(N * 1.25))',
+    evCapAtk: 'max(1, ceil(N * 1.25))',
+    evCapDef: 'max(1, ceil(N * 1.25))',
+    evCapSpAtk: 'max(1, ceil(N * 1.25))',
+    evCapSpDef: 'max(1, ceil(N * 1.25))',
+    evCapSpe: 'max(1, ceil(N * 1.25))',
+    ppPool: 'N * 3',
   },
   physTable: [
     { max: 0, dice: 1, sides: 8, bonus: 0 }, { max: 15, dice: 1, sides: 8, bonus: 2 }, { max: 35, dice: 2, sides: 8, bonus: 4 },
@@ -261,9 +277,9 @@ export const ORIGINAL_PRESET: FormulaPreset = {
   ],
 };
 
-export const FORMULA_META: Record<FormulaKey, { label: string; group: 'stat' | 'derived' | 'stage' | 'table'; help: string; vars: string[] }> = (() => {
-  const perStat = ['N', 'Bs', 'Pns', 'EVs', 'IVs', 'Ds'];
-  const all = ['N', ...STAT_KEYS.flatMap(k => { const s = STAT_SUFFIX[k]; return [`B${s}`, `Pn${s}`, `EV${s}`, `IV${s}`, `D${s}`, `F${s}`, `BN${s}`]; })];
+export const FORMULA_META: Record<FormulaKey, { label: string; group: 'stat' | 'derived' | 'stage' | 'table' | 'allocation' | 'pp'; help: string; vars: string[] }> = (() => {
+  const perStat = ['N', 'Bs', 'EVs', 'IVs', 'Ds'];
+  const all = ['N', ...STAT_KEYS.flatMap(k => { const s = STAT_SUFFIX[k]; return [`B${s}`, `EV${s}`, `IV${s}`, `D${s}`, `F${s}`, `BN${s}`]; })];
   const stage = ['X', 'E', 'N'];
   return {
     statFinal: { label: 'Stat final (F)', group: 'stat', help: 'Valor final de cada atributo.', vars: perStat },
@@ -285,18 +301,44 @@ export const FORMULA_META: Record<FormulaKey, { label: string; group: 'stat' | '
     stageCrit: { label: 'Estágio Crítico → margem', group: 'stage', help: 'X = margem de crítico do golpe, E = estágio (-6 a +6). Limitado a 1–20.', vars: stage },
     physOverflow: { label: 'Bônus acima da tabela física', group: 'table', help: 'P = poder, Pt = poder da última linha, Bt = bônus da última linha.', vars: ['P', 'Pt', 'Bt'] },
     specOverflow: { label: 'Bônus acima da tabela especial', group: 'table', help: 'P = poder, Pt = poder da última linha, Bt = bônus da última linha.', vars: ['P', 'Pt', 'Bt'] },
+    evCapHp: { label: 'Cap de EV — HP', group: 'allocation', help: 'Máximo de EV que pode ser investido em HP. O valor é limitado a um inteiro não negativo.', vars: perStat },
+    evCapAtk: { label: 'Cap de EV — ATK', group: 'allocation', help: 'Máximo de EV que pode ser investido em ATK. O valor é limitado a um inteiro não negativo.', vars: perStat },
+    evCapDef: { label: 'Cap de EV — DEF', group: 'allocation', help: 'Máximo de EV que pode ser investido em DEF. O valor é limitado a um inteiro não negativo.', vars: perStat },
+    evCapSpAtk: { label: 'Cap de EV — SP.ATK', group: 'allocation', help: 'Máximo de EV que pode ser investido em SP.ATK. O valor é limitado a um inteiro não negativo.', vars: perStat },
+    evCapSpDef: { label: 'Cap de EV — SP.DEF', group: 'allocation', help: 'Máximo de EV que pode ser investido em SP.DEF. O valor é limitado a um inteiro não negativo.', vars: perStat },
+    evCapSpe: { label: 'Cap de EV — SPEED', group: 'allocation', help: 'Máximo de EV que pode ser investido em SPEED. O valor é limitado a um inteiro não negativo.', vars: perStat },
+    ppPool: { label: 'Tamanho da barra de PP', group: 'pp', help: 'Define o máximo de Pontos de Poder disponíveis para o Pokémon.', vars: all },
   };
 })();
 
 function normalizePreset(raw: Partial<FormulaPreset>): FormulaPreset {
+  const schemaVersion = Number(raw.schemaVersion) || 0;
+  const formulas = { ...ORIGINAL_PRESET.formulas, ...(raw.formulas || {}) };
+  if (schemaVersion < 2 && raw.formulas) {
+    const legacyStatSuffix = '(s|hp|atk|def|spatk|spdef|spe)';
+    const preserveAllocatedEv = new RegExp(`\\bPn${legacyStatSuffix}\\b`, 'gi');
+    const removeLegacyEv = new RegExp(`\\bEV${legacyStatSuffix}\\b`, 'gi');
+    const restoreAllocatedEv = /__allocated_ev_(s|hp|atk|def|spatk|spdef|spe)__/gi;
+    (Object.keys(raw.formulas) as FormulaKey[]).forEach(key => {
+      if (typeof formulas[key] !== 'string') return;
+      formulas[key] = formulas[key]
+        .replace(preserveAllocatedEv, (_match, suffix: string) => `__allocated_ev_${suffix.toLowerCase()}__`)
+        .replace(removeLegacyEv, '0')
+        .replace(restoreAllocatedEv, (_match, suffix: string) => `EV${suffix}`);
+    });
+  }
   return {
     ...ORIGINAL_PRESET,
     ...raw,
     id: raw.id || `preset-${Date.now()}`,
     name: raw.name || 'Preset',
     builtin: raw.id === ORIGINAL_PRESET.id,
+    schemaVersion: 2,
+    ppMode: raw.ppMode === 'pool' ? 'pool' : 'individual',
+    ppFreeThreshold: Number.isInteger(raw.ppFreeThreshold) && raw.ppFreeThreshold! >= 0 ? raw.ppFreeThreshold! : ORIGINAL_PRESET.ppFreeThreshold,
+    ppStep: Number.isInteger(raw.ppStep) && raw.ppStep! > 0 ? raw.ppStep! : ORIGINAL_PRESET.ppStep,
     ivValues: { ...ORIGINAL_PRESET.ivValues, ...(raw.ivValues || {}) },
-    formulas: { ...ORIGINAL_PRESET.formulas, ...(raw.formulas || {}) },
+    formulas,
     physTable: Array.isArray(raw.physTable) && raw.physTable.length ? raw.physTable : ORIGINAL_PRESET.physTable,
     specTable: Array.isArray(raw.specTable) && raw.specTable.length ? raw.specTable : ORIGINAL_PRESET.specTable,
   };
@@ -325,6 +367,9 @@ export function getActivePreset(): FormulaPreset {
 export function validatePresetStructure(p: FormulaPreset): string[] {
   const errs: string[] = [];
   if (!p.name.trim()) errs.push('O nome do preset não pode ficar vazio.');
+  if (p.ppMode !== 'individual' && p.ppMode !== 'pool') errs.push('Modo de PP inválido.');
+  if (!Number.isInteger(p.ppFreeThreshold) || p.ppFreeThreshold < 0) errs.push('O valor inicial de PP deve ser um inteiro não negativo.');
+  if (!Number.isInteger(p.ppStep) || p.ppStep < 1) errs.push('A média de conversão de PP deve ser um inteiro maior que zero.');
   (Object.keys(FORMULA_META) as FormulaKey[]).forEach(k => {
     const e = validateExpression(p.formulas[k] || '', FORMULA_META[k].vars);
     if (e) errs.push(`${FORMULA_META[k].label}: ${e}`);

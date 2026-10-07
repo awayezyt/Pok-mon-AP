@@ -3,8 +3,8 @@ import { Pokemon, Attack, DiceRollResult, defaultStages } from './types';
 import { generateId } from './utils';
 import { getServerCollection, syncGameState } from './cloudSync';
 import { defaultAttacks, defaultPokemon, defaultPokemonTemplate } from './constants';
-import { computeDerivedStats as computeDerivedStatsStrict } from './calculations';
-import { ORIGINAL_PRESET } from './formulas';
+import { computeDerivedStats as computeDerivedStatsStrict, getPpPoolMax } from './calculations';
+import { getActivePreset, ORIGINAL_PRESET, STAT_KEYS } from './formulas';
 
 // Never let a runtime formula error (e.g. division by zero) break data loading.
 const computeDerivedStats: typeof computeDerivedStatsStrict = (stats, nature, stages, level, preset) => {
@@ -38,7 +38,14 @@ function getAttackCatalog() {
 
 function migrateOldPokemon(raw: any[]): Pokemon[] {
   return raw.map(p => {
-    const stats = p.stats || defaultPokemonTemplate.stats;
+    const stats = Object.fromEntries(STAT_KEYS.map(key => {
+      const oldStat = p.stats?.[key] || defaultPokemonTemplate.stats[key];
+      return [key, {
+        base: Number(oldStat.base) || 0,
+        evPoints: Number(oldStat.evPoints ?? oldStat.levelPoints) || 0,
+        iv: oldStat.iv || defaultPokemonTemplate.stats[key].iv,
+      }];
+    })) as Pokemon['stats'];
     const stages = { ...defaultStages, ...(p.stages || {}) };
     const calculatedHpMax = computeDerivedStats(
       stats,
@@ -60,6 +67,7 @@ function migrateOldPokemon(raw: any[]): Pokemon[] {
       growthRate: 'Meio rápido',
       affection: 0,
       ...p,
+      stats,
       hpMax,
       hp,
       stages,
@@ -88,12 +96,16 @@ export function usePokemonData() {
   }, []);
 
   const addPokemon = (p: Omit<Pokemon, 'id' | 'createdAt'>): Pokemon => {
-    const hpMax = Math.max(1, computeDerivedStats(p.stats, p.natureNumber, p.stages, p.level).hp);
+    const preset = getActivePreset();
+    const hpMax = Math.max(1, computeDerivedStats(p.stats, p.natureNumber, p.stages, p.level, preset).hp);
+    const ppMax = getPpPoolMax(p.stats, p.natureNumber, p.level, preset);
     const wasAtFullHealth = p.hp >= p.hpMax;
     const newP: Pokemon = {
       ...p,
       hpMax,
       hp: Math.max(0, Math.min(hpMax, wasAtFullHealth ? hpMax : p.hp)),
+      ppMax,
+      ppCurrent: Math.max(0, Math.min(ppMax, p.ppCurrent ?? p.ppMax ?? ppMax)),
       id: generateId(),
       createdAt: new Date().toISOString(),
     };

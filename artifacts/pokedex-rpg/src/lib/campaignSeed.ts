@@ -103,12 +103,12 @@ const chucky: Pokemon = {
   // The visible sheet reports 53 PV at level 7. These entries preserve that
   // displayed result through the app's derived-stat calculation.
   stats: {
-    hp: { base: 45, levelPoints: 1, ev: 0, iv: 'A' },
-    atk: { base: 60, levelPoints: 13, ev: 1, iv: 'S' },
-    def: { base: 40, levelPoints: 1, ev: 1, iv: 'SS' },
-    spAtk: { base: 70, levelPoints: 0, ev: 0, iv: 'A' },
-    spDef: { base: 50, levelPoints: 0, ev: 1, iv: 'B' },
-    spe: { base: 45, levelPoints: 6, ev: 3, iv: 'S' },
+    hp: { base: 45, evPoints: 1, iv: 'A' },
+    atk: { base: 60, evPoints: 9, iv: 'S' },
+    def: { base: 40, evPoints: 3, iv: 'SS' },
+    spAtk: { base: 70, evPoints: 2, iv: 'A' },
+    spDef: { base: 50, evPoints: 0, iv: 'B' },
+    spe: { base: 45, evPoints: 6, iv: 'S' },
   },
   attacks: ['attack-double-kick'],
   inDex: false,

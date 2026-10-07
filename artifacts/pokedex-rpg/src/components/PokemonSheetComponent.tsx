@@ -7,9 +7,9 @@ import {
   getNatureEffects,
   getStatDiceNotation, rollDice,
   getPhysicalDamage, getSpecialDamage, rollDamage, rollStatusChance,
-  computeDerivedStats, applyStageFormula, getEffectiveCritRange,
+  computeDerivedStats, applyStageFormula, getEffectiveCritRange, getAttackPpCost, getPpPoolMax, getStatEvCap,
 } from '../lib/calculations';
-import { ORIGINAL_PRESET, useFormulaSettings } from '../lib/formulas';
+import { ORIGINAL_PRESET, useFormulaSettings, type FormulaPreset } from '../lib/formulas';
 import { formatStatusChance } from '../lib/attackLocalization';
 import { CategoryIcon, TYPE_COLORS, TYPE_ICON_SOURCES, TypeIconBadge } from './TypeIcon';
 import { RichText } from '@/components/RichText';
@@ -31,6 +31,27 @@ import { useCharacterSheets, useSessionRole, type TrainerRecord } from '../lib/c
 import { getServerCollection } from '../lib/cloudSync';
 import { characterHasPokemon, getCharacterPokemonRoster, getPokemonAssignmentConflict, getPokemonTrainerName, normalizeTrainerName, syncPokemonTrainerRecord } from '../lib/pokemonOwnership';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { PokemonPPBar } from './PokemonPPBar';
+
+const POKEMON_STAT_KEYS = ['hp', 'atk', 'def', 'spAtk', 'spDef', 'spe'] as const;
+type PokemonStatKey = typeof POKEMON_STAT_KEYS[number];
+const POKEMON_STAT_LABELS: Record<PokemonStatKey, string> = {
+  hp: 'HP', atk: 'ATK', def: 'DEF', spAtk: 'SP.ATK', spDef: 'SP.DEF', spe: 'SPEED',
+};
+
+function getAllocatedEV(stat: StatEntry): number {
+  return Math.max(0, Number(stat.evPoints ?? stat.levelPoints) || 0);
+}
+
+function safePpPoolMax(stats: Pokemon['stats'], natureNumber: number, level: number, preset: FormulaPreset): number {
+  try { return getPpPoolMax(stats, natureNumber, level, preset); }
+  catch { return getPpPoolMax(stats, natureNumber, level, ORIGINAL_PRESET); }
+}
+
+function safeStatEvCap(key: PokemonStatKey, stat: StatEntry, level: number, natureNumber: number, preset: FormulaPreset): number {
+  try { return getStatEvCap(key, stat, level, natureNumber, preset); }
+  catch { return getStatEvCap(key, stat, level, natureNumber, ORIGINAL_PRESET); }
+}
 
 // ─── Stage widget ──────────────────────────────────────────────────────────────
 
@@ -168,6 +189,9 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
   const [hpAmount, setHpAmount] = useState('');
   const [hpUseRd, setHpUseRd] = useState(true);
   const [hpDamageKind, setHpDamageKind] = useState<'physical' | 'special'>('physical');
+  const [evDialogOpen, setEvDialogOpen] = useState(false);
+  const [evRandomMode, setEvRandomMode] = useState<'random' | 'focused'>('random');
+  const [evPriority, setEvPriority] = useState<[PokemonStatKey, PokemonStatKey, PokemonStatKey]>(['atk', 'spe', 'spAtk']);
   const [editingDescription, setEditingDescription] = useState<'itemDescription' | 'abilityDescription' | null>(null);
   const [descriptionDraft, setDescriptionDraft] = useState('');
   const [editingPokedexDescription, setEditingPokedexDescription] = useState(false);
@@ -179,34 +203,58 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
     const p = pokemon.find(p => p.id === pokemonId);
     if (p && (!sheet || sheet.id !== pokemonId)) {
       setSheet({ ...p, stages: p.stages || defaultStages });
-    } else if (p && sheet && (p.hp !== sheet.hp || p.hpMax !== sheet.hpMax) && !debounceTimerRef.current) {
-      setSheet(prev => prev ? { ...prev, hp: p.hp, hpMax: p.hpMax } : prev);
+    } else if (p && sheet && !debounceTimerRef.current && JSON.stringify(p) !== JSON.stringify(sheet)) {
+      setSheet({ ...p, stages: p.stages || defaultStages });
     }
   }, [pokemon, pokemonId]);
 
   const handleChange = useCallback((updates: Partial<Pokemon>) => {
     if (!canEdit) return;
+    if (updates.ppCurrent !== undefined || updates.movePpRemaining !== undefined) {
+      if (!sheet) return;
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = undefined;
+      const next = { ...sheet, ...updates };
+      if (updates.ppCurrent !== undefined) {
+        const ppMax = safePpPoolMax(next.stats, next.natureNumber, next.level, activePreset);
+        next.ppMax = ppMax;
+        next.ppCurrent = Math.max(0, Math.min(ppMax, Math.floor(Number(updates.ppCurrent) || 0)));
+      }
+      setSheet(next);
+      updatePokemon(next.id, next);
+      return;
+    }
     setSheet(prev => {
       if (!prev) return prev;
       const next = { ...prev, ...updates };
       if (updates.stats || updates.natureNumber !== undefined || updates.level !== undefined) {
         let calculated: number;
-        try { calculated = computeDerivedStats(next.stats, next.natureNumber, next.stages, next.level).hp; }
+        try { calculated = computeDerivedStats(next.stats, next.natureNumber, next.stages, next.level, activePreset).hp; }
         catch { calculated = computeDerivedStats(next.stats, next.natureNumber, next.stages, next.level, ORIGINAL_PRESET).hp; }
         const nextHpMax = Math.max(1, calculated);
         const damage = Math.max(0, prev.hpMax - prev.hp);
         next.hpMax = nextHpMax;
         next.hp = Math.max(0, Math.min(nextHpMax, nextHpMax - damage));
+        const previousPpMax = prev.ppMax ?? safePpPoolMax(prev.stats, prev.natureNumber, prev.level, activePreset);
+        const previousPpCurrent = prev.ppCurrent ?? previousPpMax;
+        const ppSpent = Math.max(0, previousPpMax - previousPpCurrent);
+        const nextPpMax = safePpPoolMax(next.stats, next.natureNumber, next.level, activePreset);
+        next.ppMax = nextPpMax;
+        next.ppCurrent = Math.max(0, Math.min(nextPpMax, nextPpMax - ppSpent));
+      } else if (updates.ppCurrent !== undefined) {
+        const ppMax = safePpPoolMax(next.stats, next.natureNumber, next.level, activePreset);
+        next.ppMax = ppMax;
+        next.ppCurrent = Math.max(0, Math.min(ppMax, Math.floor(Number(updates.ppCurrent) || 0)));
       }
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = setTimeout(() => { debounceTimerRef.current = undefined; updatePokemon(next.id, next); }, 500);
       return next;
     });
-  }, [canEdit, updatePokemon]);
+  }, [activePreset, canEdit, sheet, updatePokemon]);
 
   const handleStatChange = (statKey: keyof Pokemon['stats'], field: keyof StatEntry, value: any) => {
     if (!sheet) return;
-    if ((field === 'ev' || field === 'iv') && !canEditMoves) return;
+    if ((field === 'ev' || field === 'iv' || field === 'levelPoints') && !canEditMoves) return;
     handleChange({ stats: { ...sheet.stats, [statKey]: { ...sheet.stats[statKey], [field]: value } } });
   };
 
@@ -294,39 +342,79 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
     handleChange({ natureNumber: Math.floor(Math.random() * 25) + 1 });
   };
 
-  const randomizeLevelPoints = () => {
-    if (!sheet || !canEditMoves) return;
-    const keys = ['hp', 'atk', 'def', 'spAtk', 'spDef', 'spe'] as Array<keyof Pokemon['stats']>;
-    const nextStats = { ...sheet.stats };
-    keys.forEach(key => {
-      nextStats[key] = { ...nextStats[key], levelPoints: 0 };
-    });
-    let remaining = Math.max(0, sheet.level * 3);
-    while (remaining > 0) {
-      const key = keys[Math.floor(Math.random() * keys.length)];
-      nextStats[key] = { ...nextStats[key], levelPoints: nextStats[key].levelPoints + 1 };
-      remaining -= 1;
-    }
-    handleChange({ stats: nextStats });
-    toast.success(`Pontos de nível distribuídos (${sheet.level * 3}).`);
+  const handleEVPointsChange = (key: PokemonStatKey, requested: number) => {
+    if (!sheet) return;
+    const current = getAllocatedEV(sheet.stats[key]);
+    const otherPoints = evPointsUsed - current;
+    const totalCap = Math.max(0, Math.floor(sheet.level * 3));
+    const statusCap = safeStatEvCap(key, sheet.stats[key], sheet.level, sheet.natureNumber, activePreset);
+    const availableForThisStat = Math.max(0, totalCap - otherPoints);
+    const maximum = current > statusCap
+      ? current
+      : Math.min(statusCap, current + availableForThisStat);
+    const next = Math.max(0, Math.min(maximum, Math.floor(Number(requested) || 0)));
+    handleStatChange(key, 'evPoints', next);
   };
 
-  const randomizeEvs = () => {
+  const randomizeEVPoints = () => {
     if (!sheet || !canEditMoves) return;
-    const raw = window.prompt('Quantos pontos de EV deseja sortear?', '20');
-    if (raw === null) return;
-    const amount = Math.max(0, Math.min(510, Number(raw) || 0));
-    const keys = ['hp', 'atk', 'def', 'spAtk', 'spDef', 'spe'] as Array<keyof Pokemon['stats']>;
-    const nextStats = { ...sheet.stats };
-    keys.forEach(key => {
-      nextStats[key] = { ...nextStats[key], ev: 0 };
-    });
-    for (let index = 0; index < amount; index += 1) {
-      const key = keys[Math.floor(Math.random() * keys.length)];
-      nextStats[key] = { ...nextStats[key], ev: nextStats[key].ev + 1 };
+    const total = Math.max(0, Math.floor(sheet.level * 3));
+    const allocation: Record<PokemonStatKey, number> = { hp: 0, atk: 0, def: 0, spAtk: 0, spDef: 0, spe: 0 };
+    const caps = Object.fromEntries(POKEMON_STAT_KEYS.map(key => [
+      key, safeStatEvCap(key, sheet.stats[key], sheet.level, sheet.natureNumber, activePreset),
+    ])) as Record<PokemonStatKey, number>;
+    let remaining = total;
+
+    if (evRandomMode === 'focused') {
+      const lowerPriority = POKEMON_STAT_KEYS
+        .filter(key => !evPriority.includes(key))
+        .sort(() => Math.random() - 0.5);
+      const order = [...evPriority, ...lowerPriority];
+      while (remaining > 0) {
+        const withinCaps = order.filter(key => allocation[key] < caps[key]);
+        if (!withinCaps.length) break;
+        const canAllocateInOrder = (key: PokemonStatKey, strict: boolean) => {
+          const index = order.indexOf(key);
+          const nextValue = allocation[key] + 1;
+          const previousValue = index === 0 ? Number.POSITIVE_INFINITY : allocation[order[index - 1]];
+          const followingValue = index === order.length - 1 ? Number.NEGATIVE_INFINITY : allocation[order[index + 1]];
+          return strict
+            ? nextValue < previousValue && nextValue > followingValue
+            : nextValue <= previousValue && nextValue >= followingValue;
+        };
+        const strictlyRanked = withinCaps.filter(key => canAllocateInOrder(key, true));
+        const candidates = strictlyRanked.length
+          ? strictlyRanked
+          : withinCaps.filter(key => canAllocateInOrder(key, false));
+        if (!candidates.length) break;
+        const weighted = candidates.map(key => ({ key, weight: Math.max(1, order.length - order.indexOf(key)) }));
+        const weightTotal = weighted.reduce((sum, item) => sum + item.weight, 0);
+        let choice = Math.random() * weightTotal;
+        const selected = weighted.find(item => (choice -= item.weight) < 0)?.key || weighted[weighted.length - 1].key;
+        allocation[selected] += 1;
+        remaining -= 1;
+      }
+    } else {
+      while (remaining > 0) {
+        const candidates = POKEMON_STAT_KEYS.filter(key => allocation[key] < caps[key]);
+        if (!candidates.length) break;
+        const selected = candidates[Math.floor(Math.random() * candidates.length)];
+        allocation[selected] += 1;
+        remaining -= 1;
+      }
     }
+
+    const nextStats = { ...sheet.stats };
+    POKEMON_STAT_KEYS.forEach(key => {
+      nextStats[key] = { ...nextStats[key], evPoints: allocation[key] };
+    });
     handleChange({ stats: nextStats });
-    toast.success(`EVs distribuídos (${amount}).`);
+    setEvDialogOpen(false);
+    if (remaining > 0) {
+      toast.error(`Foram distribuídos ${total - remaining} de ${total} EVs. Os caps atuais não comportam o total.`);
+    } else {
+      toast.success(`EVs distribuídos: ${total}.`);
+    }
   };
 
   const randomizeIvs = () => {
@@ -346,7 +434,12 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
   // If the active preset throws for this Pokémon (e.g. division by zero), fall back to Original instead of crashing.
   const formulaPreset = useMemo(() => {
     if (!sheet) return activePreset;
-    try { computeDerivedStats(sheet.stats, sheet.natureNumber, sheet.stages, sheet.level, activePreset); return activePreset; }
+    try {
+      computeDerivedStats(sheet.stats, sheet.natureNumber, sheet.stages, sheet.level, activePreset);
+      getPpPoolMax(sheet.stats, sheet.natureNumber, sheet.level, activePreset);
+      POKEMON_STAT_KEYS.forEach(key => getStatEvCap(key, sheet.stats[key], sheet.level, sheet.natureNumber, activePreset));
+      return activePreset;
+    }
     catch { return ORIGINAL_PRESET; }
   }, [sheet, activePreset]);
   const formulaFallback = formulaPreset !== activePreset;
@@ -356,19 +449,16 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
     return computeDerivedStats(sheet.stats, sheet.natureNumber, sheet.stages, sheet.level, formulaPreset);
   }, [sheet, formulaPreset]);
 
-  const levelPointsUsed = useMemo(() => {
+  const evPointsUsed = useMemo(() => {
     if (!sheet) return 0;
     const s = sheet.stats;
     return ['hp','atk','def','spAtk','spDef','spe'].reduce((sum, k) =>
-      sum + (Number((s as any)[k].levelPoints) || 0), 0);
+      sum + getAllocatedEV((s as any)[k]), 0);
   }, [sheet]);
 
-  const evsUsed = useMemo(() => {
-    if (!sheet) return 0;
-    const s = sheet.stats;
-    return ['hp','atk','def','spAtk','spDef','spe'].reduce((sum, k) =>
-      sum + (Number((s as any)[k].ev) || 0), 0);
-  }, [sheet]);
+  const evPointsAvailable = sheet ? Math.max(0, Math.floor(sheet.level * 3)) : 0;
+  const ppPoolMax = sheet ? safePpPoolMax(sheet.stats, sheet.natureNumber, sheet.level, formulaPreset) : 0;
+  const ppPoolCurrent = sheet ? Math.min(ppPoolMax, Math.max(0, Math.floor(sheet.ppCurrent ?? ppPoolMax))) : 0;
 
   const nextLevelXp = sheet ? sheet.level * POKEMON_GROWTH_VALUES[sheet.growthRate || 'Meio rápido'] : 0;
 
@@ -396,6 +486,17 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
     if (!sheet || !derived) return;
     const attack = attacks.find(a => a.id === attackId);
     if (!attack) return;
+    const attackPpCost = formulaPreset.ppMode === 'pool' ? getAttackPpCost(attack.pp, formulaPreset) : 1;
+    const individualPp = Math.max(0, Math.min(attack.pp, Math.floor(sheet.movePpRemaining?.[attackId] ?? attack.pp)));
+    const availablePp = formulaPreset.ppMode === 'pool' ? ppPoolCurrent : individualPp;
+    if (canEdit && availablePp < attackPpCost) {
+      toast.error('Pontos de Poder insuficientes', {
+        description: formulaPreset.ppMode === 'pool'
+          ? `Este ataque custa ${attackPpCost} PP; restam ${availablePp}.`
+          : 'Este ataque já não tem PP disponíveis.',
+      });
+      return;
+    }
 
     const isPhysical = attack.category === 'Físico';
     const isSpecial  = attack.category === 'Especial';
@@ -445,6 +546,13 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
       damageNotation, damageResults, damageTotal,
       attackTestTotal: attackTotal,
     });
+    if (canEdit) {
+      if (formulaPreset.ppMode === 'pool') {
+        handleChange({ ppCurrent: Math.max(0, ppPoolCurrent - attackPpCost) });
+      } else {
+        handleChange({ movePpRemaining: { ...(sheet.movePpRemaining || {}), [attackId]: Math.max(0, individualPp - 1) } });
+      }
+    }
 
     toast(isCrit ? `CRÍTICO! ${attack.name}` : `${attack.name}: ${attackTotal}`, {
       description: `Teste: ${attackTotal}${attack.power ? ` | Dano: ${damageTotal}` : ''}${isCrit ? ' | CRÍTICO!' : ''}`,
@@ -475,7 +583,11 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
       toast.error('Cada Pokémon pode ter no máximo 4 ataques.');
       return;
     }
-    if (!sheet.attacks.includes(attackId)) handleChange({ attacks: [...sheet.attacks, attackId] });
+    if (!sheet.attacks.includes(attackId)) {
+      const movePpRemaining = { ...(sheet.movePpRemaining || {}) };
+      delete movePpRemaining[attackId];
+      handleChange({ attacks: [...sheet.attacks, attackId], movePpRemaining });
+    }
     setIsAttackModalOpen(false);
   };
 
@@ -848,8 +960,7 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
            <div className="grid w-full gap-2 sm:flex sm:w-auto sm:items-center">
              {canEditMoves && <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/20 bg-primary/5 p-2">
                <span className="w-full text-xs font-semibold text-muted-foreground sm:w-auto">Sortear</span>
-               <Button size="sm" variant="outline" className="min-w-[86px] flex-1 gap-1.5 px-2 sm:flex-none" onClick={randomizeLevelPoints} title="Sortear pontos de nível"><Dices className="h-3.5 w-3.5" /> Nível</Button>
-               <Button size="sm" variant="outline" className="min-w-[70px] flex-1 gap-1.5 px-2 sm:flex-none" onClick={randomizeEvs} title="Sortear EVs do zero"><Dices className="h-3.5 w-3.5" /> EV</Button>
+               <Button size="sm" variant="outline" className="min-w-[70px] flex-1 gap-1.5 px-2 sm:flex-none" onClick={() => setEvDialogOpen(true)} title="Sortear EVs"><Dices className="h-3.5 w-3.5" /> EV</Button>
                <Button size="sm" variant="outline" className="min-w-[70px] flex-1 gap-1.5 px-2 sm:flex-none" onClick={randomizeIvs} title="Sortear IVs novamente"><Dices className="h-3.5 w-3.5" /> IV</Button>
              </div>}
               {canEditMoves && (
@@ -863,13 +974,12 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
          <CardContent className="p-0">
           <div className="pokemon-stat-responsive">
            <div className="overflow-x-auto">
-          <table className="w-full min-w-[34rem] text-xs text-left sm:text-sm">
+          <table className="w-full min-w-[32rem] text-xs text-left sm:text-sm">
             <thead className="bg-secondary/30 text-muted-foreground text-xs uppercase">
               <tr>
                 <th className="px-2 py-2 font-bold w-16 sm:px-4 sm:py-3 sm:w-24">Stat</th>
                 <th className="px-2 py-3 text-center">Base</th>
-                 <th className="px-2 py-3 text-center">Nível</th>
-                  <th className="px-2 py-3 text-center">EV{!canEditMoves && <span className="block text-[9px] normal-case font-normal">Somente GM</span>}</th>
+                <th className="px-2 py-3 text-center">EV <span className="block text-[9px] normal-case font-normal">atual / cap</span></th>
                   <th className="px-2 py-3 text-center">IV{!canEditMoves && <span className="block text-[9px] normal-case font-normal">Somente GM</span>}</th>
                 <th className="px-3 py-3 text-center border-l border-border/50">Final</th>
                 <th className="px-3 py-3 text-center">Bônus</th>
@@ -882,6 +992,8 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
                 const dn     = getStatDiceNotation(key, stat, sheet.natureNumber, sheet.level, formulaPreset);
                 const final  = dn.final;
                 const bonus  = dn.bonus;
+                const evPoints = getAllocatedEV(stat);
+                const evCap = safeStatEvCap(key as PokemonStatKey, stat, sheet.level, sheet.natureNumber, formulaPreset);
                 return (
                   <tr key={key} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
                     <td className="px-2 py-1.5 font-black text-foreground sm:px-4 sm:py-2">
@@ -890,8 +1002,10 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
                       {natureEffects.penalty === key && <span className="text-red-400 ml-1 text-xs">▼</span>}
                     </td>
                     <td className="px-2 py-2"><Input type="number" className="h-8 w-12 mx-auto text-center p-1 sm:w-16" value={stat.base || ''} onChange={e => handleStatChange(key, 'base', Number(e.target.value))} /></td>
-                    <td className="px-2 py-2"><Input type="number" className="h-8 w-12 mx-auto text-center p-1 sm:w-16" value={stat.levelPoints || ''} onChange={e => handleStatChange(key, 'levelPoints', Number(e.target.value))} /></td>
-                     <td className="px-2 py-2"><Input type="number" disabled={!canEditMoves} className="h-8 w-12 mx-auto text-center p-1 sm:w-16" value={stat.ev || ''} onChange={e => handleStatChange(key, 'ev', Number(e.target.value))} /></td>
+                    <td className="px-2 py-2">
+                      <Input type="number" min={0} max={evCap} aria-label={`EV de ${statLabels[key]}`} className={`h-8 w-14 mx-auto text-center p-1 sm:w-16 ${evPoints > evCap ? 'border-destructive text-destructive' : ''}`} value={evPoints} onChange={e => handleEVPointsChange(key as PokemonStatKey, Number(e.target.value))} />
+                      <span className={`mt-0.5 block text-center text-[10px] ${evPoints > evCap ? 'text-destructive' : 'text-muted-foreground'}`}>{evPoints} / {evCap}</span>
+                    </td>
                      <td className="px-2 py-2 text-center">
                        <Select value={stat.iv} onValueChange={v => handleStatChange(key, 'iv', v)} disabled={!canEditMoves}>
                         <SelectTrigger className="h-8 w-12 mx-auto px-1 sm:w-16 sm:px-2"><SelectValue /></SelectTrigger>
@@ -921,13 +1035,8 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
           </div>
 
           <div className="p-4 bg-secondary/10 flex flex-col sm:flex-row justify-between items-center border-t border-border gap-4">
-            <div className="flex gap-6 text-sm">
-              <div className={`font-medium ${levelPointsUsed > sheet.level * 3 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                Pontos de Nível: {levelPointsUsed} / {sheet.level * 3}
-              </div>
-              <div className={`font-medium ${evsUsed > 510 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                EVs: {evsUsed} / 510
-              </div>
+            <div className={`text-sm font-medium ${evPointsUsed > evPointsAvailable ? 'text-destructive' : 'text-muted-foreground'}`}>
+              EVs distribuídos: {evPointsUsed} / {evPointsAvailable} <span className="text-xs font-normal">(3 por nível · {Math.max(0, evPointsAvailable - evPointsUsed)} disponíveis)</span>
             </div>
             {canEditMoves && (
               <Collapsible className="w-full sm:w-auto">
@@ -943,6 +1052,56 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={evDialogOpen} onOpenChange={setEvDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Sortear EVs</DialogTitle>
+            <DialogDescription>Os pontos atuais serão substituídos. O total sorteado é de {evPointsAvailable} EVs, respeitando o cap de cada status.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {([
+              ['random', 'Completamente aleatório', 'Distribui os EVs entre todos os stats sem prioridades.'],
+              ['focused', 'Focado', 'Prioriza os três stats escolhidos e mantém os outros em ordem menor.'],
+            ] as const).map(([mode, label, hint]) => (
+              <button key={mode} type="button" onClick={() => setEvRandomMode(mode)} aria-pressed={evRandomMode === mode} className={`rounded-xl border p-3 text-left transition-colors ${evRandomMode === mode ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`} data-testid={`button-ev-random-${mode}`}>
+                <p className="text-sm font-semibold">{label}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+              </button>
+            ))}
+          </div>
+          {evRandomMode === 'focused' && (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {(['Top 1', 'Top 2', 'Top 3'] as const).map((label, index) => (
+                <label key={label} className="text-xs font-semibold text-muted-foreground">{label}
+                  <Select
+                    value={evPriority[index]}
+                    onValueChange={value => setEvPriority(current => {
+                      const next: [PokemonStatKey, PokemonStatKey, PokemonStatKey] = [...current];
+                      next[index] = value as PokemonStatKey;
+                      return next;
+                    })}
+                  >
+                    <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {POKEMON_STAT_KEYS.map(key => (
+                        <SelectItem key={key} value={key} disabled={evPriority.some((selected, selectedIndex) => selectedIndex !== index && selected === key)}>
+                          {POKEMON_STAT_LABELS[key]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </label>
+              ))}
+              <p className="text-xs text-muted-foreground sm:col-span-3">Cada stat recebe no máximo o valor definido na fórmula de cap. Se um cap impedir a distribuição completa, a ficha informa quantos pontos foram distribuídos.</p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setEvDialogOpen(false)}>Cancelar</Button>
+            <Button type="button" onClick={randomizeEVPoints}><Dices className="mr-2 h-4 w-4" />Distribuir EVs</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── DERIVED STATS ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
@@ -1002,9 +1161,14 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
 
       {/* ── ATTACKS ────────────────────────────────────────────────────────── */}
       <Card className="shadow-sm border-border">
-        <CardHeader className="py-4 border-b border-border flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><Swords className="text-primary" /> Ataques</CardTitle>
-           {canEditMoves && <Button size="sm" onClick={() => setIsAttackModalOpen(true)}><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>}
+        <CardHeader className="py-4 border-b border-border flex flex-row items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+            <CardTitle className="flex items-center gap-2"><Swords className="text-primary" /> Ataques</CardTitle>
+            {formulaPreset.ppMode === 'pool' && <div className="min-w-[15rem] flex-1 sm:max-w-xl">
+              <PokemonPPBar current={ppPoolCurrent} max={ppPoolMax} disabled={!canEdit} onChange={value => handleChange({ ppCurrent: value })} />
+            </div>}
+          </div>
+          {canEditMoves && <Button size="sm" className="shrink-0" onClick={() => setIsAttackModalOpen(true)}><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>}
         </CardHeader>
         <CardContent className="p-0">
           {sheet.attacks.length === 0 ? (
@@ -1015,6 +1179,10 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
                 const attack = attacks.find(a => a.id === attackId);
                 if (!attack) return null;
                 const isStab = !!(attack.stab && sheet.types.includes(attack.type));
+                const currentMovePp = Math.max(0, Math.min(attack.pp, Math.floor(sheet.movePpRemaining?.[attackId] ?? attack.pp)));
+                const movePpCost = formulaPreset.ppMode === 'pool' ? getAttackPpCost(attack.pp, formulaPreset) : 1;
+                const currentPp = formulaPreset.ppMode === 'pool' ? ppPoolCurrent : currentMovePp;
+                const canAffordPp = currentPp >= movePpCost;
                 const dmgNotation = attack.power && attack.category !== 'Status'
                   ? (attack.category === 'Físico' ? getPhysicalDamage(attack.power, formulaPreset) : getSpecialDamage(attack.power, formulaPreset)).notation
                   : null;
@@ -1038,6 +1206,15 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
                             {dmgNotation && <span className="font-mono text-primary/80">{dmgNotation}</span>}
                             <span>Acc: {attack.accuracy}%</span>
                             <span>Crit: {getEffectiveCritRange(attack.critRange, sheet.stages.crit, sheet.level, formulaPreset)}+</span>
+                            {formulaPreset.ppMode === 'pool'
+                              ? <span className={canAffordPp ? 'text-primary' : 'text-destructive'}>Custo: {movePpCost} PP</span>
+                              : <span className={`inline-flex items-center gap-1 rounded-full bg-secondary/50 px-2 py-0.5 ${currentMovePp > 0 ? 'text-primary' : 'text-destructive'}`}>
+                                PP <b className="font-mono tabular-nums">{currentMovePp}/{attack.pp}</b>
+                                {canEdit && <>
+                                  <Button type="button" variant="ghost" size="icon" className="ml-1 h-5 w-5" aria-label={`Recuperar 1 PP de ${attack.name}`} disabled={currentMovePp >= attack.pp} onClick={event => { event.stopPropagation(); handleChange({ movePpRemaining: { ...(sheet.movePpRemaining || {}), [attackId]: Math.min(attack.pp, currentMovePp + 1) } }); }}><Plus className="h-3 w-3" /></Button>
+                                  <Button type="button" variant="ghost" size="icon" className="h-5 w-5" aria-label={`Remover 1 PP de ${attack.name}`} disabled={currentMovePp <= 0} onClick={event => { event.stopPropagation(); handleChange({ movePpRemaining: { ...(sheet.movePpRemaining || {}), [attackId]: Math.max(0, currentMovePp - 1) } }); }}><Minus className="h-3 w-3" /></Button>
+                                </>}
+                              </span>}
                             {(attack.statusChances||[]).map((sc, i) => (
                               <Badge key={i} variant="outline" className="text-[10px] h-4 py-0 bg-background">{sc.effect} ({formatStatusChance(sc.chance)})</Badge>
                             ))}
@@ -1046,6 +1223,9 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
                       </div>
                       <div className="flex shrink-0 items-center justify-end gap-1">
                         <Button variant="default" size="sm" className="h-9 gap-1 font-bold bg-primary hover:bg-primary/90 sm:h-8"
+                          disabled={canEdit && !canAffordPp}
+                          title={!canAffordPp ? 'Pontos de Poder insuficientes' : undefined}
+                          aria-label={`Rolar ${attack.name}`}
                           onClick={e => { e.stopPropagation(); handleRollAttack(attack.id); }}>
                           <Dices className="h-4 w-4" /> <span>Rolar</span>
                         </Button>
@@ -1064,7 +1244,9 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
                         <p className="mb-2 whitespace-pre-wrap text-muted-foreground"><RichText text={attack.effectFull} replaceTypeNames /></p>
                         <div className="flex flex-wrap gap-4 text-xs">
                           <span><b>Alvo:</b> <RichText text={attack.target} replaceTypeNames /></span>
-                          <span><b>PP:</b> {attack.pp}</span>
+                          {formulaPreset.ppMode === 'pool'
+                            ? <span><b>PP máximo do ataque:</b> {attack.pp} · <b>Custo da barra:</b> {movePpCost}</span>
+                            : <span><b>PP:</b> {currentMovePp}/{attack.pp} usos</span>}
                           {attack.priority !== 0 && <span><b>Prioridade:</b> {attack.priority > 0 ? `+${attack.priority}` : attack.priority}</span>}
                           <span><b>Contato:</b> {attack.makesContact ? 'Sim' : 'Não'}</span>
                         </div>

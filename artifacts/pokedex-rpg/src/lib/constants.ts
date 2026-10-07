@@ -10,12 +10,12 @@ export const defaultPokemonTypes: string[] = [
 ];
 
 export const emptyPokemonStats = {
-  hp:    { base: 0, levelPoints: 0, ev: 0, iv: "C" as const },
-  atk:   { base: 0, levelPoints: 0, ev: 0, iv: "C" as const },
-  def:   { base: 0, levelPoints: 0, ev: 0, iv: "C" as const },
-  spAtk: { base: 0, levelPoints: 0, ev: 0, iv: "C" as const },
-  spDef: { base: 0, levelPoints: 0, ev: 0, iv: "C" as const },
-  spe:   { base: 0, levelPoints: 0, ev: 0, iv: "C" as const },
+  hp:    { base: 0, evPoints: 0, iv: "C" as const },
+  atk:   { base: 0, evPoints: 0, iv: "C" as const },
+  def:   { base: 0, evPoints: 0, iv: "C" as const },
+  spAtk: { base: 0, evPoints: 0, iv: "C" as const },
+  spDef: { base: 0, evPoints: 0, iv: "C" as const },
+  spe:   { base: 0, evPoints: 0, iv: "C" as const },
 };
 
 export const defaultPokemonTemplate = {
@@ -489,12 +489,12 @@ export const defaultAttacks: Attack[] = [
 ];
 
 const seededStats = (hp: number, atk: number, def: number, spAtk: number, spDef: number, spe: number) => ({
-  hp: { base: hp, levelPoints: 0, ev: 0, iv: 'C' as const },
-  atk: { base: atk, levelPoints: 0, ev: 0, iv: 'C' as const },
-  def: { base: def, levelPoints: 0, ev: 0, iv: 'C' as const },
-  spAtk: { base: spAtk, levelPoints: 0, ev: 0, iv: 'C' as const },
-  spDef: { base: spDef, levelPoints: 0, ev: 0, iv: 'C' as const },
-  spe: { base: spe, levelPoints: 0, ev: 0, iv: 'C' as const },
+  hp: { base: hp, evPoints: 0, iv: 'C' as const },
+  atk: { base: atk, evPoints: 0, iv: 'C' as const },
+  def: { base: def, evPoints: 0, iv: 'C' as const },
+  spAtk: { base: spAtk, evPoints: 0, iv: 'C' as const },
+  spDef: { base: spDef, evPoints: 0, iv: 'C' as const },
+  spe: { base: spe, evPoints: 0, iv: 'C' as const },
 });
 
 const seededPokemon = (

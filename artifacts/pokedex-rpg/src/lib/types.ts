@@ -4,8 +4,10 @@ export type PokemonGrowthRate = "Errático" | "Rápido" | "Meio rápido" | "Meio
 
 export interface StatEntry {
   base: number;
-  levelPoints: number;
-  ev: number;
+  evPoints: number;
+  /** Legacy fields are read only while old campaign data is migrated. */
+  levelPoints?: number;
+  ev?: number;
   iv: IVRank;
 }
 
@@ -50,6 +52,9 @@ export interface Pokemon {
   abilityDescription: string;
   natureNumber: number;
   stages: PokemonStages;
+  ppCurrent?: number;
+  ppMax?: number;
+  movePpRemaining?: Record<string, number>;
   
   stats: {
     hp: StatEntry;
