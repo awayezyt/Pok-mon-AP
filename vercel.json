@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://bore.pub:43418/api/:path*"
+      "destination": "http://bore.pub:28545/api/:path*"
     },
     {
       "source": "/(.*)",
