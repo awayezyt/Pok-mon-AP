@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://8rgq7xluca3n.share.zrok.io/"
+      "destination": "https://8rgq7xluca3n.share.zrok.io/"
     },
     {
       "source": "/(.*)",
