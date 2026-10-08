@@ -93,6 +93,7 @@ export default function PublicLibrary() {
               <span className="rounded-full border border-border bg-background/70 px-3 py-2 text-xs font-semibold text-muted-foreground">
                 {filtered.length} {filtered.length === 1 ? 'criatura' : 'criaturas'}
               </span>
+              <Link href="/sistema" className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm font-semibold text-primary transition-colors hover:border-primary hover:bg-primary/10" data-testid="link-public-system">Sistema <BookOpen size={15} /></Link>
               <Link href="/" className="inline-flex items-center gap-2 rounded-lg border border-border bg-background/70 px-3 py-2 text-sm font-semibold transition-colors hover:border-primary hover:text-primary" data-testid="link-back-access">Voltar ao acesso <ArrowUpRight size={15} /></Link>
             </div>
           </div>

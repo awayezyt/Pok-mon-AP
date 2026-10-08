@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { BookOpen, KeyRound, LockKeyhole, MoonStar, Orbit, UsersRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +61,7 @@ export default function Access() {
           <p className="eyebrow mb-3">Mesa aberta</p>
           <h1 className="font-display text-4xl mb-8">Arquivo público</h1>
           <Button className="w-full" onClick={() => setLocation('/publico')} data-testid="button-open-public">Abrir arquivo público</Button>
+           <Link href="/sistema" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-foreground" data-testid="link-public-system"><BookOpen size={15} /> Consultar Sistema</Link>
           <button className="mt-5 text-sm text-muted-foreground hover:text-primary" onClick={() => setShowPublic(false)} data-testid="button-back-access">Voltar ao acesso</button>
         </section>
       </main>
@@ -125,7 +126,10 @@ export default function Access() {
           </form>
           <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
             <button onClick={() => { setGmMode(!gmMode); setCode(''); }} className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary" data-testid="button-toggle-gm"><LockKeyhole size={14} /> {gmMode ? 'Acesso do jogador' : 'Acesso do mestre'}</button>
-            <button onClick={() => setShowPublic(true)} className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary" data-testid="button-public-access"><UsersRound size={14} /> Arquivo público</button>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link href="/sistema" className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-primary transition-colors hover:text-foreground" data-testid="link-public-system"><BookOpen size={14} /> Sistema</Link>
+              <button onClick={() => setShowPublic(true)} className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary" data-testid="button-public-access"><UsersRound size={14} /> Arquivo público</button>
+            </div>
           </div>
         </div>
       </section>

@@ -15,6 +15,7 @@ import Access from './pages/Access';
 import Character from './pages/Character';
 import GMMaster from './pages/GMMaster';
 import PublicLibrary from './pages/PublicLibrary';
+import System from './pages/System';
 import { useSessionRole, restoreSession } from './lib/campaign';
 import { hydrateGameState, startRealtimeSync } from './lib/cloudSync';
 import { seedImportedCampaignData } from './lib/campaignSeed';
@@ -50,11 +51,11 @@ function Router() {
     }
   }, [location, search]);
   useEffect(() => {
-    if (role === 'public' && location !== '/' && location !== '/publico' && location !== '/sheet') setLocation('/');
+    if (role === 'public' && location !== '/' && location !== '/publico' && location !== '/sheet' && location !== '/sistema') setLocation('/');
     if (role !== 'gm' && (location === '/mestre' || location === '/attacks' || location === '/pokemon' || location === '/fichas')) setLocation(role === 'player' ? '/personagem' : '/');
   }, [location, role, setLocation]);
 
-  if (role === 'public' && location !== '/' && location !== '/publico' && location !== '/sheet') return null;
+  if (role === 'public' && location !== '/' && location !== '/publico' && location !== '/sheet' && location !== '/sistema') return null;
   if (role !== 'gm' && (location === '/mestre' || location === '/attacks' || location === '/pokemon' || location === '/fichas')) return null;
   return (
     <div className="min-h-screen flex flex-col">
@@ -63,6 +64,7 @@ function Router() {
       <main className="flex-1 relative">
         <Switch>
           <Route path="/" component={Access} />
+          <Route path="/sistema" component={System} />
           <Route path="/fichas" component={Home} />
           <Route path="/pokemon" component={Home} />
           <Route path="/personagem" component={Character} />
