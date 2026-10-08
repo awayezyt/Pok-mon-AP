@@ -1,9 +1,9 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "$schema": "https://vercel.sh",
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://pokemon-ap-osko.onrender.com/api/:path*"
+      "destination": "http://bore.pub:32536/api/:path*"
     },
     {
       "source": "/(.*)",
