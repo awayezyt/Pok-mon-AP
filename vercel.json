@@ -1,28 +1,28 @@
 {
-  "$schema": "https://vercel.sh",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://8rgq7xluca3n.share.zrok.io"
+      "destination": "https://8rgq7xluca3n.share.zrok.io/api/:path*"
     },
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "headers": [
-    {
-      "source": "/api/:path*",
-      "headers": [
-        {
-          "key": "x-vercel-enable-rewrite-caching",
-          "value": "0"
-        },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
-      ]
-    }
   ]
 }
+  "headers": [
+  {
+    "source": "/api/:path*",
+    "headers": [
+      {
+        "key": "x-vercel-enable-rewrite-caching",
+        "value": "0"
+      },
+      {
+        "key": "Access-Control-Allow-Origin",
+        "value": "*"
+      }
+    ]
+  }
+]
