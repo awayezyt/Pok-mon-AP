@@ -1,28 +1,36 @@
 import React, { useState } from 'react';
+import { useLocation } from 'wouter';
 import { useDiceHistory } from '../lib/DiceHistoryContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Trash2, Dices, ChevronLeft } from 'lucide-react';
+import { Trash2, Dices, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function DiceHistoryPanel() {
   const { history, clearHistory } = useDiceHistory();
   const [isOpen, setIsOpen] = useState(false);
+  const [location] = useLocation();
+  const isSystemPage = location === '/sistema';
 
   return (
     <>
       <Button
         variant="default"
         size="icon"
-        className={`fixed top-20 z-50 rounded-l-none transition-all duration-300 ${isOpen ? 'left-80' : 'left-0'}`}
+        className={`fixed z-50 transition-all duration-300 ${isSystemPage ? 'right-4 top-auto bottom-4 rounded-xl' : `top-20 rounded-l-none ${isOpen ? 'left-80' : 'left-0'}`}`}
+        style={isSystemPage ? { right: '16px', bottom: 'calc(16px + env(safe-area-inset-bottom))', top: 'auto', left: 'auto' } : undefined}
         onClick={() => setIsOpen(!isOpen)}
         title="Histórico de Dados"
+        aria-label={isOpen ? 'Fechar histórico de rolagens' : 'Abrir histórico de rolagens'}
       >
-        {isOpen ? <ChevronLeft size={18} /> : <Dices size={18} />}
+        {isOpen ? (isSystemPage ? <ChevronRight size={18} /> : <ChevronLeft size={18} />) : <Dices size={18} />}
       </Button>
 
-      <div className={`fixed top-16 bottom-0 left-0 w-80 bg-background border-r border-border shadow-2xl z-40 transition-transform duration-300 flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div
+        className={`fixed top-16 bottom-0 ${isSystemPage ? 'right-0 left-auto border-l border-r-0' : 'left-0 border-r'} w-80 max-w-[calc(100vw-3rem)] bg-background border-border shadow-2xl z-40 transition-transform duration-300 flex flex-col ${isOpen ? 'translate-x-0' : isSystemPage ? 'translate-x-full' : '-translate-x-full'}`}
+        style={isSystemPage ? { width: 'min(20rem, calc(100vw - 3rem))' } : undefined}
+      >
         <div className="p-4 border-b border-border flex items-center justify-between shrink-0 bg-card">
           <div className="flex items-center gap-2">
             <Dices size={20} className="text-primary" />

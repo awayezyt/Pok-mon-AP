@@ -23,7 +23,14 @@ import type {
   GetCampaignSession200,
   HealthStatus,
   LoginCampaignGMBody,
-  LoginCampaignPlayerBody
+  LoginCampaignPlayerBody,
+  SystemCatalogInput,
+  SystemCatalogResponse,
+  SystemDocumentInput,
+  SystemDocumentResponse,
+  SystemDocumentsResponse,
+  SystemEditorPasswordInput,
+  SystemEditorSessionResponse
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -341,6 +348,522 @@ export const useLogoutCampaign = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getLogoutCampaignMutationOptions(options));
+    }
+
+export const getGetSystemDocumentsUrl = () => {
+
+
+
+
+  return `/api/system/documents`
+}
+
+/**
+ * @summary Fetch persisted system document edits
+ */
+export const getSystemDocuments = async ( options?: RequestInit): Promise<SystemDocumentsResponse> => {
+
+  return customFetch<SystemDocumentsResponse>(getGetSystemDocumentsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSystemDocumentsQueryKey = () => {
+    return [
+    `/api/system/documents`
+    ] as const;
+    }
+
+
+export const getGetSystemDocumentsQueryOptions = <TData = Awaited<ReturnType<typeof getSystemDocuments>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSystemDocuments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSystemDocumentsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSystemDocuments>>> = ({ signal }) => getSystemDocuments({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSystemDocuments>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSystemDocumentsQueryResult = NonNullable<Awaited<ReturnType<typeof getSystemDocuments>>>
+export type GetSystemDocumentsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Fetch persisted system document edits
+ */
+
+export function useGetSystemDocuments<TData = Awaited<ReturnType<typeof getSystemDocuments>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSystemDocuments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSystemDocumentsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetSystemCatalogUrl = () => {
+
+
+
+
+  return `/api/system/catalog`
+}
+
+/**
+ * @summary Fetch the editable system index
+ */
+export const getSystemCatalog = async ( options?: RequestInit): Promise<SystemCatalogResponse> => {
+
+  return customFetch<SystemCatalogResponse>(getGetSystemCatalogUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSystemCatalogQueryKey = () => {
+    return [
+    `/api/system/catalog`
+    ] as const;
+    }
+
+
+export const getGetSystemCatalogQueryOptions = <TData = Awaited<ReturnType<typeof getSystemCatalog>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSystemCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSystemCatalogQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSystemCatalog>>> = ({ signal }) => getSystemCatalog({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSystemCatalog>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSystemCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getSystemCatalog>>>
+export type GetSystemCatalogQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Fetch the editable system index
+ */
+
+export function useGetSystemCatalog<TData = Awaited<ReturnType<typeof getSystemCatalog>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSystemCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSystemCatalogQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveSystemCatalogUrl = () => {
+
+
+
+
+  return `/api/system/catalog`
+}
+
+/**
+ * @summary Save the editable system index
+ */
+export const saveSystemCatalog = async (systemCatalogInput: SystemCatalogInput, options?: RequestInit): Promise<SystemCatalogResponse> => {
+
+  return customFetch<SystemCatalogResponse>(getSaveSystemCatalogUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(systemCatalogInput)
+  }
+);}
+
+
+
+
+
+export const getSaveSystemCatalogMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveSystemCatalog>>, TError,{data: BodyType<SystemCatalogInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveSystemCatalog>>, TError,{data: BodyType<SystemCatalogInput>}, TContext> => {
+
+const mutationKey = ['saveSystemCatalog'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveSystemCatalog>>, {data: BodyType<SystemCatalogInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveSystemCatalog(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveSystemCatalogMutationResult = NonNullable<Awaited<ReturnType<typeof saveSystemCatalog>>>
+    export type SaveSystemCatalogMutationBody = BodyType<SystemCatalogInput>
+    export type SaveSystemCatalogMutationError = ErrorType<void>
+
+    /**
+ * @summary Save the editable system index
+ */
+export const useSaveSystemCatalog = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveSystemCatalog>>, TError,{data: BodyType<SystemCatalogInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveSystemCatalog>>,
+        TError,
+        {data: BodyType<SystemCatalogInput>},
+        TContext
+      > => {
+      return useMutation(getSaveSystemCatalogMutationOptions(options));
+    }
+
+export const getGetSystemEditorSessionUrl = () => {
+
+
+
+
+  return `/api/system/editor-session`
+}
+
+/**
+ * @summary Check whether this browser can edit system documents
+ */
+export const getSystemEditorSession = async ( options?: RequestInit): Promise<SystemEditorSessionResponse> => {
+
+  return customFetch<SystemEditorSessionResponse>(getGetSystemEditorSessionUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSystemEditorSessionQueryKey = () => {
+    return [
+    `/api/system/editor-session`
+    ] as const;
+    }
+
+
+export const getGetSystemEditorSessionQueryOptions = <TData = Awaited<ReturnType<typeof getSystemEditorSession>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSystemEditorSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSystemEditorSessionQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSystemEditorSession>>> = ({ signal }) => getSystemEditorSession({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSystemEditorSession>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSystemEditorSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getSystemEditorSession>>>
+export type GetSystemEditorSessionQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Check whether this browser can edit system documents
+ */
+
+export function useGetSystemEditorSession<TData = Awaited<ReturnType<typeof getSystemEditorSession>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSystemEditorSession>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSystemEditorSessionQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateSystemEditorSessionUrl = () => {
+
+
+
+
+  return `/api/system/editor-session`
+}
+
+/**
+ * @summary Unlock system editing for this browser
+ */
+export const createSystemEditorSession = async (systemEditorPasswordInput: SystemEditorPasswordInput, options?: RequestInit): Promise<SystemEditorSessionResponse> => {
+
+  return customFetch<SystemEditorSessionResponse>(getCreateSystemEditorSessionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(systemEditorPasswordInput)
+  }
+);}
+
+
+
+
+
+export const getCreateSystemEditorSessionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSystemEditorSession>>, TError,{data: BodyType<SystemEditorPasswordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSystemEditorSession>>, TError,{data: BodyType<SystemEditorPasswordInput>}, TContext> => {
+
+const mutationKey = ['createSystemEditorSession'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSystemEditorSession>>, {data: BodyType<SystemEditorPasswordInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSystemEditorSession(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSystemEditorSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createSystemEditorSession>>>
+    export type CreateSystemEditorSessionMutationBody = BodyType<SystemEditorPasswordInput>
+    export type CreateSystemEditorSessionMutationError = ErrorType<void>
+
+    /**
+ * @summary Unlock system editing for this browser
+ */
+export const useCreateSystemEditorSession = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSystemEditorSession>>, TError,{data: BodyType<SystemEditorPasswordInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createSystemEditorSession>>,
+        TError,
+        {data: BodyType<SystemEditorPasswordInput>},
+        TContext
+      > => {
+      return useMutation(getCreateSystemEditorSessionMutationOptions(options));
+    }
+
+export const getDeleteSystemEditorSessionUrl = () => {
+
+
+
+
+  return `/api/system/editor-session`
+}
+
+/**
+ * @summary Lock system editing on this browser
+ */
+export const deleteSystemEditorSession = async ( options?: RequestInit): Promise<SystemEditorSessionResponse> => {
+
+  return customFetch<SystemEditorSessionResponse>(getDeleteSystemEditorSessionUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteSystemEditorSessionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSystemEditorSession>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSystemEditorSession>>, TError,void, TContext> => {
+
+const mutationKey = ['deleteSystemEditorSession'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSystemEditorSession>>, void> = () => {
+
+
+          return  deleteSystemEditorSession(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSystemEditorSessionMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSystemEditorSession>>>
+
+    export type DeleteSystemEditorSessionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Lock system editing on this browser
+ */
+export const useDeleteSystemEditorSession = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSystemEditorSession>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSystemEditorSession>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getDeleteSystemEditorSessionMutationOptions(options));
+    }
+
+export const getSaveSystemDocumentUrl = (documentId: string,) => {
+
+
+
+
+  return `/api/system/documents/${documentId}`
+}
+
+/**
+ * @summary Save an edited system document
+ */
+export const saveSystemDocument = async (documentId: string,
+    systemDocumentInput: SystemDocumentInput, options?: RequestInit): Promise<SystemDocumentResponse> => {
+
+  return customFetch<SystemDocumentResponse>(getSaveSystemDocumentUrl(documentId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(systemDocumentInput)
+  }
+);}
+
+
+
+
+
+export const getSaveSystemDocumentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveSystemDocument>>, TError,{documentId: string;data: BodyType<SystemDocumentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveSystemDocument>>, TError,{documentId: string;data: BodyType<SystemDocumentInput>}, TContext> => {
+
+const mutationKey = ['saveSystemDocument'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveSystemDocument>>, {documentId: string;data: BodyType<SystemDocumentInput>}> = (props) => {
+          const {documentId,data} = props ?? {};
+
+          return  saveSystemDocument(documentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveSystemDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof saveSystemDocument>>>
+    export type SaveSystemDocumentMutationBody = BodyType<SystemDocumentInput>
+    export type SaveSystemDocumentMutationError = ErrorType<void>
+
+    /**
+ * @summary Save an edited system document
+ */
+export const useSaveSystemDocument = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveSystemDocument>>, TError,{documentId: string;data: BodyType<SystemDocumentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveSystemDocument>>,
+        TError,
+        {documentId: string;data: BodyType<SystemDocumentInput>},
+        TContext
+      > => {
+      return useMutation(getSaveSystemDocumentMutationOptions(options));
     }
 
 export const getHealthCheckUrl = () => {

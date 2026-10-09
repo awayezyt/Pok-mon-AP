@@ -209,10 +209,65 @@ export interface MusicTrack {
   keywords: string;
 }
 
+export type GMPlanningShape = 'rectangle' | 'ellipse' | 'diamond' | 'frame';
+export type GMPlanningNodeKind = 'note' | 'pokemon' | 'trainer' | 'music' | 'item' | 'shop' | 'episode' | 'scene' | 'image' | 'shape';
+
+export interface GMPlanningNode {
+  id: string;
+  kind: GMPlanningNodeKind;
+  title: string;
+  description: string;
+  x: number;
+  y: number;
+  resourceId?: string;
+  color?: string;
+  width?: number;
+  height?: number;
+  contentHtml?: string;
+  imageUrl?: string;
+  shape?: GMPlanningShape;
+  fontSize?: number;
+}
+
+export interface GMPlanningConnection {
+  id: string;
+  fromNodeId: string;
+  toNodeId: string;
+  label?: string;
+  style?: 'solid' | 'dashed';
+  color?: string;
+}
+
+export interface GMPlanningMap {
+  id: string;
+  title: string;
+  nodes: GMPlanningNode[];
+  connections: GMPlanningConnection[];
+  viewport?: { x: number; y: number; zoom: number };
+  snapToGrid?: boolean;
+  background?: 'dots' | 'grid' | 'plain';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface GMBoardState {
   reminders: GMReminder[];
   sceneScript: string;
   music: MusicTrack[];
+  mindMaps: GMPlanningMap[];
+  activeMindMapId: string;
+}
+
+export function createGMPlanningMap(title = 'Novo mapa'): GMPlanningMap {
+  const now = new Date().toISOString();
+  return {
+    id: generateId(),
+    title,
+    nodes: [],
+    connections: [],
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
 export const FLOW_TEMPLATE: FlowStep[] = [
@@ -235,6 +290,15 @@ export const DEFAULT_GM_BOARD: GMBoardState = {
   ],
   sceneScript: 'Chuva fina · sino submerso · uma escolha sem resposta.',
   music: [],
+  mindMaps: [{
+    id: 'gm-planning-main',
+    title: 'Campanha principal',
+    nodes: [],
+    connections: [],
+    createdAt: '',
+    updatedAt: '',
+  }],
+  activeMindMapId: 'gm-planning-main',
 };
 
 const starterCharacter: CharacterSheet = {
@@ -488,20 +552,34 @@ export function useCampaignNotes() {
 export function useGMBoard() {
   const [board, setBoard] = useState<GMBoardState>(() => {
     const saved = getServerCollection<Partial<GMBoardState>>('gmBoard', {});
+    const mindMaps = Array.isArray(saved.mindMaps) && saved.mindMaps.length
+      ? saved.mindMaps
+      : DEFAULT_GM_BOARD.mindMaps;
     return {
       reminders: saved.reminders || DEFAULT_GM_BOARD.reminders,
       sceneScript: saved.sceneScript ?? DEFAULT_GM_BOARD.sceneScript,
       music: saved.music || DEFAULT_GM_BOARD.music,
+      mindMaps,
+      activeMindMapId: mindMaps.some(map => map.id === saved.activeMindMapId)
+        ? saved.activeMindMapId!
+        : mindMaps[0].id,
     };
   });
   const boardRef = useRef(board);
   useEffect(() => {
     const sync = () => {
       const incoming = getServerCollection<Partial<GMBoardState>>('gmBoard', {});
+      const mindMaps = Array.isArray(incoming.mindMaps) && incoming.mindMaps.length
+        ? incoming.mindMaps
+        : DEFAULT_GM_BOARD.mindMaps;
       const next = {
         reminders: incoming.reminders || [],
         sceneScript: incoming.sceneScript || '',
         music: incoming.music || [],
+        mindMaps,
+        activeMindMapId: mindMaps.some(map => map.id === incoming.activeMindMapId)
+          ? incoming.activeMindMapId!
+          : mindMaps[0].id,
       };
       boardRef.current = next;
       setBoard(next);

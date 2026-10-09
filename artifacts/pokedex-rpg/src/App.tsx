@@ -14,6 +14,7 @@ import { DiceHistoryProvider } from './lib/DiceHistoryContext';
 import Access from './pages/Access';
 import Character from './pages/Character';
 import GMMaster from './pages/GMMaster';
+import GMPlanningEditor from './pages/GMPlanningEditor';
 import PublicLibrary from './pages/PublicLibrary';
 import System from './pages/System';
 import { useSessionRole, restoreSession } from './lib/campaign';
@@ -22,6 +23,7 @@ import { seedImportedCampaignData } from './lib/campaignSeed';
 import { ThemeProvider } from './lib/theme';
 import { ThemeFooter } from './components/ThemeFooter';
 import { ServerStartupScreen, type StartupPhase } from './components/ServerStartupScreen';
+import { useServerMoodFavicon } from './lib/serverMoodFavicon';
 
 const queryClient = new QueryClient();
 
@@ -41,10 +43,33 @@ function canRetryStartup(error: unknown) {
     || (error instanceof Error && 'retryable' in error && error.retryable === true);
 }
 
+function PlanningSheetNavigationBridge() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return;
+    const channel = new BroadcastChannel('pokemon-rpg-planning-navigation');
+    channel.onmessage = event => {
+      const data = event.data as { type?: unknown; targetId?: unknown; pokemonId?: unknown };
+      if (data.type !== 'open-pokemon-sheet' || typeof data.targetId !== 'string' || typeof data.pokemonId !== 'string') return;
+      if (!/^[a-z0-9-]{1,80}$/i.test(data.targetId) || !/^[a-z0-9-]{1,120}$/i.test(data.pokemonId)) return;
+
+      let ownTargetId: string | null = null;
+      try { ownTargetId = sessionStorage.getItem('pokemon-rpg-planning-origin'); } catch { /* Cross-tab navigation is optional. */ }
+      if (ownTargetId !== data.targetId) return;
+      setLocation(`/sheet?id=${encodeURIComponent(data.pokemonId)}`);
+    };
+    return () => channel.close();
+  }, [setLocation]);
+
+  return null;
+}
+
 function Router() {
   const [location, setLocation] = useLocation();
   const search = useSearch();
   const { role } = useSessionRole();
+  const isPlanningEditor = location === '/mestre/anotacoes/editor';
   useEffect(() => {
     if (location !== '/sheet' && location !== '/') {
       try { sessionStorage.setItem('pokemon-sheet-origin', `${location}${search ? `?${search}` : ''}`); } catch { /* Navigation still has a role-based fallback. */ }
@@ -52,15 +77,16 @@ function Router() {
   }, [location, search]);
   useEffect(() => {
     if (role === 'public' && location !== '/' && location !== '/publico' && location !== '/sheet' && location !== '/sistema') setLocation('/');
-    if (role !== 'gm' && (location === '/mestre' || location === '/attacks' || location === '/pokemon' || location === '/fichas')) setLocation(role === 'player' ? '/personagem' : '/');
+    if (role !== 'gm' && (location === '/mestre' || location === '/mestre/anotacoes/editor' || location === '/attacks' || location === '/pokemon' || location === '/fichas')) setLocation(role === 'player' ? '/personagem' : '/');
   }, [location, role, setLocation]);
 
   if (role === 'public' && location !== '/' && location !== '/publico' && location !== '/sheet' && location !== '/sistema') return null;
-  if (role !== 'gm' && (location === '/mestre' || location === '/attacks' || location === '/pokemon' || location === '/fichas')) return null;
+  if (role !== 'gm' && (location === '/mestre' || location === '/mestre/anotacoes/editor' || location === '/attacks' || location === '/pokemon' || location === '/fichas')) return null;
   return (
     <div className="min-h-screen flex flex-col">
-      <Navigation />
-      <DiceHistoryPanel />
+      <PlanningSheetNavigationBridge />
+      {!isPlanningEditor && <Navigation />}
+      {!isPlanningEditor && <DiceHistoryPanel />}
       <main className="flex-1 relative">
         <Switch>
           <Route path="/" component={Access} />
@@ -68,6 +94,7 @@ function Router() {
           <Route path="/fichas" component={Home} />
           <Route path="/pokemon" component={Home} />
           <Route path="/personagem" component={Character} />
+          <Route path="/mestre/anotacoes/editor" component={GMPlanningEditor} />
           <Route path="/mestre" component={GMMaster} />
           <Route path="/publico" component={PublicLibrary} />
           <Route path="/attacks" component={Attacks} />
@@ -75,12 +102,13 @@ function Router() {
           <Route component={NotFound} />
         </Switch>
       </main>
-      <ThemeFooter />
+      {!isPlanningEditor && location !== '/sistema' && <ThemeFooter />}
     </div>
   );
 }
 
 function App() {
+  useServerMoodFavicon();
   const [cloudReady, setCloudReady] = useState(false);
   const [cloudError, setCloudError] = useState(false);
   const [startupPhase, setStartupPhase] = useState<StartupPhase>('server');

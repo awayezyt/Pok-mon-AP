@@ -45,6 +45,111 @@ export const LogoutCampaignResponse = zod.unknown()
 
 
 /**
+ * @summary Fetch persisted system document edits
+ */
+export const GetSystemDocumentsResponse = zod.object({
+  "documents": zod.record(zod.string(), zod.record(zod.string(), zod.unknown()))
+})
+
+
+/**
+ * @summary Fetch the editable system index
+ */
+export const GetSystemCatalogResponse = zod.object({
+  "catalog": zod.object({
+  "sections": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "groups": zod.array(zod.object({
+  "title": zod.string().nullable(),
+  "documentIds": zod.array(zod.string()),
+  "groups": zod.array(zod.unknown())
+}))
+})),
+  "deletedDocumentIds": zod.array(zod.string())
+})
+})
+
+
+/**
+ * @summary Save the editable system index
+ */
+export const SaveSystemCatalogBody = zod.object({
+  "catalog": zod.object({
+  "sections": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "groups": zod.array(zod.object({
+  "title": zod.string().nullable(),
+  "documentIds": zod.array(zod.string()),
+  "groups": zod.array(zod.unknown())
+}))
+})),
+  "deletedDocumentIds": zod.array(zod.string())
+})
+})
+
+export const SaveSystemCatalogResponse = zod.object({
+  "catalog": zod.object({
+  "sections": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "groups": zod.array(zod.object({
+  "title": zod.string().nullable(),
+  "documentIds": zod.array(zod.string()),
+  "groups": zod.array(zod.unknown())
+}))
+})),
+  "deletedDocumentIds": zod.array(zod.string())
+})
+})
+
+
+/**
+ * @summary Check whether this browser can edit system documents
+ */
+export const GetSystemEditorSessionResponse = zod.object({
+  "authorized": zod.boolean()
+})
+
+
+/**
+ * @summary Unlock system editing for this browser
+ */
+export const CreateSystemEditorSessionBody = zod.object({
+  "password": zod.string()
+})
+
+export const CreateSystemEditorSessionResponse = zod.object({
+  "authorized": zod.boolean()
+})
+
+
+/**
+ * @summary Lock system editing on this browser
+ */
+export const DeleteSystemEditorSessionResponse = zod.object({
+  "authorized": zod.boolean()
+})
+
+
+/**
+ * @summary Save an edited system document
+ */
+export const SaveSystemDocumentParams = zod.object({
+  "documentId": zod.coerce.string()
+})
+
+export const SaveSystemDocumentBody = zod.object({
+  "document": zod.record(zod.string(), zod.unknown())
+})
+
+export const SaveSystemDocumentResponse = zod.object({
+  "document": zod.record(zod.string(), zod.unknown())
+})
+
+
+/**
  * Returns server health status
  * @summary Health check
  */

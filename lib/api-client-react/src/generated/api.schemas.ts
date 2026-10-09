@@ -9,6 +9,55 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface SystemEditorPasswordInput {
+  password: string;
+}
+
+export interface SystemEditorSessionResponse {
+  authorized: boolean;
+}
+
+export interface SystemDocument { [key: string]: unknown }
+
+export interface SystemDocumentInput {
+  document: SystemDocument;
+}
+
+export interface SystemDocumentResponse {
+  document: SystemDocument;
+}
+
+export type SystemDocumentsResponseDocuments = {[key: string]: SystemDocument};
+
+export interface SystemDocumentsResponse {
+  documents: SystemDocumentsResponseDocuments;
+}
+
+export interface SystemIndexGroup {
+  title: string | null;
+  documentIds: string[];
+  groups: SystemIndexGroup[];
+}
+
+export interface SystemIndexSection {
+  id: string;
+  title: string;
+  groups: SystemIndexGroup[];
+}
+
+export interface SystemCatalog {
+  sections: SystemIndexSection[];
+  deletedDocumentIds: string[];
+}
+
+export interface SystemCatalogInput {
+  catalog: SystemCatalog;
+}
+
+export interface SystemCatalogResponse {
+  catalog: SystemCatalog;
+}
+
 export type GetCampaignSession200Role = typeof GetCampaignSession200Role[keyof typeof GetCampaignSession200Role];
 
 

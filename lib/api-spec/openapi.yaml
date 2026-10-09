@@ -75,6 +75,114 @@ paths:
       responses:
         "200":
           description: Signed out
+  /system/documents:
+    get:
+      operationId: getSystemDocuments
+      summary: Fetch persisted system document edits
+      responses:
+        "200":
+          description: System document overrides
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemDocumentsResponse"
+  /system/catalog:
+    get:
+      operationId: getSystemCatalog
+      summary: Fetch the editable system index
+      responses:
+        "200":
+          description: Persisted system index
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemCatalogResponse"
+    put:
+      operationId: saveSystemCatalog
+      summary: Save the editable system index
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemCatalogInput"
+      responses:
+        "200":
+          description: Saved system index
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemCatalogResponse"
+        "401":
+          description: Editor access required
+  /system/editor-session:
+    get:
+      operationId: getSystemEditorSession
+      summary: Check whether this browser can edit system documents
+      responses:
+        "200":
+          description: Editor access state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemEditorSessionResponse"
+    post:
+      operationId: createSystemEditorSession
+      summary: Unlock system editing for this browser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemEditorPasswordInput"
+      responses:
+        "200":
+          description: Editor access granted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemEditorSessionResponse"
+        "401":
+          description: Incorrect editor password
+        "503":
+          description: System editor password is not configured
+    delete:
+      operationId: deleteSystemEditorSession
+      summary: Lock system editing on this browser
+      responses:
+        "200":
+          description: Editor access revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemEditorSessionResponse"
+  /system/documents/{documentId}:
+    put:
+      operationId: saveSystemDocument
+      summary: Save an edited system document
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemDocumentInput"
+      responses:
+        "200":
+          description: Saved document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemDocumentResponse"
+        "401":
+          description: Editor access required
+        "400":
+          description: Invalid document payload
   /healthz:
     get:
       operationId: healthCheck
@@ -97,4 +205,90 @@ components:
           type: string
       required:
         - status
+    SystemEditorPasswordInput:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+    SystemEditorSessionResponse:
+      type: object
+      required: [authorized]
+      properties:
+        authorized:
+          type: boolean
+    SystemDocumentInput:
+      type: object
+      required: [document]
+      properties:
+        document:
+          $ref: "#/components/schemas/SystemDocument"
+    SystemDocumentResponse:
+      type: object
+      required: [document]
+      properties:
+        document:
+          $ref: "#/components/schemas/SystemDocument"
+    SystemDocumentsResponse:
+      type: object
+      required: [documents]
+      properties:
+        documents:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/SystemDocument"
+    SystemCatalogInput:
+      type: object
+      required: [catalog]
+      properties:
+        catalog:
+          $ref: "#/components/schemas/SystemCatalog"
+    SystemCatalogResponse:
+      type: object
+      required: [catalog]
+      properties:
+        catalog:
+          $ref: "#/components/schemas/SystemCatalog"
+    SystemCatalog:
+      type: object
+      required: [sections, deletedDocumentIds]
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemIndexSection"
+        deletedDocumentIds:
+          type: array
+          items:
+            type: string
+    SystemIndexSection:
+      type: object
+      required: [id, title, groups]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemIndexGroup"
+    SystemIndexGroup:
+      type: object
+      required: [title, documentIds, groups]
+      properties:
+        title:
+          type: string
+          nullable: true
+        documentIds:
+          type: array
+          items:
+            type: string
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemIndexGroup"
+    SystemDocument:
+      type: object
+      additionalProperties: true
 

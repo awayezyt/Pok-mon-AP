@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import {
   AlertTriangle, Archive, BookOpen, Check, ChevronRight, CircleDot, ClipboardList,
-  Copy, Edit3, Eye, EyeOff, Flag, Headphones, LockKeyhole, Plus, ScrollText,
+  Copy, Edit3, Eye, Flag, Headphones, LockKeyhole, Map, Plus, ScrollText,
   Search, ImagePlus, ClipboardPaste, Filter,
   Shield, Trash2, UsersRound, Swords, PackageOpen, ExternalLink, Coins,
   Settings, Download, Upload, FileJson, FunctionSquare,
@@ -18,19 +18,25 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import {
   useCampaignNotes, useCampaignStory, useCharacterSheets, useGMBoard,
   calculateCharacterResources, CHARACTER_CLASSES, CHARACTER_ATTRIBUTE_LABELS, SKILL_NAMES, getSkillCap,
-  type CampaignEpisode, type CampaignScene, type CharacterAttribute, type CharacterSheet,
+  createGMPlanningMap, type CampaignEpisode, type CampaignScene, type CharacterAttribute, type CharacterSheet,
+  type GMPlanningMap,
   type MusicTrack, type ProvisionalItem, type SceneMarketItem, type SceneTest, type TrainerRecord,
 } from '../lib/campaign';
 import { usePokemonData, useAttackData } from '../lib/hooks';
 import { getServerCollection, syncGameState } from '../lib/cloudSync';
-import { defaultProvisionalItems } from '../lib/constants';
 import FormulaEditor from '../components/FormulaEditor';
 import { useFormulaSettings } from '../lib/formulas';
 import { createGameBackup, importGameState, syncImportedGameState } from '../lib/backup';
 import type { Pokemon, PokemonGrowthRate } from '../lib/types';
 import { getCharacterPokemonRoster, getPokemonAssignmentConflict, getPokemonTrainerName, normalizeTrainerName } from '../lib/pokemonOwnership';
+import {
+  buildGMPlanningResources,
+  normalizeGMProvisionalItems as normalizeItems,
+  normalizeGMTrainers as normalizeTrainers,
+} from '../lib/gmPlanning';
+import GMNotesWorkspace from '../components/GMNotesWorkspace';
 
-type Panel = 'visao' | 'pokemon' | 'treinadores' | 'itens' | 'episodios' | 'musica' | 'configuracoes';
+type Panel = 'visao' | 'pokemon' | 'treinadores' | 'itens' | 'episodios' | 'musica' | 'anotacoes' | 'configuracoes';
 const panelLabels: Record<Panel, string> = {
   visao: 'Visão geral',
   pokemon: 'Pokémon',
@@ -38,77 +44,12 @@ const panelLabels: Record<Panel, string> = {
   itens: 'Itens provisórios',
   episodios: 'Episódios',
   musica: 'Música',
+  anotacoes: 'Anotações',
   configuracoes: 'Configurações',
 };
 const attributeKeys: CharacterAttribute[] = ['agi', 'car', 'for', 'int', 'vig', 'von'];
 const itemCategories = ['Consumíveis', 'Berries', 'Itens Chave', 'Especiais', 'Alimentos', 'TM', 'Pokebolas', 'Batalha'];
-
-function normalizeTrainers(): TrainerRecord[] {
-  const raw = getServerCollection<unknown[]>('trainers', []);
-  return raw.map((item, index) => {
-    const value = item as Partial<TrainerRecord> & { name?: string; pokemonId?: string };
-    if (value.kind !== 'npc' && !value.attributes && !value.pokemonIds) {
-      return { ...value, id: value.id || `trainer-${index}`, name: value.name || 'Treinador', player: value.player || '', characterId: value.characterId, pokemonId: value.pokemonId };
-    }
-    const rawAttributes = { agi: 1, car: 1, for: 1, int: 1, vig: 1, von: 1, ...(value.attributes || {}) };
-    const attributes = {
-      agi: Math.max(1, Number(rawAttributes.agi) || 1),
-      car: Math.max(1, Number(rawAttributes.car) || 1),
-      for: Math.max(1, Number(rawAttributes.for) || 1),
-      int: Math.max(1, Number(rawAttributes.int) || 1),
-      vig: Math.max(1, Number(rawAttributes.vig) || 1),
-      von: Math.max(1, Number(rawAttributes.von) || 1),
-    };
-    const npc = {
-      ...value,
-      id: value.id || `trainer-${index}`,
-      name: value.name || 'Treinador',
-      player: value.player || '',
-      kind: 'npc' as const,
-      className: value.className || 'Treinador',
-      path: value.path || CHARACTER_CLASSES.Treinador[0],
-      level: Math.max(1, value.level || 1),
-      attributes,
-      skills: value.skills || SKILL_NAMES.map(skill => ({ name: skill, value: 0, trained: false })),
-      abilities: value.abilities || [],
-      notes: value.notes || '',
-      pokemonIds: value.pokemonIds || [],
-    };
-    const resources = calculateCharacterResources(npc as unknown as CharacterSheet);
-    return {
-      ...npc,
-      hpMax: resources.hpMax,
-      focusMax: resources.focusMax,
-      hp: typeof value.hp === 'number' ? Math.min(value.hp, resources.hpMax) : resources.hpMax,
-      focus: typeof value.focus === 'number' ? Math.min(value.focus, resources.focusMax) : resources.focusMax,
-    };
-  });
-}
-
-function normalizeItems(): ProvisionalItem[] {
-  const raw = getServerCollection<unknown[]>('provisionalItems', []);
-  const normalized = raw.map((item, index) => {
-    if (typeof item === 'string') {
-      return { id: `item-${index}`, name: item, category: 'Especiais', weight: 1, detail: 'Item provisório enviado pelo GM.', holdable: true };
-    }
-    const value = item as Partial<ProvisionalItem>;
-    const category = value.category || 'Especiais';
-    return {
-      id: value.id || `item-${index}`,
-      name: value.name || 'Item sem nome',
-      category,
-      weight: Number(value.weight) || 0,
-      detail: value.detail || '',
-      image: value.image || '',
-      holdable: typeof value.holdable === 'boolean' ? value.holdable : !['Itens Chave', 'Pokebolas'].includes(category),
-    };
-  });
-  const existingNames = new Set(normalized.map(item => item.name.toLocaleLowerCase()));
-  const missingDefaults = defaultProvisionalItems
-    .filter(item => !existingNames.has(item.name.toLocaleLowerCase()))
-    .map(item => ({ ...item }));
-  return [...normalized, ...missingDefaults];
-}
+type GMSceneFocus = { episodeId: string; sceneId: string };
 
 const GROWTH_VALUES: Record<PokemonGrowthRate, number> = {
   'Errático': 1, 'Rápido': 2, 'Meio rápido': 3,
@@ -128,6 +69,7 @@ function affectionLabel(value: number) {
 }
 
 export default function GMMaster() {
+  const [, setLocation] = useLocation();
   const { characters, addCharacter, updateCharacter, deleteCharacter } = useCharacterSheets();
   const { pokemon, updatePokemon, setPokemon } = usePokemonData();
   const { attacks, setAttacks } = useAttackData();
@@ -145,7 +87,6 @@ export default function GMMaster() {
     url.searchParams.set('panel', next);
     window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
   };
-  const [showSecrets, setShowSecrets] = useState(true);
   const [selectedNote, setSelectedNote] = useState<string | null>(notes[0]?.id || null);
   const [selectedCharacterId, setSelectedCharacterId] = useState(characters[0]?.id || '');
   const [expandedCharacterId, setExpandedCharacterId] = useState<string | null>(characters[0]?.id || null);
@@ -167,8 +108,24 @@ export default function GMMaster() {
   const [musicSearch, setMusicSearch] = useState('');
   const [musicCategory, setMusicCategory] = useState<'all' | MusicTrack['category']>('all');
   const [editingTrainerId, setEditingTrainerId] = useState<string | null>(null);
-  const [selectedEpisodeId, setSelectedEpisodeId] = useState('');
-  const [selectedSceneId, setSelectedSceneId] = useState('');
+  const [sceneFocus, setSceneFocusState] = useState<GMSceneFocus>(() => {
+    const saved = getServerCollection<Partial<GMSceneFocus>>('gmSceneFocus', {});
+    return { episodeId: saved.episodeId || '', sceneId: saved.sceneId || '' };
+  });
+  const selectedEpisodeId = sceneFocus.episodeId;
+  const selectedSceneId = sceneFocus.sceneId;
+  const saveSceneFocus = (next: GMSceneFocus) => {
+    setSceneFocusState(next);
+    void syncGameState({ gmSceneFocus: next });
+  };
+  const setSelectedEpisodeId = (id: string) => {
+    const nextEpisode = episodes.find(item => item.id === id);
+    saveSceneFocus({ episodeId: id, sceneId: nextEpisode?.scenes[0]?.id || '' });
+  };
+  const setSelectedSceneId = (id: string) => {
+    const ownerEpisode = episodes.find(item => item.scenes.some(scene => scene.id === id));
+    saveSceneFocus({ episodeId: ownerEpisode?.id || selectedEpisodeId, sceneId: id });
+  };
   const [focusedTrainerId, setFocusedTrainerId] = useState('');
   const setTrainers = (next: TrainerRecord[] | ((current: TrainerRecord[]) => TrainerRecord[])) => {
     const updated = typeof next === 'function' ? next(trainersRef.current) : next;
@@ -184,7 +141,6 @@ export default function GMMaster() {
   };
 
   const selected = notes.find(note => note.id === selectedNote);
-  const visibleNotes = useMemo(() => showSecrets ? notes : notes.filter(note => note.public), [notes, showSecrets]);
   const playerPokemonIds = new Set(characters.flatMap(character => {
     const roster = getCharacterPokemonRoster(character, pokemon, characters);
     return [...roster.partyPokemonIds, ...roster.pcPokemonIds];
@@ -194,6 +150,49 @@ export default function GMMaster() {
   const selectedPokemon = filteredPokemon.find(item => item.id === selectedPokemonId) || filteredPokemon[0];
   const selectedEpisode = episodes.find(item => item.id === selectedEpisodeId) || episodes[0];
   const selectedScene = selectedEpisode?.scenes.find(item => item.id === selectedSceneId) || selectedEpisode?.scenes[0];
+  const activeMindMap = board.mindMaps.find(map => map.id === board.activeMindMapId) || board.mindMaps[0];
+  const planningResources = useMemo(() => buildGMPlanningResources({
+    pokemon,
+    trainers,
+    music: board.music,
+    items: provisionalItems,
+    episodes,
+    characters,
+  }), [pokemon, trainers, board.music, provisionalItems, episodes, characters]);
+  const updateMindMap = (map: GMPlanningMap) => setBoard(current => ({
+    ...current,
+    mindMaps: current.mindMaps.map(item => item.id === map.id
+      ? { ...map, updatedAt: new Date().toISOString() }
+      : item),
+  }));
+  const selectMindMap = (id: string) => setBoard(current => ({ ...current, activeMindMapId: id }));
+  const createMindMap = () => {
+    const map = createGMPlanningMap(`Mapa ${board.mindMaps.length + 1}`);
+    setBoard(current => ({
+      ...current,
+      mindMaps: [...current.mindMaps, map],
+      activeMindMapId: map.id,
+    }));
+  };
+  const renameMindMap = (id: string, title: string) => setBoard(current => ({
+    ...current,
+    mindMaps: current.mindMaps.map(map => map.id === id ? { ...map, title, updatedAt: new Date().toISOString() } : map),
+  }));
+  const deleteMindMap = (id: string) => setBoard(current => {
+    if (current.mindMaps.length <= 1) return current;
+    const mindMaps = current.mindMaps.filter(map => map.id !== id);
+    return {
+      ...current,
+      mindMaps,
+      activeMindMapId: current.activeMindMapId === id ? mindMaps[0].id : current.activeMindMapId,
+    };
+  });
+  const openMindMapEditor = (id: string) => {
+    const targetId = crypto.randomUUID();
+    try { sessionStorage.setItem('pokemon-rpg-planning-origin', targetId); } catch { /* Editing still works without cross-tab sheet navigation. */ }
+    const query = new URLSearchParams({ map: id, returnTab: targetId });
+    window.open(`/mestre/anotacoes/editor?${query.toString()}`, '_blank', 'noopener,noreferrer');
+  };
 
   useEffect(() => {
     const syncLocalCollections = () => {
@@ -213,6 +212,18 @@ export default function GMMaster() {
     window.addEventListener('pokemon-rpg-state-change', syncLocalCollections);
     syncLocalCollections();
     return () => window.removeEventListener('pokemon-rpg-state-change', syncLocalCollections);
+  }, []);
+  useEffect(() => {
+    const syncSceneFocus = () => {
+      const saved = getServerCollection<Partial<GMSceneFocus>>('gmSceneFocus', {});
+      const next = { episodeId: saved.episodeId || '', sceneId: saved.sceneId || '' };
+      setSceneFocusState(current => current.episodeId === next.episodeId && current.sceneId === next.sceneId
+        ? current
+        : next);
+    };
+    window.addEventListener('pokemon-rpg-state-change', syncSceneFocus);
+    syncSceneFocus();
+    return () => window.removeEventListener('pokemon-rpg-state-change', syncSceneFocus);
   }, []);
   useEffect(() => {
     if (!selectedCharacterId && characters[0]) setSelectedCharacterId(characters[0].id);
@@ -322,18 +333,18 @@ export default function GMMaster() {
   };
 
   return (
-    <div className="rpg-shell min-h-[calc(100dvh-72px)] p-4 md:p-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-wrap items-end justify-between gap-5">
+    <div className={`rpg-shell min-h-[calc(100dvh-72px)] ${panel === 'anotacoes' ? 'p-2 md:p-3' : 'p-4 md:p-8'}`}>
+      <div className={`mx-auto ${panel === 'anotacoes' ? 'max-w-none' : 'max-w-7xl'}`}>
+        {panel !== 'anotacoes' && <header className="mb-8 flex flex-wrap items-end justify-between gap-5">
           <div><p className="eyebrow mb-2">Pokémon: Ascensão e Presságio · Mestre</p><h1 className="font-display text-4xl md:text-5xl">{panelLabels[panel]}</h1></div>
-          <div className="flex gap-2"><Button onClick={createCharacter} variant="outline" data-testid="button-add-character"><Plus size={16} /> Nova ficha</Button><Link href="/publico" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold hover:border-primary"><Eye size={16} /> Ver área pública</Link><Button onClick={() => setShowSecrets(value => !value)} variant="outline">{showSecrets ? <EyeOff size={16} /> : <Eye size={16} />}{showSecrets ? ' Ocultar segredos' : ' Mostrar segredos'}</Button></div>
-        </header>
+          <div className="flex gap-2"><Button onClick={createCharacter} variant="outline" data-testid="button-add-character"><Plus size={16} /> Nova ficha</Button><Link href="/publico" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold hover:border-primary"><Eye size={16} /> Ver área pública</Link></div>
+        </header>}
 
-        <div className="mb-6 flex gap-2 overflow-x-auto border-b border-border pb-2">
+        <div className={`${panel === 'anotacoes' ? 'mb-2' : 'mb-6'} flex gap-2 overflow-x-auto border-b border-border pb-2`}>
           {[
              ['visao', 'Visão geral', UsersRound], ['pokemon', 'Pokémon', CircleDot],
             ['treinadores', 'Treinadores e fichas', UsersRound], ['itens', 'Itens provisórios', PackageOpen],
-             ['episodios', 'Episódios', ScrollText], ['musica', 'Música', Headphones], ['configuracoes', 'Configurações', Settings],
+             ['episodios', 'Episódios', ScrollText], ['musica', 'Música', Headphones], ['anotacoes', 'Anotações', Map], ['configuracoes', 'Configurações', Settings],
           ].map(([value, label, Icon]) => <button key={value as string} onClick={() => setPanel(value as Panel)} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold ${panel === value ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}><Icon size={15} />{label as string}</button>)}
         </div>
 
@@ -342,6 +353,19 @@ export default function GMMaster() {
         {panel === 'itens' && <ItemsPanel characters={characters} items={provisionalItems} draft={itemDraft} setDraft={setItemDraft} addItem={addProvisionalItem} editingItemId={editingItemId} onEdit={item => { setEditingItemId(item.id); setItemDraft({ name: item.name, category: item.category, weight: item.weight, detail: item.detail, image: item.image || '', holdable: item.holdable }); }} onCancelEdit={() => { setEditingItemId(null); setItemDraft({ name: '', category: 'Especiais', weight: 1, detail: '', image: '', holdable: true }); }} onSend={setPendingDelivery} />}
         {panel === 'episodios' && <EpisodesPanel episodes={episodes} addEpisode={addEpisode} updateEpisode={updateEpisode} removeEpisode={removeEpisode} pokemon={pokemon} trainers={trainers} music={board.music} provisionalItems={provisionalItems} selectedEpisodeId={selectedEpisode?.id || ''} setSelectedEpisodeId={setSelectedEpisodeId} selectedSceneId={selectedScene?.id || ''} setSelectedSceneId={setSelectedSceneId} emptyScene={emptyScene} />}
         {panel === 'musica' && <MusicPanel tracks={board.music} draft={musicDraft} setDraft={setMusicDraft} addTrack={addMusic} copyTrack={copyMusic} removeTrack={id => setBoard(prev => ({ ...prev, music: prev.music.filter(track => track.id !== id) }))} search={musicSearch} setSearch={setMusicSearch} category={musicCategory} setCategory={setMusicCategory} />}
+        {panel === 'anotacoes' && activeMindMap && <GMNotesWorkspace
+          maps={board.mindMaps}
+          activeMapId={activeMindMap.id}
+          resources={planningResources}
+          readOnly
+          onSelectMap={selectMindMap}
+          onCreateMap={createMindMap}
+          onRenameMap={renameMindMap}
+          onDeleteMap={deleteMindMap}
+          onUpdateMap={updateMindMap}
+          onOpenEditor={openMindMapEditor}
+          onNavigateToSheet={setLocation}
+        />}
         {panel === 'configuracoes' && <SettingsPanel pokemon={pokemon} onExport={handleExport} onImport={handleImport} summary={{ characters: characters.length, pokemon: pokemon.length, attacks: attacks.length, episodes: episodes.length, music: board.music.length, items: provisionalItems.length }} />}
 
         {panel === 'visao' && <Overview characters={characters} notes={notes} expandedCharacterId={expandedCharacterId} setExpandedCharacterId={setExpandedCharacterId} board={board} setBoard={setBoard} reminderDraft={reminderDraft} setReminderDraft={setReminderDraft} importantReminder={importantReminder} setImportantReminder={setImportantReminder} addReminder={addReminder} />}
@@ -846,7 +870,6 @@ function EpisodesPanel({ episodes, addEpisode, updateEpisode, removeEpisode, pok
   const createEpisode = () => {
     const next = addEpisode();
     setSelectedEpisodeId(next.id);
-    setSelectedSceneId(next.scenes[0].id);
   };
   const createScene = () => {
     if (!episode) return;
@@ -854,7 +877,7 @@ function EpisodesPanel({ episodes, addEpisode, updateEpisode, removeEpisode, pok
     updateEpisode(episode.id, { scenes: [...episode.scenes, next] });
     setSelectedSceneId(next.id);
   };
-  return <Card className="paper-panel"><CardHeader className="flex flex-wrap flex-row items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2"><ScrollText className="text-primary" /> Episódios da campanha</CardTitle><p className="text-sm text-muted-foreground">Organize episódios, cenas e tudo que pode aparecer durante a sessão.</p></div><Button onClick={createEpisode}><Plus size={16} /> Novo episódio</Button></CardHeader><CardContent><div className="grid gap-5 lg:grid-cols-[220px_1fr]"><div className="space-y-2">{episodes.map(item => <div key={item.id} className={`flex items-center rounded-lg border ${item.id === episode?.id ? 'border-primary bg-primary/10' : 'border-border'}`}><button onClick={() => { setSelectedEpisodeId(item.id); setSelectedSceneId(item.scenes[0]?.id || ''); }} className="min-w-0 flex-1 p-3 text-left"><p className="truncate font-semibold">{item.title}</p><p className="text-xs text-muted-foreground">{item.scenes.length} cenas</p></button><Button size="icon" variant="ghost" onClick={() => { removeEpisode(item.id); if (item.id === episode?.id) setSelectedEpisodeId(episodes.find(other => other.id !== item.id)?.id || ''); }}><Trash2 size={14} /></Button></div>)}{episodes.length === 0 && <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Crie o primeiro episódio.</p>}</div>{episode && scene ? <div><div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto]"><div><Input value={episode.title} onChange={event => updateEpisode(episode.id, { title: event.target.value })} placeholder="Título do episódio" /><Textarea value={episode.description} onChange={event => updateEpisode(episode.id, { description: event.target.value })} className="mt-2" placeholder="Resumo do episódio" /></div><div className="flex items-start gap-2"><select value={scene.id} onChange={event => setSelectedSceneId(event.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm">{episode.scenes.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select><Button variant="outline" onClick={createScene}><Plus size={15} /> Cena</Button></div></div><SceneEditor scene={scene} updateScene={updateScene} pokemon={pokemon} trainers={trainers} music={music} provisionalItems={provisionalItems} /></div> : <p className="p-8 text-center text-sm text-muted-foreground">Selecione um episódio para editar.</p>}</div></CardContent></Card>;
+  return <Card className="paper-panel"><CardHeader className="flex flex-wrap flex-row items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2"><ScrollText className="text-primary" /> Episódios da campanha</CardTitle><p className="text-sm text-muted-foreground">Organize episódios, cenas e tudo que pode aparecer durante a sessão.</p></div><Button onClick={createEpisode}><Plus size={16} /> Novo episódio</Button></CardHeader><CardContent><div className="grid gap-5 lg:grid-cols-[220px_1fr]"><div className="space-y-2">{episodes.map(item => <div key={item.id} className={`flex items-center rounded-lg border ${item.id === episode?.id ? 'border-primary bg-primary/10' : 'border-border'}`}><button onClick={() => setSelectedEpisodeId(item.id)} className="min-w-0 flex-1 p-3 text-left"><p className="truncate font-semibold">{item.title}</p><p className="text-xs text-muted-foreground">{item.scenes.length} cenas</p></button><Button size="icon" variant="ghost" onClick={() => { removeEpisode(item.id); if (item.id === episode?.id) setSelectedEpisodeId(episodes.find(other => other.id !== item.id)?.id || ''); }}><Trash2 size={14} /></Button></div>)}{episodes.length === 0 && <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Crie o primeiro episódio.</p>}</div>{episode && scene ? <div><div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto]"><div><Input value={episode.title} onChange={event => updateEpisode(episode.id, { title: event.target.value })} placeholder="Título do episódio" /><Textarea value={episode.description} onChange={event => updateEpisode(episode.id, { description: event.target.value })} className="mt-2" placeholder="Resumo do episódio" /></div><div className="flex items-start gap-2"><select value={scene.id} onChange={event => setSelectedSceneId(event.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm">{episode.scenes.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select><Button variant="outline" onClick={createScene}><Plus size={15} /> Cena</Button></div></div><SceneEditor scene={scene} updateScene={updateScene} pokemon={pokemon} trainers={trainers} music={music} provisionalItems={provisionalItems} /></div> : <p className="p-8 text-center text-sm text-muted-foreground">Selecione um episódio para editar.</p>}</div></CardContent></Card>;
 }
 
 function SceneEditor({ scene, updateScene, pokemon, trainers, music, provisionalItems }: { scene: CampaignScene; updateScene: (patch: Partial<CampaignScene>) => void; pokemon: ReturnType<typeof usePokemonData>['pokemon']; trainers: TrainerRecord[]; music: MusicTrack[]; provisionalItems: ProvisionalItem[] }) {

@@ -8,7 +8,7 @@ const SHARED_STATE_ID = "shared-campaign";
 
 function visibleState(state: Record<string, unknown>, isGM: boolean) {
   if (isGM) return state;
-  const { gmHistory: _privateHistory, ...publicState } = state;
+  const { gmHistory: _privateHistory, gmBoard: _privateBoard, ...publicState } = state;
   return publicState;
 }
 
@@ -102,7 +102,7 @@ router.put("/state", async (req, res): Promise<void> => {
 
   const requestedPatch = req.body as Record<string, unknown>;
   const session = await readSession(req);
-  if (session?.role !== "gm" && ("gmHistory" in requestedPatch || "formulaSettings" in requestedPatch)) {
+  if (session?.role !== "gm" && ("gmHistory" in requestedPatch || "gmBoard" in requestedPatch || "formulaSettings" in requestedPatch)) {
     res.status(403).json({ error: "Somente o mestre pode alterar estes dados." });
     return;
   }

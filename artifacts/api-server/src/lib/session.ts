@@ -10,6 +10,8 @@ export interface CampaignSession {
 }
 const COOKIE = "campaign_session";
 const YEAR = 365 * 24 * 60 * 60 * 1000;
+const SYSTEM_EDITOR_COOKIE = "system_editor_session";
+const SYSTEM_EDITOR_SESSION_TTL = 4 * 60 * 60 * 1000;
 
 function sessionId(req: Request) {
   const token = req.cookies?.[COOKIE];
@@ -43,5 +45,52 @@ export async function createSession(req: Request, res: Response, role: CampaignS
   res.cookie(COOKIE, token, {
     httpOnly: true, sameSite: "lax", path: "/", maxAge: YEAR,
     secure: req.secure || req.get("x-forwarded-proto") === "https",
+  });
+}
+
+function systemEditorSessionId(req: Request) {
+  const token = req.cookies?.[SYSTEM_EDITOR_COOKIE];
+  if (typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token)) return null;
+  return `system-editor-session:${createHash("sha256").update(token).digest("hex")}`;
+}
+
+export async function hasSystemEditorAccess(req: Request): Promise<boolean> {
+  const id = systemEditorSessionId(req);
+  if (!id) return false;
+  const [record] = await db
+    .select()
+    .from(gameStateTable)
+    .where(eq(gameStateTable.id, id))
+    .limit(1);
+  const session = record?.state as { authorized?: boolean; expiresAt?: number } | undefined;
+  return session?.authorized === true
+    && typeof session.expiresAt === "number"
+    && session.expiresAt > Date.now();
+}
+
+export async function grantSystemEditorAccess(req: Request, res: Response): Promise<void> {
+  await revokeSystemEditorAccess(req, res);
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = Date.now() + SYSTEM_EDITOR_SESSION_TTL;
+  await db.insert(gameStateTable).values({
+    id: `system-editor-session:${createHash("sha256").update(token).digest("hex")}`,
+    state: { authorized: true, expiresAt },
+  });
+  res.cookie(SYSTEM_EDITOR_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: SYSTEM_EDITOR_SESSION_TTL,
+    secure: req.secure || req.get("x-forwarded-proto") === "https",
+  });
+}
+
+export async function revokeSystemEditorAccess(req: Request, res: Response): Promise<void> {
+  const id = systemEditorSessionId(req);
+  if (id) await db.delete(gameStateTable).where(eq(gameStateTable.id, id));
+  res.clearCookie(SYSTEM_EDITOR_COOKIE, {
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
   });
 }
