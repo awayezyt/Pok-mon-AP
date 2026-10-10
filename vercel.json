@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://omuteb576lvd.share.zrok.io/api/:path*"
+      "destination": "https://ensemble-compile-pens-relatives.trycloudflare.com/api/:path*"
     },
     {
       "source": "/(.*)",
