@@ -8,7 +8,7 @@ export function ThemeFooter() {
   return (
     <footer className="mt-auto border-t border-border bg-card/70 px-4 py-4">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">Pokémon RPG · preferência salva neste dispositivo</p>
+        <p className="text-xs text-muted-foreground">Ascenção e Presságio · preferência salva neste dispositivo</p>
         <button
           type="button"
           onClick={toggleTheme}

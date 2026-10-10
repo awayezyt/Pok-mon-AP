@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Pokémon RPG - Gerenciador de Fichas"
+title = "Ascenção e Presságio"
 version = "1.0.0"
 id = "artifacts/pokedex-rpg"
 router = "path"

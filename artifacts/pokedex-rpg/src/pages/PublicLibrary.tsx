@@ -142,7 +142,7 @@ export default function PublicLibrary() {
                   >
                     <div className="pointer-events-none absolute inset-0 opacity-20" style={{ backgroundImage: `linear-gradient(135deg, transparent 48%, ${palette.accent} 49%, transparent 50%)`, backgroundSize: '34px 34px' }} />
                     {item.image
-                      ? <img src={item.image} alt={item.name} className="relative z-10 h-full w-full object-contain drop-shadow-[0_14px_22px_rgba(0,0,0,0.45)] transition-transform duration-300 group-hover:scale-105" />
+                      ? <img src={item.image} alt={item.name} loading="lazy" className="relative z-10 h-full w-full object-contain drop-shadow-[0_14px_22px_rgba(0,0,0,0.45)] transition-transform duration-300 group-hover:scale-105" />
                       : <div className="relative z-10 grid h-20 w-20 place-items-center rounded-full border border-white/20 bg-white/10 text-white/70 backdrop-blur-sm"><CircleDot size={36} /></div>}
                     <span className="absolute left-4 top-4 rounded-full border border-white/20 bg-black/25 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/80 backdrop-blur-sm">{primaryType}</span>
                     <span className="absolute right-4 top-4 rounded-full border border-white/20 bg-black/30 px-3 py-1.5 font-mono text-xs font-bold text-white backdrop-blur-sm">LV {item.level}</span>
@@ -255,7 +255,7 @@ export default function PublicLibrary() {
                   }}
                 >
                   {selectedPokemon.image
-                    ? <img src={selectedPokemon.image} alt={selectedPokemon.name} className="max-h-48 max-w-full object-contain drop-shadow-[0_12px_20px_rgba(0,0,0,0.45)]" />
+                    ? <img src={selectedPokemon.image} alt={selectedPokemon.name} loading="lazy" className="max-h-48 max-w-full object-contain drop-shadow-[0_12px_20px_rgba(0,0,0,0.45)]" />
                     : <CircleDot size={40} className="text-white/60" />}
                 </div>
                 <dl className="grid grid-cols-2 gap-3 text-sm">

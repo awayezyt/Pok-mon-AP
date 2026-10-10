@@ -5,6 +5,19 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface CampaignPlayerLoginInput {
+  characterId: string;
+  password: string;
+}
+
+export interface CampaignGMLoginInput {
+  password: string;
+}
+
+export interface CampaignState { [key: string]: unknown }
+
+export interface CampaignStateInput { [key: string]: unknown }
+
 export interface HealthStatus {
   status: string;
 }
@@ -58,6 +71,21 @@ export interface SystemCatalogResponse {
   catalog: SystemCatalog;
 }
 
+export type GetCampaignStateParams = {
+/**
+ * Return content-addressed image references for the current interface, or inline image data for portable legacy consumers.
+ */
+media?: GetCampaignStateMedia;
+};
+
+export type GetCampaignStateMedia = typeof GetCampaignStateMedia[keyof typeof GetCampaignStateMedia];
+
+
+export const GetCampaignStateMedia = {
+  inline: 'inline',
+  refs: 'refs',
+} as const;
+
 export type GetCampaignSession200Role = typeof GetCampaignSession200Role[keyof typeof GetCampaignSession200Role];
 
 
@@ -71,14 +99,5 @@ export type GetCampaignSession200 = {
   role: GetCampaignSession200Role;
   /** @nullable */
   activeCharacterId: string | null;
-};
-
-export type LoginCampaignPlayerBody = {
-  characterId: string;
-  password: string;
-};
-
-export type LoginCampaignGMBody = {
-  password: string;
 };
 

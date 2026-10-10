@@ -149,7 +149,7 @@ export default function Home() {
                 onClick={() => setLocation(`/sheet?id=${p.id}`)}
               >
                 {p.image ? (
-                  <img src={p.image} alt={p.name} className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                  <img src={p.image} alt={p.name} loading="lazy" className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                 ) : (
                   <div className="text-muted-foreground text-4xl font-bold opacity-20">?</div>
                 )}

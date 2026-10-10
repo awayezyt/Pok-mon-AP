@@ -20,10 +20,13 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CampaignGMLoginInput,
+  CampaignPlayerLoginInput,
+  CampaignState,
+  CampaignStateInput,
   GetCampaignSession200,
+  GetCampaignStateParams,
   HealthStatus,
-  LoginCampaignGMBody,
-  LoginCampaignPlayerBody,
   SystemCatalogInput,
   SystemCatalogResponse,
   SystemDocumentInput,
@@ -59,6 +62,238 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetCampaignStateUrl = (params?: GetCampaignStateParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/state?${stringifiedParams}` : `/api/state`
+}
+
+/**
+ * @summary Read the shared campaign state
+ */
+export const getCampaignState = async (params?: GetCampaignStateParams, options?: RequestInit): Promise<CampaignState> => {
+
+  return customFetch<CampaignState>(getGetCampaignStateUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCampaignStateQueryKey = (params?: GetCampaignStateParams,) => {
+    return [
+    `/api/state`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCampaignStateQueryOptions = <TData = Awaited<ReturnType<typeof getCampaignState>>, TError = ErrorType<void>>(params?: GetCampaignStateParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCampaignState>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCampaignStateQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCampaignState>>> = ({ signal }) => getCampaignState(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCampaignState>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCampaignStateQueryResult = NonNullable<Awaited<ReturnType<typeof getCampaignState>>>
+export type GetCampaignStateQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read the shared campaign state
+ */
+
+export function useGetCampaignState<TData = Awaited<ReturnType<typeof getCampaignState>>, TError = ErrorType<void>>(
+ params?: GetCampaignStateParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCampaignState>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCampaignStateQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveCampaignStateUrl = () => {
+
+
+
+
+  return `/api/state`
+}
+
+/**
+ * @summary Merge a campaign-state patch
+ */
+export const saveCampaignState = async (campaignStateInput: CampaignStateInput, options?: RequestInit): Promise<CampaignState | void> => {
+
+  return customFetch<CampaignState | void>(getSaveCampaignStateUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(campaignStateInput)
+  }
+);}
+
+
+
+
+
+export const getSaveCampaignStateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCampaignState>>, TError,{data: BodyType<CampaignStateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveCampaignState>>, TError,{data: BodyType<CampaignStateInput>}, TContext> => {
+
+const mutationKey = ['saveCampaignState'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveCampaignState>>, {data: BodyType<CampaignStateInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveCampaignState(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveCampaignStateMutationResult = NonNullable<Awaited<ReturnType<typeof saveCampaignState>>>
+    export type SaveCampaignStateMutationBody = BodyType<CampaignStateInput>
+    export type SaveCampaignStateMutationError = ErrorType<void>
+
+    /**
+ * @summary Merge a campaign-state patch
+ */
+export const useSaveCampaignState = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveCampaignState>>, TError,{data: BodyType<CampaignStateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveCampaignState>>,
+        TError,
+        {data: BodyType<CampaignStateInput>},
+        TContext
+      > => {
+      return useMutation(getSaveCampaignStateMutationOptions(options));
+    }
+
+export const getGetCampaignImageUrl = (hash: string,) => {
+
+
+
+
+  return `/api/media/${hash}`
+}
+
+/**
+ * @summary Retrieve a cached campaign image by content hash
+ */
+export const getCampaignImage = async (hash: string, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getGetCampaignImageUrl(hash),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCampaignImageQueryKey = (hash: string,) => {
+    return [
+    `/api/media/${hash}`
+    ] as const;
+    }
+
+
+export const getGetCampaignImageQueryOptions = <TData = Awaited<ReturnType<typeof getCampaignImage>>, TError = ErrorType<void>>(hash: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCampaignImage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCampaignImageQueryKey(hash);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCampaignImage>>> = ({ signal }) => getCampaignImage(hash, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: hash !== null && hash !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCampaignImage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCampaignImageQueryResult = NonNullable<Awaited<ReturnType<typeof getCampaignImage>>>
+export type GetCampaignImageQueryError = ErrorType<void>
+
+
+/**
+ * @summary Retrieve a cached campaign image by content hash
+ */
+
+export function useGetCampaignImage<TData = Awaited<ReturnType<typeof getCampaignImage>>, TError = ErrorType<void>>(
+ hash: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCampaignImage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCampaignImageQueryOptions(hash,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetCampaignSessionUrl = () => {
 
@@ -148,14 +383,14 @@ export const getLoginCampaignPlayerUrl = () => {
 /**
  * @summary Sign in to a character and remember this browser
  */
-export const loginCampaignPlayer = async (loginCampaignPlayerBody: LoginCampaignPlayerBody, options?: RequestInit): Promise<void> => {
+export const loginCampaignPlayer = async (campaignPlayerLoginInput: CampaignPlayerLoginInput, options?: RequestInit): Promise<void> => {
 
   return customFetch<void>(getLoginCampaignPlayerUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(loginCampaignPlayerBody)
+    body: JSON.stringify(campaignPlayerLoginInput)
   }
 );}
 
@@ -164,8 +399,8 @@ export const loginCampaignPlayer = async (loginCampaignPlayerBody: LoginCampaign
 
 
 export const getLoginCampaignPlayerMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginCampaignPlayer>>, TError,{data: BodyType<LoginCampaignPlayerBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof loginCampaignPlayer>>, TError,{data: BodyType<LoginCampaignPlayerBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginCampaignPlayer>>, TError,{data: BodyType<CampaignPlayerLoginInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof loginCampaignPlayer>>, TError,{data: BodyType<CampaignPlayerLoginInput>}, TContext> => {
 
 const mutationKey = ['loginCampaignPlayer'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -177,7 +412,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginCampaignPlayer>>, {data: BodyType<LoginCampaignPlayerBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginCampaignPlayer>>, {data: BodyType<CampaignPlayerLoginInput>}> = (props) => {
           const {data} = props ?? {};
 
           return  loginCampaignPlayer(data,requestOptions)
@@ -191,18 +426,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type LoginCampaignPlayerMutationResult = NonNullable<Awaited<ReturnType<typeof loginCampaignPlayer>>>
-    export type LoginCampaignPlayerMutationBody = BodyType<LoginCampaignPlayerBody>
+    export type LoginCampaignPlayerMutationBody = BodyType<CampaignPlayerLoginInput>
     export type LoginCampaignPlayerMutationError = ErrorType<void>
 
     /**
  * @summary Sign in to a character and remember this browser
  */
 export const useLoginCampaignPlayer = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginCampaignPlayer>>, TError,{data: BodyType<LoginCampaignPlayerBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginCampaignPlayer>>, TError,{data: BodyType<CampaignPlayerLoginInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof loginCampaignPlayer>>,
         TError,
-        {data: BodyType<LoginCampaignPlayerBody>},
+        {data: BodyType<CampaignPlayerLoginInput>},
         TContext
       > => {
       return useMutation(getLoginCampaignPlayerMutationOptions(options));
@@ -219,14 +454,14 @@ export const getLoginCampaignGMUrl = () => {
 /**
  * @summary Sign in as GM and remember this browser
  */
-export const loginCampaignGM = async (loginCampaignGMBody: LoginCampaignGMBody, options?: RequestInit): Promise<void> => {
+export const loginCampaignGM = async (campaignGMLoginInput: CampaignGMLoginInput, options?: RequestInit): Promise<void> => {
 
   return customFetch<void>(getLoginCampaignGMUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(loginCampaignGMBody)
+    body: JSON.stringify(campaignGMLoginInput)
   }
 );}
 
@@ -235,8 +470,8 @@ export const loginCampaignGM = async (loginCampaignGMBody: LoginCampaignGMBody, 
 
 
 export const getLoginCampaignGMMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginCampaignGM>>, TError,{data: BodyType<LoginCampaignGMBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof loginCampaignGM>>, TError,{data: BodyType<LoginCampaignGMBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginCampaignGM>>, TError,{data: BodyType<CampaignGMLoginInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof loginCampaignGM>>, TError,{data: BodyType<CampaignGMLoginInput>}, TContext> => {
 
 const mutationKey = ['loginCampaignGM'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -248,7 +483,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginCampaignGM>>, {data: BodyType<LoginCampaignGMBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginCampaignGM>>, {data: BodyType<CampaignGMLoginInput>}> = (props) => {
           const {data} = props ?? {};
 
           return  loginCampaignGM(data,requestOptions)
@@ -262,18 +497,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type LoginCampaignGMMutationResult = NonNullable<Awaited<ReturnType<typeof loginCampaignGM>>>
-    export type LoginCampaignGMMutationBody = BodyType<LoginCampaignGMBody>
+    export type LoginCampaignGMMutationBody = BodyType<CampaignGMLoginInput>
     export type LoginCampaignGMMutationError = ErrorType<void>
 
     /**
  * @summary Sign in as GM and remember this browser
  */
 export const useLoginCampaignGM = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginCampaignGM>>, TError,{data: BodyType<LoginCampaignGMBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginCampaignGM>>, TError,{data: BodyType<CampaignGMLoginInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof loginCampaignGM>>,
         TError,
-        {data: BodyType<LoginCampaignGMBody>},
+        {data: BodyType<CampaignGMLoginInput>},
         TContext
       > => {
       return useMutation(getLoginCampaignGMMutationOptions(options));

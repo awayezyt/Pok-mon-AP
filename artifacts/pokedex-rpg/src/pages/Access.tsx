@@ -46,7 +46,10 @@ export default function Access() {
       body: JSON.stringify({ characterId: character.id, password: code }),
     }).then(async response => {
       if (!response.ok) throw new Error('invalid');
-      await hydrateGameState();
+      // Public and player views contain the same campaign fields. Reuse the
+      // hydrated snapshot unless its revision changed; a GM always needs the
+      // privileged full view after authenticating.
+      await hydrateGameState({ ifUnchanged: !gmMode });
       window.dispatchEvent(new CustomEvent('pokemon-rpg-state-change'));
       setRole('player', character.id);
       setLocation(`/personagem?id=${character.id}`);
@@ -79,7 +82,7 @@ export default function Access() {
           <div className="relative">
             <div className="mb-16 inline-flex items-center gap-3 rounded-full border border-cyan-100/15 bg-white/[0.04] px-4 py-2.5 backdrop-blur">
               <span className="grid h-9 w-9 place-items-center rounded-full bg-cyan-100/10 text-cyan-100"><Orbit size={21} /></span>
-              <span className="font-display text-sm font-semibold tracking-wide">Pokémon: Ascensão e Presságio</span>
+              <span className="font-display text-sm font-semibold tracking-wide">Ascenção e Presságio</span>
             </div>
             <div className="max-w-xl">
               <p className="eyebrow mb-5 text-cyan-100/65">Pokémon</p>
@@ -105,7 +108,7 @@ export default function Access() {
         <div className="flex flex-col justify-center p-7 sm:p-10 md:p-14">
           <div className="mb-10 flex items-center gap-3 lg:hidden">
             <span className="grid h-10 w-10 place-items-center rounded-full border border-primary/25 bg-primary/10 text-primary"><Orbit size={22} /></span>
-            <span className="font-display text-base font-semibold">Pokémon: Ascensão e Presságio</span>
+            <span className="font-display text-base font-semibold">Ascenção e Presságio</span>
           </div>
           <p className="eyebrow mb-3">{gmMode ? 'Mestre' : 'Jogador'}</p>
           <h2 className="font-display text-4xl tracking-tight">{gmMode ? 'Acesso do mestre' : 'Acessar ficha'}</h2>

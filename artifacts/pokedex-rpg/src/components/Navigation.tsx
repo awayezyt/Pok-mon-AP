@@ -25,7 +25,7 @@ export function Navigation() {
         <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
           <Link href="/" className="flex shrink-0 items-center gap-2.5 text-sm font-bold" data-testid="link-public-brand">
             <span className="rounded-full border border-primary/35 bg-primary/10 p-2 text-primary"><Orbit size={20} /></span>
-            <span className="hidden font-display sm:inline">Pokémon: Ascensão e Presságio</span>
+            <span className="hidden font-display sm:inline">Ascenção e Presságio</span>
           </Link>
           <div className="flex min-w-0 items-center gap-4 overflow-x-auto text-sm font-medium">
             <Link href="/publico" aria-current="page" className="flex shrink-0 items-center gap-2 text-foreground" data-testid="link-nav-public-archive"><BookOpen size={16} /> Arquivo</Link>
@@ -69,7 +69,7 @@ export function Navigation() {
             <Orbit size={21} />
           </div>
           <span className="hidden max-w-48 font-display text-sm font-bold leading-tight sm:inline-block md:max-w-none md:text-base">
-            Pokémon: Ascensão e Presságio
+            Ascenção e Presságio
           </span>
         </div>
         

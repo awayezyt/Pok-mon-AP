@@ -211,7 +211,7 @@ export default function Character() {
                     data-testid="button-character-image-preview"
                   >
                     {character.image
-                      ? <img src={character.image} alt={`Retrato de ${character.name}`} className="h-full w-full object-contain" />
+                       ? <img src={character.image} alt={`Retrato de ${character.name}`} loading="lazy" className="h-full w-full object-contain" />
                       : <div className="flex flex-col items-center gap-2 text-muted-foreground"><UserRound size={34} /><span className="text-xs">Nenhuma imagem anexada</span></div>}
                   </button>
                   {isOwner && <div className="flex flex-wrap items-center gap-2">
@@ -393,7 +393,7 @@ function InventoryEditor({ items, capacity, money, onChange, onMoneyChange, isOw
           return <div key={`${item.name}-${index}`} className="flex items-start gap-3 rounded-lg border border-border bg-secondary/25 p-3">
             <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-background/70 text-primary">
               {item.image
-                ? <img src={item.image} alt={`Imagem de ${item.name}`} className="h-full w-full object-cover" />
+                 ? <img src={item.image} alt={`Imagem de ${item.name}`} loading="lazy" className="h-full w-full object-cover" />
                 : <PackageOpen size={22} aria-hidden="true" />}
             </div>
             <div className="min-w-0 flex-1">

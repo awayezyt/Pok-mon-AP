@@ -9,6 +9,52 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Read the shared campaign state
+ */
+export const getCampaignStateQueryMediaDefault = `inline`;
+
+export const GetCampaignStateQueryParams = zod.object({
+  "media": zod.enum(['inline', 'refs']).default(getCampaignStateQueryMediaDefault).describe('Return content-addressed image references for the current interface, or inline image data for portable legacy consumers.')
+})
+
+export const GetCampaignStateHeader = zod.object({
+  "If-None-Match": zod.string().optional()
+})
+
+export const GetCampaignStateResponse = zod.record(zod.string(), zod.unknown())
+
+
+/**
+ * @summary Merge a campaign-state patch
+ */
+export const SaveCampaignStateHeader = zod.object({
+  "If-Match": zod.string().optional(),
+  "Prefer": zod.string().optional().describe('Request a compact acknowledgement instead of the merged state.')
+})
+
+export const SaveCampaignStateBody = zod.record(zod.string(), zod.unknown())
+
+export const SaveCampaignStateResponse = zod.record(zod.string(), zod.unknown())
+
+
+/**
+ * @summary Retrieve a cached campaign image by content hash
+ */
+export const getCampaignImagePathHashRegExp = new RegExp('^[a-f0-9]{64}$');
+
+
+export const GetCampaignImageParams = zod.object({
+  "hash": zod.coerce.string().regex(getCampaignImagePathHashRegExp)
+})
+
+export const GetCampaignImageHeader = zod.object({
+  "If-None-Match": zod.string().optional()
+})
+
+export const GetCampaignImageResponse = zod.unknown()
+
+
+/**
  * @summary Restore persistent campaign access
  */
 export const GetCampaignSessionResponse = zod.object({

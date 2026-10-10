@@ -671,7 +671,7 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
         {/* Avatar */}
         <div className="group relative mx-auto flex h-28 w-28 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed bg-secondary/30 sm:mx-0 sm:h-36 sm:w-36 md:h-44 md:w-44" style={{ borderColor: 'color-mix(in srgb, var(--pokemon-accent) 60%, transparent)' }} onClick={() => setIsImageModalOpen(true)}>
           {sheet.image
-            ? <img src={sheet.image} alt={sheet.name} className="w-full h-full object-cover" />
+            ? <img src={sheet.image} alt={sheet.name} loading="lazy" className="w-full h-full object-cover" />
             : <div className="text-7xl text-muted-foreground opacity-20 font-bold">?</div>}
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
             <Camera className="text-white h-8 w-8" />

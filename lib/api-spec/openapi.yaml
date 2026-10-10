@@ -11,6 +11,119 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /state:
+    get:
+      operationId: getCampaignState
+      summary: Read the shared campaign state
+      parameters:
+        - name: media
+          in: query
+          required: false
+          description: Return content-addressed image references for the current interface, or inline image data for portable legacy consumers.
+          schema:
+            type: string
+            enum: [inline, refs]
+            default: inline
+        - name: If-None-Match
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Campaign state at the returned revision
+          headers:
+            ETag:
+              schema: { type: string }
+            X-State-Revision:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignState"
+        "304":
+          description: Campaign revision is unchanged
+        "404":
+          description: Image reference was not found
+    put:
+      operationId: saveCampaignState
+      summary: Merge a campaign-state patch
+      parameters:
+        - name: If-Match
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: Prefer
+          in: header
+          required: false
+          description: Request a compact acknowledgement instead of the merged state.
+          schema:
+            type: string
+            example: return=minimal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignStateInput"
+      responses:
+        "200":
+          description: Merged campaign state for legacy clients
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignState"
+        "204":
+          description: State saved with a compact acknowledgement
+          headers:
+            ETag:
+              schema: { type: string }
+            X-State-Revision:
+              schema: { type: string }
+            X-State-Refresh-Required:
+              schema: { type: string, enum: ["true", "false"] }
+            Preference-Applied:
+              schema: { type: string }
+        "400":
+          description: Invalid campaign-state payload
+        "403":
+          description: Player cannot update GM-only state
+        "409":
+          description: Image reference is no longer present in the campaign
+  /media/{hash}:
+    get:
+      operationId: getCampaignImage
+      summary: Retrieve a cached campaign image by content hash
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-f0-9]{64}$"
+        - name: If-None-Match
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Original image bytes
+          headers:
+            Cache-Control:
+              schema: { type: string }
+            ETag:
+              schema: { type: string }
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        "304":
+          description: Image has not changed
+        "404":
+          description: Image is no longer available
   /auth/session:
     get:
       operationId: getCampaignSession
@@ -38,11 +151,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [characterId, password]
-              properties:
-                characterId: { type: string }
-                password: { type: string }
+              $ref: "#/components/schemas/CampaignPlayerLoginInput"
       responses:
         "200":
           description: Signed in
@@ -57,10 +166,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [password]
-              properties:
-                password: { type: string }
+              $ref: "#/components/schemas/CampaignGMLoginInput"
       responses:
         "200":
           description: Signed in
@@ -198,6 +304,23 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    CampaignPlayerLoginInput:
+      type: object
+      required: [characterId, password]
+      properties:
+        characterId: { type: string }
+        password: { type: string }
+    CampaignGMLoginInput:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string }
+    CampaignState:
+      type: object
+      additionalProperties: true
+    CampaignStateInput:
+      type: object
+      additionalProperties: true
     HealthStatus:
       type: object
       properties:

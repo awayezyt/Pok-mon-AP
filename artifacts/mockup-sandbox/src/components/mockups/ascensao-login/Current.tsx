@@ -23,7 +23,7 @@ export function Current() {
           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(120deg, transparent 0 45%, hsl(var(--accent)) 45% 46%, transparent 46%), radial-gradient(circle at 80% 20%, hsl(var(--accent) / .8), transparent 24%)' }} />
           <div className="relative">
             <div className="mb-16 flex items-center gap-3"><ShieldCheck size={26} /><span className="font-mono text-xs uppercase tracking-[.2em]">Caderno de campo</span></div>
-            <p className="eyebrow mb-4 text-primary-foreground/65">Campanha Pokémon RPG</p>
+            <p className="eyebrow mb-4 text-primary-foreground/65">Ascenção e Presságio</p>
             <h1 className="font-display text-6xl leading-[.95]">Toda boa<br />aventura<br /><i>deixa marca.</i></h1>
           </div>
           <div className="relative flex items-end justify-between gap-6"><p className="max-w-xs text-sm text-primary-foreground/70">Fichas, criaturas e segredos da mesa no mesmo lugar. Feito para jogar, não para administrar.</p><div className="font-mono text-xs text-primary-foreground/60">v. 2.4 / PORTO SALITRE</div></div>

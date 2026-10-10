@@ -16,11 +16,25 @@ export function readCompleteGameState(): GameState {
   ) as GameState;
 }
 
-export function createGameBackup() {
+export async function createGameBackup() {
+  // Backups deliberately request inline image data so exported files remain
+  // portable and compatible with older app versions.
+  const response = await fetch('/api/state?media=inline', {
+    cache: 'no-store',
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    throw new Error(`Não foi possível carregar os dados para o backup (${response.status}).`);
+  }
+  const state = await response.json() as GameState;
   return {
     version: 4,
     exportedAt: new Date().toISOString(),
-    ...readCompleteGameState(),
+    ...Object.fromEntries(
+      GAME_STATE_KEYS
+        .filter(key => Object.prototype.hasOwnProperty.call(state, key))
+        .map(key => [key, state[key]]),
+    ),
   };
 }
 

@@ -1,0 +1,73 @@
+Quero otimizar drasticamente o tráfego de rede da API do meu RPG Pokémon. Atualmente, a requisição `GET /api/state` retorna aproximadamente **4 MB de JSON**, consumindo minha cota de banda do serviço de túnel público Zrok muito rapidamente. Preciso reduzir esse consumo urgentemente, pois o sistema precisa estar funcional amanhã.
+
+**Contexto da infraestrutura:**
+- Aplicação organizada em monorepo.
+- Frontend com Vite/React, hospedado na Vercel.
+- Backend com Node.js e Express.
+- Banco de dados PostgreSQL.
+- O backend roda em um celular Android usando Termux.
+- A API pública é exposta por um túnel Zrok.
+- A rota `GET /api/state` atualmente retorna cerca de 4 MB.
+- Existem fichas de personagens, Pokémon, dados de campanha e outros conteúdos que precisam continuar funcionando.
+
+## Objetivo principal
+
+Investigue o código existente e implemente a maior redução de tráfego possível sem remover funcionalidades, perder dados, alterar regras de negócio ou quebrar a compatibilidade entre frontend e backend.
+
+### 1. Descubra por que `/api/state` retorna tantos dados
+- Localize a implementação da rota e todas as partes do frontend que a chamam.
+- Identifique quais tabelas, campos, objetos e arquivos compõem a resposta.
+- Verifique se imagens, sprites, descrições extensas, dados duplicados ou informações que a tela atual não utiliza estão sendo enviados junto com o estado.
+- Procure chamadas repetidas e recarregamentos completos do estado após ações simples.
+- Não presuma a origem do tamanho: confirme-a examinando o código e, se possível, medindo a resposta real.
+
+### 2. Implemente compressão HTTP
+Configure compressão gzip ou Brotli no Express, conforme a compatibilidade das dependências e do ambiente.
+- Garanta que respostas JSON sejam comprimidas quando o cliente aceitar a codificação.
+- Configure corretamente os cabeçalhos HTTP necessários.
+- Verifique se o proxy da Vercel mantém a compressão funcionando.
+- Não comprima novamente respostas já comprimidas.
+- Teste a resposta comprimida e compare seu tamanho com o original.
+
+### 3. Evite baixar o estado completo repetidamente
+Investigue a estratégia atual de carregamento e implemente uma solução segura para reduzir as transferências:
+- Use cache no frontend para evitar requisições idênticas desnecessárias.
+- Utilize `ETag` e respostas `304 Not Modified`, ou uma estratégia equivalente de validação de cache, quando apropriado.
+- Não use cache público para dados privados ou protegidos.
+- Depois de uma alteração, atualize somente os dados necessários sempre que possível, em vez de baixar os 4 MB novamente.
+- Se o sistema tiver salvamento automático, polling ou atualização periódica, reduza as requisições redundantes sem prejudicar a sincronização entre usuários.
+
+### 4. Reduza o conteúdo enviado pela API
+Se for compatível com a arquitetura existente:
+- Crie endpoints específicos para buscar apenas os dados necessários em cada tela.
+- Separe dados estáticos, como catálogo de Pokémon e informações de referência, dos dados dinâmicos da campanha.
+- Não envie imagens em Base64, arquivos binários ou grandes listas de referência em cada resposta se puderem ser carregados separadamente e armazenados em cache.
+- Considere paginação ou carregamento sob demanda para listas extensas.
+- Preserve a estrutura e os campos esperados pelo frontend atual, adaptando-o junto com a API quando necessário.
+
+**Importante:** não remova campos só porque parecem grandes. Primeiro descubra quais são usados e atualize todos os consumidores afetados. Não substitua os dados por exemplos, valores vazios ou mocks.
+
+### 5. Evite alterações arriscadas
+- Não migre o banco de dados nem altere o provedor de hospedagem.
+- Não introduza serviços pagos ou dependências de infraestrutura adicionais.
+- Não remova dados existentes nem altere o formato de armazenamento no PostgreSQL sem necessidade.
+- Não exponha senhas, variáveis de ambiente ou dados privados.
+- Mantenha compatibilidade com o frontend publicado na Vercel e com o backend executado no Termux.
+- Se uma mudança exigir alterações coordenadas no frontend e no backend, implemente ambas.
+
+### 6. Testes obrigatórios
+Após implementar:
+1. Execute os testes existentes e os comandos de build disponíveis no projeto.
+2. Confirme que o login, as fichas, os Pokémon, a leitura e a gravação dos dados continuam funcionando.
+3. Compare o tamanho da resposta de `/api/state` antes e depois.
+4. Meça separadamente o tamanho JSON sem compressão e o tamanho transferido com compressão.
+5. Verifique se requisições repetidas sem mudanças podem evitar transferir novamente todo o conteúdo.
+6. Informe quais arquivos foram alterados, quais mudanças foram realizadas e quais testes passaram.
+
+### Prioridade
+
+**Prioridade máxima: reduzir o consumo real de banda imediatamente, com o menor risco de quebrar o sistema.**
+
+Comece analisando o projeto e implementando as otimizações de baixo risco, especialmente compressão HTTP, cache condicional e eliminação de requisições redundantes. Depois implemente melhorias estruturais maiores, como carregamento parcial, caso sejam necessárias.
+
+Não se limite a apresentar sugestões: faça as alterações diretamente no código, valide-as e informe os resultados medidos. Não afirme que o problema foi resolvido sem testes reais.

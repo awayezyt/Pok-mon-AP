@@ -12,6 +12,7 @@ let writeQueue: Promise<void> = Promise.resolve();
 let latestWriteId = 0;
 let pendingWrites = 0;
 let refreshInFlight: Promise<void> | null = null;
+let refreshAfterWrite = false;
 let stopRealtimeSync: (() => void) | null = null;
 let syncStatus: SyncStatusSnapshot = { state: 'connecting' };
 
@@ -39,14 +40,27 @@ function stateEtag(revision: number) {
   return `"campaign-state-${revision}"`;
 }
 
-async function requestState() {
-  const response = await fetch('/api/state', { cache: 'no-store' });
+const CAMPAIGN_STATE_MEDIA_QUERY = '?media=refs';
+
+async function requestState(ifNoneMatch?: string) {
+  const response = await fetch(`/api/state${CAMPAIGN_STATE_MEDIA_QUERY}`, {
+    cache: 'no-store',
+    ...(ifNoneMatch ? { headers: { 'If-None-Match': ifNoneMatch } } : {}),
+  });
+  if (response.status === 304) {
+    return {
+      notModified: true as const,
+      state: null,
+      revision: getRevision(response, serverRevision),
+    };
+  }
   if (!response.ok) {
     const error = new Error(`State read failed with status ${response.status}`);
     Object.assign(error, { retryable: response.status === 408 || response.status === 429 || response.status >= 500 });
     throw error;
   }
   return {
+    notModified: false as const,
     state: await response.json() as GameState,
     revision: getRevision(response, 0),
   };
@@ -61,9 +75,13 @@ async function writePatch(patch: GameState, writeId: number) {
   let attempt = 0;
   while (true) {
     try {
-      const response = await fetch('/api/state', {
+      const response = await fetch(`/api/state${CAMPAIGN_STATE_MEDIA_QUERY}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+          'If-Match': stateEtag(serverRevision),
+        },
         body: JSON.stringify(patch),
       });
       if (!response.ok) {
@@ -74,12 +92,22 @@ async function writePatch(patch: GameState, writeId: number) {
         throw error;
       }
 
-      const savedState = await response.json() as GameState;
-      serverRevision = getRevision(response, serverRevision);
-      // Text inputs save on every change. A slower response from an older
-      // request must not replace a newer optimistic edit while the user types.
+      if (response.status === 204) {
+        if (response.headers.get('X-State-Refresh-Required') === 'true') {
+          refreshAfterWrite = true;
+        } else {
+          serverRevision = getRevision(response, serverRevision);
+        }
+      } else {
+        // Compatibility with an older API that does not support Prefer.
+        const savedState = await response.json() as GameState;
+        serverRevision = getRevision(response, serverRevision);
+        if (writeId === latestWriteId) serverState = savedState;
+      }
+
+      // Keep other components that derive data from the shared in-memory
+      // snapshot in sync without waiting for the next polling interval.
       if (writeId === latestWriteId) {
-        serverState = savedState;
         window.dispatchEvent(new CustomEvent('pokemon-rpg-state-change'));
       }
       return;
@@ -105,7 +133,12 @@ export function syncGameState(patch: GameState, options?: { throwOnError?: boole
   writeQueue = next.then(() => undefined, () => undefined);
   return next.then(() => {
     pendingWrites -= 1;
-    setSyncStatus(pendingWrites ? 'saving' : 'connected');
+    const shouldRefresh = pendingWrites === 0 && refreshAfterWrite;
+    if (shouldRefresh) {
+      refreshAfterWrite = false;
+      void refreshGameState();
+    }
+    setSyncStatus(pendingWrites ? 'saving' : shouldRefresh ? 'connecting' : 'connected');
   }).catch(error => {
     pendingWrites -= 1;
     setSyncStatus('error', error instanceof Error ? error.message : 'Não foi possível salvar as alterações.');
@@ -114,9 +147,16 @@ export function syncGameState(patch: GameState, options?: { throwOnError?: boole
   });
 }
 
-export async function hydrateGameState() {
+export async function hydrateGameState(options?: { ifUnchanged?: boolean }) {
   setSyncStatus('connecting');
-  const result = await requestState();
+  const result = await requestState(
+    options?.ifUnchanged ? stateEtag(serverRevision) : undefined,
+  );
+  if (result.notModified) {
+    serverRevision = result.revision;
+    setSyncStatus('connected');
+    return true;
+  }
   serverState = result.state;
   serverRevision = result.revision;
   setSyncStatus('connected');
@@ -130,7 +170,7 @@ export async function refreshGameState(): Promise<void> {
   const requestWriteId = latestWriteId;
   refreshInFlight = (async () => {
     try {
-      const response = await fetch('/api/state', {
+      const response = await fetch(`/api/state${CAMPAIGN_STATE_MEDIA_QUERY}`, {
         cache: 'no-store',
         headers: { 'If-None-Match': stateEtag(serverRevision) },
       });
