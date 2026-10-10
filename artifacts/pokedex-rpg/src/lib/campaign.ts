@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { generateId } from './utils';
-import { getServerCollection, syncGameState } from './cloudSync';
+import { getServerCollection, hydrateGameState, syncGameState } from './cloudSync';
 
 export type SessionRole = 'player' | 'gm' | 'public';
 export const CHARACTER_CLASSES = {
@@ -258,6 +258,98 @@ export interface GMBoardState {
   activeMindMapId: string;
 }
 
+export type BrigadaKirkBattleOutcome = 'win' | 'loss' | 'draw';
+export type BrigadaKirkRarity = 'Comum' | 'Incomum' | 'Raro' | 'Épico' | 'Lendário' | 'Mítico';
+export type BrigadaKirkContestPlacement = 'first' | 'second' | 'third' | 'other' | 'unplaced';
+type BrigadaKirkHistoryDraft<T = BrigadaKirkHistoryEntry> =
+  T extends BrigadaKirkHistoryEntry
+    ? Omit<T, 'id' | 'createdAt' | 'rankBefore' | 'rankAfter' | 'movement'>
+    : never;
+export type BrigadaKirkHistoryEntry =
+  | {
+    id: string; kind: 'battle'; createdAt: string; title: string; rankBefore: number; rankAfter: number; movement: number;
+    outcome: BrigadaKirkBattleOutcome; opponentName: string; opponentRank: number; opponentRankAfter: number;
+    brigadaCompetitors: string[]; opponentCompetitors: string[];
+    brigadaPokemon: string[]; opponentPokemon: string[];
+  }
+  | {
+    id: string; kind: 'pokemon'; createdAt: string; title: string; rankBefore: number; rankAfter: number; movement: number;
+    pokemonName: string; species: string; rarity: BrigadaKirkRarity; image?: string;
+  }
+  | {
+    id: string; kind: 'contest'; createdAt: string; title: string; rankBefore: number; rankAfter: number; movement: number;
+    contestName: string; topThree: Array<{ place: 1 | 2 | 3; name: string; pokemon: string[] }>;
+    participantName: string; placement: BrigadaKirkContestPlacement; approval: number; relevance: number;
+  }
+  | {
+    id: string; kind: 'manual'; createdAt: string; title: string; rankBefore: number; rankAfter: number; movement: number;
+    reason: string;
+  };
+export interface BrigadaKirkLeague {
+  currentRank: number;
+  history: BrigadaKirkHistoryEntry[];
+  opponentRanks: Record<string, number>;
+}
+export type BrigadaKirkBattleInput = {
+  opponentName: string;
+  opponentRank: number;
+  brigadaCompetitors: string[];
+  opponentCompetitors: string[];
+  brigadaPokemon: string[];
+  opponentPokemon: string[];
+  outcome: BrigadaKirkBattleOutcome;
+};
+export type BrigadaKirkPokemonInput = {
+  pokemonName: string;
+  species: string;
+  rarity: BrigadaKirkRarity;
+  image?: string;
+};
+export type BrigadaKirkContestInput = {
+  contestName: string;
+  topThree: Array<{ place: 1 | 2 | 3; name: string; pokemon: string[] }>;
+  participantName: string;
+  placement: BrigadaKirkContestPlacement;
+  approval: number;
+  relevance: number;
+};
+export const DEFAULT_BRIGADA_KIRK_LEAGUE: BrigadaKirkLeague = { currentRank: 481, history: [], opponentRanks: {} };
+
+export function calculateBrigadaBattleMovement(
+  teamRank: number,
+  opponentRank: number,
+  outcome: BrigadaKirkBattleOutcome,
+) {
+  const safeTeamRank = Math.max(1, Math.floor(teamRank));
+  const safeOpponentRank = Math.max(1, Math.floor(opponentRank));
+  // A lower rank number is stronger. This smooth expectation gives underdogs
+  // more credit for wins and makes a favorite's loss costly, without swapping
+  // distant teams' league positions after a single match.
+  const expectedWin = safeOpponentRank / (safeTeamRank + safeOpponentRank);
+  const winMovement = Math.round(6 + 44 * Math.pow(1 - expectedWin, 1.5));
+  const lossMovement = Math.round(6 + 44 * Math.pow(expectedWin, 1.5));
+  if (outcome === 'win') return winMovement;
+  if (outcome === 'loss') return -lossMovement;
+  return Math.round((0.5 - expectedWin) * 20);
+}
+
+export function calculateBrigadaContestMovement(
+  placement: BrigadaKirkContestPlacement,
+  approval: number,
+  relevance: number,
+) {
+  const placementEffect: Record<BrigadaKirkContestPlacement, number> = {
+    first: 10, second: 6, third: 2, other: -6, unplaced: -10,
+  };
+  const approvalEffect = ((Math.max(0, Math.min(100, approval)) - 50) / 50)
+    * Math.max(1, Math.min(5, relevance)) * 5;
+  return Math.round(placementEffect[placement] + approvalEffect);
+}
+
+function applyBrigadaMovement(currentRank: number, movement: number) {
+  return Math.max(1, Math.min(10000, currentRank - movement));
+}
+
 export function createGMPlanningMap(title = 'Novo mapa'): GMPlanningMap {
   const now = new Date().toISOString();
   return {
@@ -340,6 +432,10 @@ function readSessionRole(): SessionRole {
 let currentSessionRole: SessionRole = 'public';
 let currentActiveCharacterId: string | null = null;
 const sessionListeners = new Set<() => void>();
+
+export function getCurrentSessionRole(): SessionRole {
+  return currentSessionRole;
+}
 
 function notifySessionListeners() {
   sessionListeners.forEach(listener => listener());
@@ -547,6 +643,141 @@ export function useCampaignNotes() {
     setNotes(updated);
   };
   return { notes, saveNote, removeNote };
+}
+
+function normalizeBrigadaKirkLeague(value: Partial<BrigadaKirkLeague> | undefined): BrigadaKirkLeague {
+  const savedOpponentRanks = value?.opponentRanks && typeof value.opponentRanks === 'object'
+    ? Object.fromEntries(Object.entries(value.opponentRanks)
+      .filter(([name, rank]) => name.trim() && Number.isFinite(rank))
+      .map(([name, rank]) => [name, Math.max(1, Math.min(10000, Math.floor(rank)))]))
+    : {};
+  return {
+    currentRank: Number.isFinite(value?.currentRank)
+      ? Math.max(1, Math.min(10000, Math.floor(value!.currentRank!)))
+      : DEFAULT_BRIGADA_KIRK_LEAGUE.currentRank,
+    history: Array.isArray(value?.history) ? value.history : [],
+    opponentRanks: savedOpponentRanks,
+  };
+}
+
+export function useBrigadaKirk() {
+  const [league, setLeague] = useState(() => normalizeBrigadaKirkLeague(
+    getServerCollection<Partial<BrigadaKirkLeague> | undefined>('brigadaKirk', undefined),
+  ));
+  const leagueRef = useRef(league);
+
+  useEffect(() => {
+    const sync = () => {
+      const next = normalizeBrigadaKirkLeague(
+        getServerCollection<Partial<BrigadaKirkLeague> | undefined>('brigadaKirk', undefined),
+      );
+      leagueRef.current = next;
+      setLeague(next);
+    };
+    window.addEventListener('pokemon-rpg-state-change', sync);
+    return () => window.removeEventListener('pokemon-rpg-state-change', sync);
+  }, []);
+
+  const save = (next: BrigadaKirkLeague) => {
+    leagueRef.current = next;
+    setLeague(next);
+    return syncGameState({ brigadaKirk: next }, { throwOnError: true }).catch(async error => {
+      // An API rejection (including a non-GM write) must discard the optimistic
+      // change and restore the authoritative campaign snapshot.
+      await hydrateGameState();
+      const current = normalizeBrigadaKirkLeague(
+        getServerCollection<Partial<BrigadaKirkLeague> | undefined>('brigadaKirk', undefined),
+      );
+      leagueRef.current = current;
+      setLeague(current);
+      window.dispatchEvent(new CustomEvent('pokemon-rpg-state-change'));
+      throw error;
+    });
+  };
+
+  const addEntry = (entry: BrigadaKirkHistoryDraft, movement: number, leaguePatch: Partial<BrigadaKirkLeague> = {}) => {
+    const currentRank = leagueRef.current.currentRank;
+    const rankAfter = applyBrigadaMovement(currentRank, movement);
+    return save({
+      ...leagueRef.current,
+      ...leaguePatch,
+      currentRank: rankAfter,
+      history: [{
+        ...entry,
+        id: generateId(),
+        createdAt: new Date().toISOString(),
+        rankBefore: currentRank,
+        rankAfter,
+        movement,
+      } as BrigadaKirkHistoryEntry, ...leagueRef.current.history],
+    });
+  };
+
+  const addBattle = (input: BrigadaKirkBattleInput) => {
+    const currentRank = leagueRef.current.currentRank;
+    const movement = calculateBrigadaBattleMovement(currentRank, input.opponentRank, input.outcome);
+    const opponentOutcome = input.outcome === 'win' ? 'loss' : input.outcome === 'loss' ? 'win' : 'draw';
+    const opponentMovement = calculateBrigadaBattleMovement(input.opponentRank, currentRank, opponentOutcome);
+    const opponentRankAfter = applyBrigadaMovement(input.opponentRank, opponentMovement);
+    const outcomeTitle = input.outcome === 'win' ? 'Vitória' : input.outcome === 'loss' ? 'Derrota' : 'Empate / imprevisto';
+    return addEntry({
+      ...input,
+      kind: 'battle',
+      title: `${outcomeTitle} contra ${input.opponentName}`,
+      opponentRankAfter,
+    }, movement, {
+      opponentRanks: {
+        ...leagueRef.current.opponentRanks,
+        [input.opponentName.trim().toLowerCase()]: opponentRankAfter,
+      },
+    });
+  };
+
+  const addPokemonDiscovery = (input: BrigadaKirkPokemonInput) => {
+    const points: Record<BrigadaKirkRarity, number> = {
+      Comum: 2, Incomum: 5, Raro: 9, Épico: 14, Lendário: 21, Mítico: 26,
+    };
+    return addEntry({
+      ...input,
+      kind: 'pokemon',
+      title: `Nova descoberta: ${input.pokemonName}`,
+    }, points[input.rarity]);
+  };
+
+  const addContest = (input: BrigadaKirkContestInput) => {
+    const movement = calculateBrigadaContestMovement(input.placement, input.approval, input.relevance);
+    const placementLabel: Record<BrigadaKirkContestPlacement, string> = {
+      first: '1º lugar', second: '2º lugar', third: '3º lugar', other: 'colocação baixa', unplaced: 'sem colocação',
+    };
+    return addEntry({
+      ...input,
+      kind: 'contest',
+      title: `${input.contestName} · ${placementLabel[input.placement]}`,
+    }, movement);
+  };
+
+  const setCurrentRank = (rank: number, reason: string) => {
+    const rankAfter = Math.max(1, Math.min(10000, Math.floor(rank)));
+    const rankBefore = leagueRef.current.currentRank;
+    if (rankAfter === rankBefore) return Promise.resolve();
+    const movement = rankBefore - rankAfter;
+    return save({
+      ...leagueRef.current,
+      currentRank: rankAfter,
+      history: [{
+        id: generateId(),
+        kind: 'manual',
+        title: 'Ajuste manual de colocação',
+        createdAt: new Date().toISOString(),
+        rankBefore,
+        rankAfter,
+        movement,
+        reason: reason.trim() || 'Ajuste feito pelo GM nas configurações.',
+      }, ...leagueRef.current.history],
+    });
+  };
+
+  return { league, addBattle, addPokemonDiscovery, addContest, setCurrentRank };
 }
 
 export function useGMBoard() {

@@ -19,7 +19,7 @@ import PublicLibrary from './pages/PublicLibrary';
 import System from './pages/System';
 import { useSessionRole, restoreSession } from './lib/campaign';
 import { hydrateGameState, startRealtimeSync } from './lib/cloudSync';
-import { seedImportedCampaignData } from './lib/campaignSeed';
+import { removeSavedCampaignImages, seedImportedCampaignData } from './lib/campaignSeed';
 import { ThemeProvider } from './lib/theme';
 import { ThemeFooter } from './components/ThemeFooter';
 import { ServerStartupScreen, type StartupPhase } from './components/ServerStartupScreen';
@@ -77,6 +77,7 @@ function Router() {
   }, [location, search]);
   useEffect(() => {
     if (role === 'public' && location !== '/' && location !== '/publico' && location !== '/sheet' && location !== '/sistema') setLocation('/');
+    if (role === 'gm' && location === '/personagem') setLocation('/mestre');
     if (role !== 'gm' && (location === '/mestre' || location === '/mestre/anotacoes/editor' || location === '/attacks' || location === '/pokemon' || location === '/fichas')) setLocation(role === 'player' ? '/personagem' : '/');
   }, [location, role, setLocation]);
 
@@ -153,6 +154,7 @@ function App() {
         await runStartupStep('server', checkApiHealth);
         await runStartupStep('session', restoreSession);
         await runStartupStep('campaign', hydrateGameState);
+        await runStartupStep('prepare', removeSavedCampaignImages);
         await runStartupStep('prepare', seedImportedCampaignData);
         if (cancelled) return;
         stopSync = startRealtimeSync();

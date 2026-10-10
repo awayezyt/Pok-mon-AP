@@ -432,6 +432,14 @@ h1, h2, h3, h4, .font-display {
 .system-toggle summary::-webkit-details-marker { display: none; }
 .system-toggle[open] summary svg { transform: rotate(180deg); }
 .system-toggle-content { border-top: 1px solid #dfe7e3; padding: 12px 15px 4px; }
+.system-live-attack .system-live-attack-source { margin-left: auto; color: var(--system-teal); font: 9px var(--app-font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.system-live-attack-note { margin: 0 0 10px; color: var(--system-muted); font: 10px var(--app-font-mono); }
+.system-live-attack-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin: 0 0 12px; }
+.system-live-attack-grid div { min-width: 0; padding: 8px 9px; border: 1px solid var(--system-line); border-radius: 6px; background: color-mix(in srgb, var(--system-paper) 88%, #253134); }
+.system-live-attack-grid dt { color: var(--system-muted); font: 9px var(--app-font-mono); text-transform: uppercase; }
+.system-live-attack-grid dd { margin: 4px 0 0; color: var(--system-ink); font-size: 12px; font-weight: 650; overflow-wrap: anywhere; }
+.system-live-attack-summary { margin: 0 0 8px; color: var(--system-ink); font-size: 12px; }
+.system-live-attack-full { margin: 0; color: var(--system-ink); font-size: 12px; line-height: 1.65; white-space: pre-wrap; }
 .system-divider { height: 1px; margin: 24px 0; border: 0; background: #dce4df; }
 .system-quote { margin: 17px 0; border-left: 3px solid #8faea1; padding: 5px 0 5px 17px; color: #54716f; font-family: var(--app-font-serif); font-size: 16px; font-style: italic; }
 .system-table-wrap { max-width: 100%; margin: 18px 0 22px; overflow-x: auto; border: 1px solid #dbe4df; border-radius: 9px; background: #fbfcf9; }
@@ -631,6 +639,183 @@ html:not(.dark) .system-page {
 .system-editor-raw p { font-size: 11px; }
 .system-editor-error { display: block; margin-top: 7px; color: #c77b68; font-size: 11px; }
 .system-editor-empty { padding: 20px; border: 1px dashed var(--system-line); border-radius: 8px; color: var(--system-muted); text-align: center; font-size: 12px; }
+
+/* Navigação e ferramentas de consulta das páginas extensas. */
+.system-page-outline {
+  margin: 22px 0 20px;
+  border: 1px solid var(--system-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--system-paper) 78%, var(--system-teal));
+}
+.system-page-outline > summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 14px;
+  color: var(--system-ink);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.system-page-outline > summary::-webkit-details-marker { display: none; }
+.system-page-outline > summary > span { margin-left: auto; color: var(--system-muted); font-size: 10px; font-weight: 400; }
+.system-page-outline[open] > summary { border-bottom: 1px solid var(--system-line); }
+.system-page-outline[open] > summary > svg:last-child { transform: rotate(180deg); }
+.system-page-outline nav {
+  display: grid;
+  max-height: 260px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+  gap: 3px;
+  overflow: auto;
+  padding: 9px;
+}
+.system-page-outline nav button {
+  min-width: 0;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 8px;
+  color: var(--system-muted);
+  background: transparent;
+  font-size: 10px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+.system-page-outline nav button:hover,
+.system-page-outline nav button:focus-visible {
+  color: var(--system-ink);
+  background: color-mix(in srgb, var(--system-teal) 14%, var(--system-paper));
+}
+.system-page-search { margin: 20px 0 17px; }
+.system-page-search .system-page-search-input { width: 100%; height: 43px; margin: 0; border-radius: 9px; }
+.system-page-search-input input { font-size: 12px; }
+.system-page-search-count { margin: 7px 4px 0; color: var(--system-muted); font-size: 10px; }
+.system-page-search-empty {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  margin: 22px 0;
+  border: 1px dashed var(--system-line);
+  border-radius: 12px;
+  padding: 30px 18px;
+  color: var(--system-muted);
+  text-align: center;
+  font-size: 12px;
+}
+.system-page-search-empty svg { color: var(--system-teal); }
+.system-page-search-empty strong { color: var(--system-ink); font-size: 14px; }
+
+/* Referência dinâmica às fórmulas do preset selecionado pelo mestre. */
+.system-formula-guide {
+  margin: 27px 0 34px;
+  border: 1px solid color-mix(in srgb, var(--system-teal) 38%, var(--system-line));
+  border-radius: 14px;
+  padding: clamp(15px, 3vw, 23px);
+  color: var(--system-ink);
+  background: color-mix(in srgb, var(--system-teal) 7%, var(--system-paper));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+}
+.system-formula-guide-header { display: flex; align-items: flex-start; gap: 14px; }
+.system-formula-guide-icon {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--system-teal) 37%, var(--system-line));
+  border-radius: 11px;
+  color: var(--system-teal);
+  background: color-mix(in srgb, var(--system-teal) 13%, var(--system-paper));
+}
+.system-formula-eyebrow { margin: 0 0 5px; color: var(--system-teal); font: 9px var(--app-font-mono); letter-spacing: .12em; }
+.system-formula-guide-header h2 { margin: 0; color: var(--system-ink); font: 600 clamp(20px, 3vw, 25px)/1.2 var(--app-font-serif); letter-spacing: -.025em; }
+.system-formula-guide-header > div > p:last-child { margin: 7px 0 0; color: var(--system-muted); font-size: 11px; line-height: 1.55; }
+.system-formula-active-preset {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 17px 0 12px;
+  border: 1px solid var(--system-line);
+  border-radius: 7px;
+  padding: 8px 10px;
+  color: var(--system-muted);
+  background: color-mix(in srgb, var(--system-paper) 80%, transparent);
+  font-size: 10px;
+}
+.system-formula-active-preset strong { color: var(--system-ink); }
+.system-formula-active-dot { width: 7px; height: 7px; border-radius: 50%; background: #59a980; box-shadow: 0 0 0 3px color-mix(in srgb, #59a980 18%, transparent); }
+.system-formula-table-wrap { margin: 0 0 15px; }
+.system-formula-table { font-size: 11px; }
+.system-formula-table th,
+.system-formula-table td { min-width: 145px; padding: 9px 11px; }
+.system-formula-table th:first-child { min-width: 150px; }
+.system-formula-table td:nth-child(2) { min-width: 175px; }
+.system-formula-table th[scope="row"] { color: var(--system-ink); font-size: 10px; }
+.system-formula-expression {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--system-teal);
+  font: 10px/1.55 var(--app-font-mono);
+  white-space: pre-wrap;
+}
+.system-formula-guide .system-table thead th { position: sticky; z-index: 1; top: 0; }
+.system-formula-details { margin: 12px 0 16px; border: 1px solid var(--system-line); border-radius: 8px; background: color-mix(in srgb, var(--system-paper) 82%, transparent); }
+.system-formula-details > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 12px;
+  color: var(--system-teal);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.system-formula-details > summary::-webkit-details-marker { display: none; }
+.system-formula-details[open] > summary { border-bottom: 1px solid var(--system-line); }
+.system-formula-reference { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; padding: 14px; }
+.system-formula-reference h3,
+.system-formula-mode-heading h3 { margin: 0; color: var(--system-ink); font-size: 12px; font-weight: 700; }
+.system-formula-variable-list { display: grid; gap: 5px; margin: 10px 0 0; }
+.system-formula-variable-list > div { display: grid; grid-template-columns: minmax(54px, auto) 1fr; align-items: baseline; gap: 9px; border-bottom: 1px solid color-mix(in srgb, var(--system-line) 70%, transparent); padding-bottom: 5px; }
+.system-formula-variable-list dt { color: var(--system-teal); font: 10px var(--app-font-mono); }
+.system-formula-variable-list dd { margin: 0; color: var(--system-muted); font-size: 10px; line-height: 1.5; }
+.system-formula-reference > div > p { color: var(--system-muted); font-size: 10px; line-height: 1.55; }
+.system-formula-side-notes { display: grid; gap: 11px; }
+.system-formula-mode { min-width: 0; border: 1px solid var(--system-line); border-radius: 9px; padding: 13px; background: color-mix(in srgb, var(--system-paper) 80%, transparent); }
+.system-formula-mode-heading { display: flex; align-items: flex-start; gap: 9px; color: var(--system-teal); }
+.system-formula-mode-heading > svg { flex: 0 0 auto; margin-top: 1px; }
+.system-formula-mode-heading p { margin: 4px 0 0; color: var(--system-muted); font-size: 10px; }
+.system-formula-mode > p { margin: 9px 0 0; color: var(--system-muted); font-size: 10px; line-height: 1.6; }
+.system-formula-small-table { margin: 10px 0 0; }
+.system-formula-small-table .system-table th,
+.system-formula-small-table .system-table td { min-width: 90px; padding: 7px 9px; font-size: 10px; }
+.system-formula-example { border: 1px solid var(--system-line); border-radius: 7px; padding: 9px 10px; background: color-mix(in srgb, var(--system-teal) 6%, var(--system-paper)); }
+.system-formula-example p { margin: 0; color: var(--system-muted); font-size: 10px; line-height: 1.6; }
+.system-formula-example p + p { margin-top: 6px; }
+.system-formula-example code { overflow-wrap: anywhere; color: var(--system-teal); font: 10px/1.6 var(--app-font-mono); }
+.system-formula-note { color: var(--system-muted); font-size: 10px; line-height: 1.6; }
+.system-formula-damage-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.system-formula-damage-table { min-width: 0; }
+.system-formula-damage-table h4 { margin: 10px 0 -3px; color: var(--system-muted); font-size: 10px; font-weight: 700; }
+.system-formula-footer { margin: 16px 0 0; border-top: 1px solid var(--system-line); padding-top: 12px; color: var(--system-muted); font-size: 10px; line-height: 1.6; }
+.system-heading,
+.system-toggle { scroll-margin-top: 90px; }
+
+@media (max-width: 760px) {
+  .system-page-outline { margin-top: 18px; }
+  .system-page-outline nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .system-formula-guide { margin: 22px 0 28px; border-radius: 11px; }
+  .system-formula-guide-header { gap: 10px; }
+  .system-formula-guide-icon { width: 34px; height: 34px; border-radius: 9px; }
+  .system-formula-active-preset > span:last-child { width: 100%; padding-left: 14px; }
+  .system-formula-reference,
+  .system-formula-damage-grid { grid-template-columns: 1fr; }
+  .system-formula-variable-list > div { grid-template-columns: minmax(54px, auto) 1fr; }
+}
 .system-editor-foot { display: flex; justify-content: flex-end; gap: 9px; border-top: 1px solid var(--system-line); padding: 14px 26px; }
 .system-editor-cancel, .system-editor-save { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 37px; border: 1px solid var(--system-line); border-radius: 7px; padding: 0 12px; color: var(--system-muted); background: transparent; font-size: 11px; cursor: pointer; }
 .system-editor-save { border-color: color-mix(in srgb, var(--system-teal) 65%, transparent); color: #11201c; background: var(--system-teal); font-weight: 700; }

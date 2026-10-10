@@ -1,0 +1,934 @@
+Trovão de 10.000.000 Volts	Elétrico	Especial	195	—	1	Movimento Z exclusivo do Pikachu. Alta taxa de acerto crítico.	—
+Absorver	Grama	Especial	20	100	25	O usuário recupera metade dos pontos de vida infligidos ao oponente.	—
+Accelerock	Pedra	Físico	40	100	20	Ataques do usuário primeiro.	—
+Ácido	Tóxico	Especial	40	100	30	Pode reduzir a Defesa Especial do oponente.	10
+Armadura Ácida	Tóxico	Status	—	—	20	Aumenta drasticamente a Defesa do usuário.	—
+Chuva Ácida	Tóxico	—	—	—	1	Movimento Z do tipo Veneno.	—
+Spray ácido	Tóxico	Especial	40	100	20	Reduz drasticamente a Defesa Especial do oponente.	100
+Acrobacias	Vôo	Físico	55	100	15	Mais forte quando o usuário não tem nenhum objeto em mãos.	—
+Acupressão	Normal	Status	—	—	30	Aumenta drasticamente um atributo aleatório.	—
+Ás Aéreo	Vôo	Físico	60	∞	20	Ignora a precisão e a evasão.	—
+Aeroblast	Vôo	Especial	100	95	5	Alta taxa de acerto crítico.	—
+Depois de você	Normal	Status	—	—	15	Concede prioridade ao alvo no próximo turno.	—
+Agilidade	Psíquico	Status	—	—	30	Aumenta drasticamente a velocidade do usuário.	—
+Cortador de ar	Vôo	Especial	60	95	25	Alta taxa de acerto crítico.	—
+Corte de ar	Vôo	Especial	75	95	15	Pode causar sobressaltos.	30
+Pancadaria Total	Combate	—	—	—	1	Movimento Z do tipo Lutador.	—
+Voz Sedutora	Fada	Especial	80	100	10		—
+Ally Switch	Psíquico	Status	—	—	15	O usuário troca de posição com o colega de equipe oposto.	—
+Amnésia	Psíquico	Status	—	—	20	Aumenta consideravelmente a Defesa Especial do usuário.	—
+Foto de âncora	Aço	Físico	80	100	20	O usuário enreda o alvo com sua corrente de âncora enquanto ataca. O alvo fica impossibilitado de fugir.	—
+Poder Ancestral	Pedra	Especial	60	100	5	Pode aumentar as estatísticas de todos os usuários de uma só vez.	10
+Ácido de maçã	Grama	Especial	80	100	10	Reduz a Defesa Especial do alvo.	100
+Cortador de água	Água	Físico	70	100	20	Alta taxa de acerto crítico.	—
+Aqua Jet	Água	Físico	40	100	20	Ataques do usuário primeiro.	—
+Anel Aqua	Água	Status	—	—	20	Restaura um pouco de HP a cada turno.	—
+Passo Aquático	Água	Físico	80	100	10	Aumenta a velocidade do usuário.	100
+Cauda Aquática	Água	Físico	90	90	10		—
+Impulso do braço	Combate	Físico	15	100	20	Acerta de 2 a 5 vezes em um turno.	—
+Canhão de blindagem	Fogo	Especial	120	100	5	Reduz a Defesa e a Defesa Especial do usuário.	—
+Aromaterapia	Grama	Status	—	—	5	Resolve todos os problemas de status no seu grupo.	—
+Névoa Aromática	Fada	Status	—	—	20	Aumenta a Defesa Especial de um aliado.	—
+Auxiliar	Normal	Status	—	—	20	O usuário executa um movimento conhecido por seus aliados, escolhido aleatoriamente.	—
+Garantia	Escuro	Físico	60	100	10	O poder dobra se o oponente já tiver sofrido dano no mesmo turno.	—
+Surpreendente	Fantasma	Físico	30	100	15	Pode causar sobressaltos.	30
+Barragem Astral	Fantasma	Especial	120	100	5	O usuário ataca enviando uma quantidade assustadora de pequenos fantasmas contra os Pokémon adversários.	—
+Ordem de ataque	Erro	Físico	90	100	15	Alta taxa de acerto crítico.	—
+Atrair	Normal	Status	—	100	15	Se o oponente for do sexo oposto, é menos provável que ataque.	—
+Esfera de Aura	Combate	Especial	80	∞	20	Ignora a precisão e a evasão.	—
+Roda da Aura	Elétrico	Físico	110	100	10	Altera o tipo com base no Modo de Morpeko.	100
+Raio Aurora	Gelo	Especial	65	100	20	Pode diminuir o Ataque do oponente.	10
+Véu da Aurora	Gelo	Status	—	—	20	Reduz pela metade o dano recebido de ataques físicos e especiais por cinco turnos.	—
+Autotomizar	Aço	Status	—	—	15	Reduz o peso e aumenta drasticamente a velocidade.	—
+Avalanche	Gelo	Físico	60	100	10	O poder dobra se o usuário sofrer dano primeiro.	—
+Chute de machado	Combate	Físico	120	90	10	Pode confundir o oponente. Se errar, o usuário perde PV.	—
+Olhos de boneca	Fada	Status	—	100	30	Sempre ataca primeiro. Reduz o ataque do alvo.	—
+Mau	Escuro	Especial	90	100	15	Reduz o dano causado por ataques físicos.	—
+Bunker Nefasto	Tóxico	Status	—	—	10	Protege o usuário e envenena o oponente ao contato.	—
+Barragem de farpas	Tóxico	Físico	60	100	10	Pode envenenar o oponente; causa dano dobrado se o alvo já estiver envenenado.	—
+Barragem	Normal	Físico	15	85	20	Acerta de 2 a 5 vezes em um turno.	—
+Barreira	Psíquico	Status	—	—	20	Aumenta drasticamente a Defesa do usuário.	—
+Passagem do bastão	Normal	Status	—	—	40	O usuário troca de Pokémon e transfere as alterações de atributos para o Pokémon que entra.	—
+Explosão de bico	Vôo	Físico	100	100	15	O usuário primeiro aquece o bico do Pokémon e, em seguida, ele ataca o alvo. O contato direto com o Pokémon enquanto ele aquece o bico resulta em queimadura.	—
+Espancado	Escuro	Físico	—	100	10	Cada Pokémon na equipe do usuário ataca.	—
+Ataque do Behemoth	Aço	Físico	100	100	5	O dano dobra se o alvo estiver Dynamaxed.	—
+Lâmina Behemoth	Aço	Físico	100	100	5	O dano dobra se o alvo estiver Dynamaxed.	—
+Arroto	Tóxico	Especial	120	90	10	O usuário deve ter consumido uma fruta.	—
+Tambor de barriga	Normal	Status	—	—	10	O usuário perde 50% de seu HP máximo, mas o Ataque aumenta para o máximo.	—
+Conceder	Normal	Status	—	—	15	Entrega o item que o usuário está segurando ao alvo.	—
+Esperar	Normal	Físico	—	—	10	O usuário sofre dano por dois turnos e então contra-ataca com o dobro do dano.	—
+Vincular	Normal	Físico	15	85	20	Prende o oponente, causando dano por 4 a 5 turnos.	100
+Morder	Escuro	Físico	60	100	25	Pode causar sobressaltos.	30
+Lâmina Amarga	Fogo	Físico	90	100	10	O usuário recupera metade dos pontos de vida infligidos ao oponente.	—
+Malícia Amarga	Fantasma	Especial	75	100	10	Reduz o ataque do oponente.	—
+Eclipse do Buraco Negro	Escuro	—	—	—	1	Movimento Z do tipo Sombrio.	—
+Queimadura Explosiva	Fogo	Especial	150	90	5	O usuário deverá recarregar no próximo turno.	—
+Chute Flamejante	Fogo	Físico	85	90	10	Alta taxa de acerto crítico. Pode causar queimaduras no oponente.	10
+Torque Ardente	Fogo	Físico	80	100	10	Pode queimar o oponente.	—
+Tempestade de Vento Sombrio	Vôo	Especial	100	80	10	Pode diminuir a velocidade do oponente.	—
+Nevasca	Gelo	Especial	110	70	5	Pode congelar o oponente.	10
+Bloquear	Normal	Status	—	—	5	O oponente não pode fugir nem trocar de posição.	—
+Lua de Sangue	Normal	Especial	140	100	5	Não pode ser usado duas vezes seguidas.	—
+Bloom Doom	Grama	—	—	—	1	Movimento Z do tipo Grama.	—
+Sinalizador Azul	Fogo	Especial	130	85	5	Pode queimar o oponente.	20
+Pressão Corporal	Combate	Físico	80	100	10	Quanto maior a Defesa do usuário, mais forte será o ataque.	—
+Golpe corporal	Normal	Físico	85	100	15	Pode paralisar o oponente.	30
+Bico de Parafuso	Elétrico	Físico	85	100	10	Se o usuário atacar antes do alvo, o poder desse movimento é dobrado.	—
+Golpe de parafuso	Elétrico	Físico	130	85	5	Pode paralisar o oponente.	20
+Clube dos Ossos	Chão	Físico	65	85	20	Pode causar sobressaltos.	10
+Corrida Óssea	Chão	Físico	25	90	10	Acerta de 2 a 5 vezes em um turno.	—
+Bonemerang	Chão	Físico	50	90	10	Acerta duas vezes em um turno.	—
+Explosão explosiva	Normal	Especial	140	100	10	Atinge todos os Pokémon adjacentes.	—
+Quicar	Vôo	Físico	85	85	5	Surge no primeiro turno e ataca no segundo. Pode paralisar o oponente.	30
+Bolha saltitante	Água	Especial	90	100	15	O usuário recupera metade dos pontos de vida infligidos ao oponente.	—
+Broto Cutucado	Grama	Físico	40	100	40		—
+Pássaro Valente	Vôo	Físico	120	100	15	O usuário sofre dano por recuo.	—
+Quebrando o Swipe	Dragão	Físico	60	100	15	Atinge vários oponentes e reduz o ataque deles.	100
+Blitz alucinante	Normal	—	—	—	1	Movimento Z do tipo normal.	—
+Quebra de tijolo	Combate	Físico	75	100	15	Supera as barreiras das telas de reflexão e luz.	—
+Salmoura	Água	Especial	65	100	10	O poder dobra se o HP do oponente for inferior a 50%.	—
+Balanço Brutal	Escuro	Físico	60	100	20	O usuário gira o corpo violentamente para causar dano a tudo em sua proximidade.	—
+Bolha	Água	Especial	40	100	30	Pode diminuir a velocidade do oponente.	10
+Feixe de Bolhas	Água	Especial	65	100	20	Pode diminuir a velocidade do oponente.	10
+Picada de inseto	Erro	Físico	60	100	20	Recebe o efeito da fruta que o oponente está segurando.	—
+Zumbido de inseto	Erro	Especial	90	100	10	Pode reduzir a Defesa Especial do oponente.	10
+Ganhar massa muscular	Combate	Status	—	—	20	Aumenta o Ataque e a Defesa do usuário.	—
+Demolição com escavadeira	Chão	Físico	60	100	20	Reduz a velocidade do oponente.	100
+Soco Bala	Aço	Físico	40	100	30	Ataques do usuário primeiro.	—
+Semente de Bala	Grama	Físico	25	100	30	Acerta de 2 a 5 vezes em um turno.	—
+Queime até o fim	Fogo	Especial	130	100	5	Para causar dano massivo, o usuário se consome em chamas. Após usar esse movimento, o usuário deixará de ser do tipo Fogo.	—
+Baluarte em Chamas	Fogo	Status	—	∞	10		—
+Ciúme Ardente	Fogo	Especial	70	100	5	Atinge todos os oponentes e queima qualquer um que tenha tido seus atributos aumentados.	—
+Zumbido Zumbido	Elétrico	Especial	90	100	15	Paralisa o oponente.	100
+Mente calma	Psíquico	Status	—	—	20	Aumenta o Ataque Especial e a Defesa Especial do usuário.	—
+Camuflar	Normal	Status	—	—	20	Altera o tipo de usuário de acordo com a localização.	—
+Cativar	Normal	Status	—	100	20	Reduz drasticamente o Ataque Especial do oponente se for do sexo oposto.	—
+Catastrofia	Elétrico	Físico	210	—	1	Movimento Z exclusivo do Pikachu.	—
+Vantagem Incessante	Escuro	Físico	65	90	15	Prepara Spikes.	—
+Comemore	Normal	Status	—	—	40	O Pokémon te parabeniza pelo seu dia especial. Sem efeito de batalha.	—
+Cobrar	Elétrico	Status	—	—	20	Aumenta a Defesa Especial do usuário e o poder do próximo movimento Elétrico.	—
+Feixe de carga	Elétrico	Especial	50	90	10	Pode aumentar o Ataque Especial do usuário.	70
+Charme	Fada	Status	—	100	20	Reduz drasticamente o ataque do oponente.	—
+Conversa fiada	Vôo	Especial	65	100	20	Confunde o oponente.	100
+Água gelada	Água	Especial	50	100	20	Reduz o ataque do oponente.	—
+Recepção fria	Gelo	Status	—	—	10	Troca de personagem e invoca uma tempestade de neve que dura 5 turnos.	—
+Aos poucos	Normal	Físico	70	100	20	Ignora as alterações de atributos do oponente.	—
+Cloroblasto	Grama	Especial	150	95	5	O usuário sofre dano por recuo.	—
+Arremesso em círculo	Combate	Físico	60	90	10	Em batalhas, o oponente troca de Pokémon. Na natureza, o Pokémon foge.	—
+Braçadeira	Água	Físico	35	85	15	Prende o oponente, causando dano por 4 a 5 turnos.	100
+Balança clangorosa	Dragão	Especial	110	100	5	Reduz a defesa do usuário.	100
+Alma Estridente	Dragão	Status	—	100	5	Aumenta todos os atributos do usuário, mas causa perda de HP.	100
+Chama da Alma Estrondosa	Dragão	Especial	185	—	1	Movimento Z exclusivo da Kommo-o.	—
+Limpar a poluição	Tóxico	Especial	50	—	15	Remove todas as alterações de atributos do alvo.	—
+Combate corpo a corpo	Combate	Físico	120	100	5	Reduz a Defesa e a Defesa Especial do usuário.	100
+Coaching	Combate	Status	—	—	10	Aumenta o ataque e a defesa de um companheiro de equipe.	—
+Bobina	Tóxico	Status	—	—	20	Aumenta o Ataque, a Defesa e a Precisão do usuário.	—
+Rota de Colisão	Combate	Físico	100	100	5	O efeito é ainda maior se for super eficaz.	—
+Torque de combate	Combate	Físico	100	100	10	Pode paralisar o oponente.	—
+Soco de Cometa	Normal	Físico	18	85	15	Acerta de 2 a 5 vezes em um turno.	—
+Retribuição	Escuro	Físico	—	100	10	Causa mais dano ao oponente do que o último dano que lhe foi infligido.	—
+Confiar	Normal	Status	—	—	20	Reduz o Ataque Especial do oponente.	100
+Raio Confuso	Fantasma	Status	—	100	10	Confunde o oponente.	—
+Confusão	Psíquico	Especial	50	100	25	Pode confundir o oponente.	10
+Restringir	Normal	Físico	10	100	35	Pode reduzir a Velocidade do oponente em um estágio.	10
+Continental Crush	Pedra	—	—	—	1	Movimento Z do tipo Pedra.	—
+Conversão	Normal	Status	—	—	30	Altera o tipo do usuário para o tipo do seu primeiro movimento.	—
+Conversão 2	Normal	Status	—	—	30	O usuário muda de tipo para se tornar resistente ao último movimento do oponente.	—
+Imitador	Normal	Status	—	—	20	Copia o último movimento do oponente.	—
+Executor Central	Dragão	Especial	100	100	10	Suprime a habilidade do alvo se ele já tiver se movido.	—
+Acidente em saca-rolhas	Aço	—	—	—	1	Movimento Z do tipo Aço.	—
+Gás corrosivo	Tóxico	Status	—	100	40	Remove os itens do oponente.	—
+Poder Cósmico	Psíquico	Status	—	—	20	Aumenta a Defesa e a Defesa Especial do usuário.	—
+Protetor de algodão	Grama	Status	—	—	10	Aumenta drasticamente a defesa do usuário.	—
+Esporo de algodão	Grama	Status	—	100	40	Reduz drasticamente a velocidade do oponente.	—
+Contador	Combate	Físico	—	100	20	Ao ser atingido por um ataque físico, o usuário contra-ataca com o dobro da força.	—
+Mudança de tribunal	Normal	Status	—	100	10	Troca os efeitos de cada lado do campo.	—
+Cobiçar	Normal	Físico	60	100	25	O item do oponente é roubado pelo usuário.	—
+Crabhammer	Água	Físico	100	90	10	Alta taxa de acerto crítico.	—
+Escudo Astuto	Fada	Status	—	—	10	Protege o Pokémon de movimentos que afetam o status.	—
+Corte cruzado	Combate	Físico	100	80	5	Alta taxa de acerto crítico.	—
+Veneno Cruzado	Tóxico	Físico	70	100	20	Alta taxa de acerto crítico. Pode envenenar o oponente.	10
+Crocante	Escuro	Físico	80	100	15	Pode diminuir a Defesa do oponente.	20
+Garra Esmagadora	Normal	Físico	75	95	10	Pode diminuir a Defesa do oponente.	50
+Aperto de esmagamento	Normal	Físico	—	100	5	Mais poderoso quando o oponente tem mais HP.	—
+Xingamento	Fantasma	Status	—	—	10	Fantasmas perdem 50% do HP máximo e amaldiçoam o oponente; unidades não-fantasma aumentam o Ataque e a Defesa, mas diminuem a Velocidade.	—
+Corte	Normal	Físico	50	95	30		—
+Pulso Sombrio	Escuro	Especial	80	100	15	Pode causar sobressaltos.	20
+Vazio Escuro	Escuro	Status	—	50	10	Coloca todos os oponentes adjacentes para dormir.	—
+Laço Mais Sombrio	Escuro	Físico	85	100	10	Ignora as alterações de atributos do oponente.	—
+Brilho deslumbrante	Fada	Especial	80	100	10	Atinge todos os oponentes adjacentes.	—
+Decorar	Fada	Status	—	—	15	Aumenta drasticamente o Ataque e o Ataque Especial do alvo.	100
+Ordem de Defesa	Erro	Status	—	—	10	Aumenta a Defesa e a Defesa Especial do usuário.	—
+Curva de Defesa	Normal	Status	—	—	40	Aumenta a defesa do usuário.	—
+Desembaçar	Vôo	Status	—	—	15	Reduz a evasão do oponente e dissipa a névoa.	—
+Laço do Destino	Fantasma	Status	—	—	5	Se o usuário desmaiar, o oponente também desmaia.	—
+Detectar	Combate	Status	—	—	5	Protege o usuário, mas pode falhar se usado consecutivamente.	—
+Drake devastador	Dragão	—	—	—	1	Movimento Z do tipo Dragão.	—
+Tempestade de Diamantes	Pedra	Físico	100	95	5	Pode aumentar significativamente a Defesa do usuário.	50
+Escavação	Chão	Físico	80	100	10	Escava no subsolo no primeiro turno e ataca no segundo. Também pode escapar de cavernas.	—
+Garra Dire	Tóxico	Físico	80	100	15	Pode envenenar, paralisar ou induzir o sono ao oponente.	—
+Desativar	Normal	Status	—	100	20	O oponente não poderá usar seu último ataque por alguns turnos.	—
+Voz Desarmante	Fada	Especial	40	∞	15	Ignora a precisão e a evasão.	—
+Descarga	Elétrico	Especial	80	100	15	Pode paralisar o oponente.	30
+Mergulho	Água	Físico	80	100	10	Mergulha na água no primeiro turno e ataca no segundo.	—
+Soco Vertiginoso	Normal	Físico	70	100	10	Pode confundir o oponente.	20
+rabisco	Normal	Status	—	100	10	Altera as habilidades do usuário e de seus companheiros de equipe para as do alvo.	—
+Desejo de Perdição	Aço	Especial	140	100	5	O dano ocorre 2 turnos depois.	—
+Golpe duplo	Normal	Físico	35	90	10	Acerta duas vezes em um turno.	—
+Golpe Duplo de Ferro	Aço	Físico	60	100	5	Acerta duas vezes em um turno; pode causar hesitação.	30
+Chute duplo	Combate	Físico	30	100	30	Acerta duas vezes em um turno.	—
+Choque duplo	Elétrico	Físico	120	100	5	Após usar esse movimento, o usuário deixará de ser do tipo Elétrico.	—
+Tapa duplo	Normal	Físico	15	85	10	Acerta de 2 a 5 vezes em um turno.	—
+Dupla Equipe	Normal	Status	—	—	15	Aumenta a capacidade de evasão do usuário.	—
+Dupla face	Normal	Físico	120	100	15	O usuário sofre dano por recuo.	—
+Meteoro Draco	Dragão	Especial	130	90	5	Reduz drasticamente o Ataque Especial do usuário.	100
+Ascensão do Dragão	Vôo	Físico	120	100	5	Reduz a Defesa e a Defesa Especial do usuário.	100
+Sopro do Dragão	Dragão	Especial	60	100	20	Pode paralisar o oponente.	30
+Alegria do Dragão	Dragão	Status	—	∞	15		—
+Garra de Dragão	Dragão	Físico	80	100	15		—
+Dança do Dragão	Dragão	Status	—	—	20	Aumenta o Ataque e a Velocidade do usuário.	—
+Dardos de Dragão	Dragão	Físico	50	100	10	O usuário ataca duas vezes.	—
+Energia do Dragão	Dragão	Especial	150	100	5	Quanto maior a potência (HP) do usuário, maior o consumo de energia.	—
+Martelo do Dragão	Dragão	Físico	90	100	15	O usuário utiliza seu corpo como um martelo para atacar o alvo e causar dano.	—
+Pulso do Dragão	Dragão	Especial	85	100	10		—
+Fúria do Dragão	Dragão	Especial	—	100	10	Sempre causa 40 de dano.	—
+Corrida do Dragão	Dragão	Físico	100	75	10	Pode causar sobressaltos.	20
+Cauda de Dragão	Dragão	Físico	60	90	10	Em batalhas, o oponente troca de Pokémon. Na natureza, o Pokémon foge.	—
+Soco de drenagem	Combate	Físico	75	100	10	O usuário recupera metade dos pontos de vida infligidos ao oponente.	—
+Beijo Esgotante	Fada	Especial	50	100	10	O usuário recupera a maior parte dos pontos de vida infligidos ao oponente.	—
+Devorador de Sonhos	Psíquico	Especial	100	100	15	O usuário recupera metade dos pontos de vida infligidos a um oponente adormecido.	—
+Pedaço de perfuração	Vôo	Físico	80	100	20		—
+Execução de perfuração	Chão	Físico	80	95	10	Alta taxa de acerto crítico.	—
+Batida de tambor	Grama	Físico	80	100	10	Reduz a velocidade do oponente.	100
+Corte duplo	Dragão	Físico	40	90	15	Acerta duas vezes em um turno.	—
+Batida de Asa Dupla	Vôo	Físico	40	90	10	O usuário golpeia o alvo com suas asas. O alvo é atingido duas vezes seguidas.	—
+Canhão Dynamax	Dragão	Especial	100	100	5	O dano é dobrado se o oponente estiver Dynamaxed.	—
+Soco Dinâmico	Combate	Físico	100	50	5	Confunde o oponente.	100
+Poder da Terra	Chão	Especial	90	100	10	Pode reduzir a Defesa Especial do oponente.	10
+Terremoto	Chão	Físico	100	100	10	O poder é dobrado se o oponente estiver debaixo da terra devido ao uso de Escavação.	—
+Voz ecoada	Normal	Especial	40	100	15	A potência aumenta a cada turno.	—
+Impulso Assustador	Elétrico	Status	—	100	15	Reduz drasticamente o Ataque Especial do oponente.	—
+Feitiço Assustador	Psíquico	Especial	80	100	5	Causa dano e reduz os PP do oponente.	—
+Bomba de Ovo	Normal	Físico	100	75	10		—
+Terreno Elétrico	Elétrico	Status	—	—	10	Impede que todos os Pokémon adormeçam por 5 turnos.	—
+Eletrificar	Elétrico	Status	—	—	20	Altera o tipo de movimento do alvo para Elétrico.	—
+Bola Elétrica	Elétrico	Especial	—	100	10	Quanto mais rápido o usuário, mais forte o ataque.	—
+Deriva Eletro	Elétrico	Especial	100	100	5	O efeito é ainda maior se for super eficaz.	—
+Injeção Eletrocutânea	Elétrico	Especial	130	100	10	Investidas no primeiro turno, ataques no segundo.	—
+Electroweb	Elétrico	Especial	55	95	15	Reduz a velocidade do oponente.	100
+Embargo	Escuro	Status	—	100	15	O oponente não pode usar itens.	—
+Brasa	Fogo	Especial	40	100	25	Pode queimar o oponente.	10
+Encore	Normal	Status	—	100	5	Obriga o oponente a continuar usando seu último movimento por 3 turnos.	—
+Empreendimento	Normal	Físico	—	100	5	Reduz os PV do oponente ao mesmo valor dos PV do usuário.	—
+Aguentar	Normal	Status	—	—	10	Sempre resta pelo menos 1 HP, mas pode falhar se usado consecutivamente.	—
+Bola de Energia	Grama	Especial	90	100	10	Pode reduzir a Defesa Especial do oponente.	10
+Sincronização	Normal	Status	—	100	15	Faz com que a habilidade do alvo fique igual à do usuário.	—
+Erupção	Fogo	Especial	150	100	5	Mais forte quando o HP do usuário for maior.	—
+Asa Esper	Psíquico	Especial	80	100	10	Alta taxa de acerto crítico. Aumenta a velocidade do usuário.	—
+Raio Eterno	Dragão	Especial	160	90	5	O usuário não poderá jogar na próxima rodada.	—
+Força em Expansão	Psíquico	Especial	80	100	10	Aumenta o poder e atinge todos os oponentes em Terreno Psíquico.	—
+Explosão	Normal	Physical	250	100	5	Usuário desmaia.	—
+Extrassensorial	Psíquico	Special	80	100	20	Pode causar sobressaltos.	10
+Evoboost extremo	Normal	Status	—	—	1	Movimento Z exclusivo do Eevee. Aumenta drasticamente todos os atributos.	100
+Velocidade extrema	Normal	Physical	80	100	5	Ataques do usuário primeiro.	—
+Fachada	Normal	Physical	70	100	20	O poder dobra se o usuário for queimado, envenenado ou paralisado.	—
+Cadeado de Fada	Fada	Status	—	—	10	Impede a fuga no próximo turno.	—
+Vento de Fada	Fada	Special	40	100	30		—
+Falsa saída	Normal	Physical	40	100	10	O usuário ataca primeiro, o oponente recua. Só pode ser usado no primeiro turno.	100
+Lágrimas Falsas	Escuro	Status	—	100	20	Reduz drasticamente a Defesa Especial do oponente.	—
+Falsa Rendição	Escuro	Physical	80	∞	10	Ignora a precisão e a evasão.	—
+Falso deslize	Normal	Physical	40	100	40	Sempre deixa o oponente com pelo menos 1 PV.	—
+Dança das Penas	Vôo	Status	—	100	15	Reduz drasticamente o ataque do oponente.	—
+Finta	Normal	Physical	30	100	10	Só acerta se o oponente usar Proteger ou Detectar no mesmo turno.	—
+Ataque de finta	Escuro	Physical	60	∞	20	Ignora a precisão e a evasão.	—
+Ferrão caído	Erro	Physical	50	100	25	Aumenta drasticamente o Ataque do usuário se o alvo for nocauteado.	—
+Feixe Inconstante	Dragão	Special	80	100	5	Pode causar dano dobrado.	—
+Dança Ardente	Fogo	Special	80	100	10	Pode aumentar o Ataque Especial do usuário.	50
+Ira Ardente	Escuro	Special	90	100	10	Pode causar sobressaltos.	20
+Filete à vontade	Normal	Status	—	—	10	Reduz os PV, mas aumenta consideravelmente o Ataque, o Ataque Especial e a Velocidade.	—
+Última Jogada	Combate	Special	—	100	5	Causa dano igual aos pontos de vida restantes do usuário. O usuário desmaia.	—
+Explosão de Fogo	Fogo	Special	110	85	5	Pode queimar o oponente.	10
+Presa de Fogo	Fogo	Physical	65	95	15	Pode provocar sobressaltos e/ou queimaduras no oponente.	10
+Chicote de Fogo	Fogo	Physical	80	100	15	O usuário ataca o alvo com um chicote flamejante. Isso também reduz o atributo de Defesa do alvo.	100
+Juramento de Incêndio	Fogo	Special	80	100	10	Efeitos adicionais aparecem se combinado com Grass Pledge ou Water Pledge.	—
+Soco de Fogo	Fogo	Physical	75	100	15	Pode queimar o oponente.	10
+Giro de Fogo	Fogo	Special	35	85	15	Prende o oponente, causando dano por 4 a 5 turnos.	100
+Primeira impressão	Erro	Physical	90	100	10	Embora esse movimento tenha grande poder, ele só funciona no primeiro turno em que o usuário entra em batalha.	—
+Retalho Pesqueiro	Água	Physical	85	100	10	Se o usuário atacar antes do alvo, o poder desse movimento é dobrado.	—
+Fissura	Chão	Physical	—	30	5	Nocaute instantâneo, se acertar.	—
+Mangual	Normal	Physical	—	100	15	Quanto menor a potência (HP) do usuário, maior o consumo de energia.	—
+Explosão de Chamas	Fogo	Special	70	100	15	Também pode ferir Pokémon próximos.	—
+Carga de Chama	Fogo	Physical	50	100	20	Aumenta a velocidade do usuário.	100
+Roda de Chamas	Fogo	Physical	60	100	25	Pode queimar o oponente.	10
+Lança-chamas	Fogo	Special	90	100	15	Pode queimar o oponente.	10
+Ataque de sinalizadores	Fogo	Physical	120	100	15	O usuário sofre dano de recuo. Pode causar queimaduras no oponente.	10
+Clarão	Normal	Status	—	100	20	Reduz a precisão do oponente.	—
+Canhão de Flash	Aço	Special	80	100	10	Pode reduzir a Defesa Especial do oponente.	10
+Embelezar	Escuro	Status	—	100	15	Confunde o oponente, mas aumenta seu Ataque Especial.	—
+Fleur Cannon	Fada	Special	130	90	5	Reduz drasticamente o Ataque Especial do usuário.	100
+Arremesso	Escuro	Physical	—	100	10	A potência depende do objeto segurado.	—
+Vire e gire	Água	Physical	60	100	20	Após realizar seu ataque, o usuário retorna rapidamente para trocar de lugar com um Pokémon da equipe que o aguarda.	—
+Queda Flutuante	Vôo	Physical	90	95	15	Pode causar sobressaltos.	30
+Cura Floral	Fada	Status	—	—	10	O usuário restaura até metade do HP máximo do alvo. A restauração de HP é maior em terrenos com grama.	—
+Escudo de flores	Fada	Status	—	—	10	Aumenta drasticamente a Defesa de todos os Pokémon do tipo Grama em campo.	100
+Truque com flores	Grama	Physical	70	∞	10	Nunca erra; sempre resulta em um acerto crítico.	—
+Voar	Vôo	Physical	90	95	15	Voa no primeiro turno e ataca no segundo.	—
+Imprensa Voadora	Combate	Physical	100	95	10	Causa dano dos tipos Lutador e Voador.	—
+Explosão de foco	Combate	Special	120	70	5	Pode reduzir a Defesa Especial do oponente.	10
+Energia de foco	Normal	Status	—	—	30	Aumenta a taxa de acerto crítico.	—
+Soco Focalizado	Combate	Physical	150	100	20	Se o usuário for atingido antes de atacar, ele recua em vez de atacar.	—
+Me siga	Normal	Status	—	—	20	Em Batalha Dupla, o usuário recebe todos os ataques.	—
+Palma de Força	Combate	Physical	60	100	10	Pode paralisar o oponente.	30
+Previsão	Normal	Status	—	—	40	Redefine a Evasão do oponente e permite que ataques do tipo Normal e Lutador atinjam Fantasmas.	—
+A Maldição da Floresta	Grama	Status	—	100	20	Adiciona o tipo Grama ao oponente.	—
+Jogo sujo	Escuro	Physical	95	100	15	Utiliza o atributo de Ataque do oponente.	—
+Choque de congelamento	Gelo	Physical	140	90	5	Investida no primeiro turno, ataques no segundo. Pode paralisar o oponente.	30
+Liofilização	Gelo	Special	70	100	20	Pode congelar o oponente. Super eficaz contra tipos Água.	10
+Brilho congelante	Psíquico	Special	90	100	10	Pode congelar o oponente.	10
+Geada congelante	Gelo	Special	90	100	15	Redefine todas as alterações de estatísticas.	—
+Planta Frenética	Grama	Special	150	90	5	O usuário deverá recarregar no próximo turno.	—
+Sopro Congelante	Gelo	Special	60	90	10	Sempre resulta em um acerto crítico.	100
+Frustração	Normal	Physical	—	100	20	O poder diminui com níveis mais altos de amizade.	—
+Ataque de Fúria	Normal	Physical	15	85	20	Acerta de 2 a 5 vezes em um turno.	—
+Cortador de Fúria	Erro	Physical	40	95	20	A potência aumenta a cada turno.	—
+Ataques de fúria	Normal	Physical	18	80	15	Acerta de 2 a 5 vezes em um turno.	—
+Parafuso de Fusão	Elétrico	Physical	100	100	5	O poder aumenta se o Fusion Flare for usado no mesmo turno.	—
+Chama de fusão	Fogo	Special	100	100	5	O poder aumenta se o Raio de Fusão for usado no mesmo turno.	—
+Visão do Futuro	Psíquico	Special	120	100	10	O dano ocorre 2 turnos depois.	—
+G-Max Confuso	Erro	—	—	∞	5	Golpe G-Max exclusivo do Butterfree. Envenena, paralisa ou coloca o oponente para dormir.	100
+Canhonada G-Max	Água	—	—	∞	10	Ataque G-Max exclusivo do Blastoise. Causa dano a Pokémon que não sejam do tipo Água por 4 turnos.	—
+G-Max Centiferno	Fogo	—	—	∞	5	Movimento G-Max exclusivo do Centiskorch. Prende os oponentes por 4 a 5 turnos.	100
+Golpe G-Max Chi	Combate	—	—	∞	5	Movimento G-Max exclusivo do Machamp. Aumenta a chance de acerto crítico.	—
+Abraço G-Max	Normal	—	—	∞	5	Movimento G-Max exclusivo do Eevee. Cativa os oponentes.	100
+Depleção de G-Max	Dragão	—	—	∞	5	Golpe G-Max exclusivo do Duraludon. Reduz os PP do oponente.	—
+Solo de bateria G-Max	Grama	—	160	∞	5	Movimento G-Max exclusivo do Rillaboom. Ignora a habilidade do alvo.	—
+G-Max Finale	Fada	—	—	∞	5	Movimento G-Max exclusivo de Alcremie. Cura a equipe do usuário.	—
+Bola de Fogo G-Max	Fogo	—	160	∞	5	Movimento G-Max exclusivo do Cinderace. Ignora a habilidade do alvo.	—
+G-Max Foam Burst	Água	—	—	∞	5	Golpe G-Max exclusivo do Kingler. Reduz drasticamente a Velocidade dos oponentes.	100
+Corrida do Ouro G-Max	Normal	—	—	∞	5	Movimento G-Max exclusivo do Meowth. Confunde os oponentes e rende mais dinheiro.	100
+G-Max Gravitas	Psíquico	—	—	∞	5	Movimento G-Max exclusivo do Orbeetle. Invoca Gravidade por 5 turnos.	—
+Hidrosnipe G-Max	Água	—	160	∞	5	Golpe G-Max exclusivo do Inteleon. Ignora a habilidade do alvo.	—
+G-Max Malodor	Tóxico	—	—	∞	5	Golpe G-Max exclusivo do Garbodor. Envenena os oponentes.	100
+Colapso G-Max	Aço	—	—	∞	5	Golpe G-Max exclusivo do Melmetal. Impede que os oponentes usem o mesmo golpe duas vezes seguidas.	—
+G-Max Um Golpe	Escuro	—	—	∞	5	Golpe G-Max exclusivo do estilo Golpe Único de Urshifu. Ataca através de Guarda Máxima e Proteção.	—
+G-Max Fluxo Rápido	Água	—	—	∞	5	Golpe G-Max exclusivo do estilo Ataque Rápido de Urshifu. Ataca através de Guarda Máxima e Proteção.	—
+Reposição G-Max	Normal	—	—	∞	5	Movimento G-Max exclusivo do Snorlax. Recicla Frutas.	—
+Ressonância G-Max	Gelo	—	—	∞	5	Movimento G-Max exclusivo do Lapras. Reduz o dano recebido por 5 turnos.	—
+Jateamento de areia G-Max	Chão	—	—	∞	5	Golpe G-Max exclusivo de Sandaconda. Prende os oponentes por 4 a 5 turnos.	100
+Golpe G-Max	Fada	—	—	∞	5	Golpe G-Max exclusivo de Hatterene. Confunde os oponentes.	100
+Soneca G-Max	Escuro	—	—	∞	5	Golpe G-Max exclusivo do Grimmsnarl. Deixa os oponentes sonolentos.	—
+G-Max Steelsurge	Aço	—	—	∞	5	Movimento G-Max exclusivo de Copperajah. Cria Espinhos no campo.	—
+G-Max Stonesurge	Água	—	—	∞	5	Movimento G-Max exclusivo do Drednaw. Coloca Stealth Rock em jogo.	—
+Choque G-Max	Elétrico	—	—	∞	10	Golpe G-Max exclusivo do Toxtricity. Envenena ou paralisa os oponentes.	100
+Doçura G-Max	Grama	—	—	∞	10	Golpe G-Max exclusivo do Appletun. Cura os efeitos negativos da equipe do usuário.	—
+Acidez G-Max	Grama	—	—	∞	10	Movimento G-Max exclusivo do Flapple. Reduz a capacidade de evasão dos oponentes.	100
+G-Max Terror	Fantasma	—	—	∞	10	Movimento G-Max exclusivo do Gengar. Impede o oponente de trocar de Pokémon.	—
+Cílios G-Max Vine	Grama	—	—	∞	10	Golpe G-Max exclusivo do Venusaur. Causa dano a Pokémon que não sejam do tipo Grama por 4 turnos.	—
+G-Max Volcalith	Pedra	—	—	∞	10	Movimento G-Max exclusivo dos Coalossais. Causa dano por 4 turnos.	100
+Colisão G-Max Volt	Elétrico	—	—	∞	10	Movimento G-Max exclusivo do Pikachu. Paralisa os oponentes.	100
+Incêndio florestal G-Max	Fogo	—	—	∞	10	Movimento G-Max exclusivo do Charizard. Causa dano a Pokémon que não sejam do tipo Fogo por 4 turnos.	100
+Fúria do Vento G-Max	Vôo	—	—	∞	10	Movimento G-Max exclusivo do Corviknight. Remove perigos do campo de batalha.	—
+Ácido gastrointestinal	Tóxico	Status	—	100	10	Anula o efeito da Habilidade do oponente.	—
+Retífica de engrenagens	Aço	Físico	50	85	15	Acerta duas vezes em um turno.	—
+Prepare-se	Aço	Status	—	—	20	O usuário aciona suas engrenagens para aumentar os atributos de Ataque e Ataque Especial dos Pokémon aliados com a habilidade Mais ou Menos.	—
+Supernova de Gênesis	Psíquico	Especial	185	—	1	Movimento Z exclusivo do Mew.	—
+Geomancia	Fada	Status	—	—	10	Investe no primeiro turno e aumenta drasticamente o Ataque Especial, a Defesa Especial e a Velocidade do usuário no segundo.	—
+Giga Dreno	Grama	Especial	75	100	10	O usuário recupera metade dos pontos de vida infligidos ao oponente.	—
+Impacto Gigante	Normal	Físico	150	90	5	O usuário deverá recarregar no próximo turno.	—
+Martelo Gigaton	Aço	Físico	160	100	5	Não pode ser usado duas vezes seguidas.	—
+Caos Gigavolt	Elétrico	—	—	—	1	Movimento elétrico tipo Z.	—
+Lança Glacial	Gelo	Físico	120	100	5	O usuário ataca lançando uma lança de gelo envolta em nevasca contra os Pokémon adversários.	—
+Glaciar	Gelo	Especial	65	95	10	Reduz a velocidade do oponente.	100
+Glaive Rush	Dragão	Físico	120	100	5	Os ataques de Pokémon adversários durante o próximo turno não podem errar e causarão o dobro de dano.	—
+Brilho	Normal	Status	—	100	30	Paralisa o oponente.	—
+Brilho deslumbrante	Psíquico	Especial	90	100	15	Reduz o dano de ataques especiais.	—
+Nó de grama	Grama	Especial	—	100	20	Quanto mais pesado o oponente, mais forte o ataque.	—
+Compromisso com a Grama	Grama	Especial	80	100	10	Efeitos adicionais aparecem se precedidos por Juramento da Água ou sucedidos por Juramento do Fogo.	—
+Apito de grama	Grama	Status	—	55	15	Coloca o oponente para dormir.	—
+Deslize na grama	Grama	Físico	55	100	20	Alta prioridade durante terrenos gramados.	—
+Terreno gramado	Grama	Status	—	—	10	Restaura um pouco de HP de todos os Pokémon por 5 turnos.	—
+Maçã Grav	Grama	Físico	80	100	10	Reduz o atributo de Defesa do oponente.	100
+Gravidade	Psíquico	Status	—	—	5	Impede movimentos como Voar e Saltar, além da habilidade Levitar, por 5 turnos.	—
+Rosnar	Normal	Status	—	100	40	Reduz o ataque do oponente.	—
+Crescimento	Normal	Status	—	—	20	Aumenta o Ataque e o Ataque Especial do usuário.	—
+Rancor	Fantasma	Status	—	—	5	Se o usuário desmaiar após usar esse movimento, os PP (Pontos de Poder) do último movimento do oponente serão esgotados.	—
+Divisão de guarda	Psíquico	Status	—	—	10	Defesa média e defesa especial com o alvo.	—
+Troca de Guarda	Psíquico	Status	—	—	10	Usuário e oponente trocam Defesa e Defesa Especial.	—
+Guardião de Alola	Fada	Especial	—	—	1	Movimento Z exclusivo do Tapu. Reduz o HP do oponente em 75%.	—
+Guilhotina	Normal	Físico	—	30	5	Nocaute instantâneo, se acertar.	—
+Tiro de Gunk	Tóxico	Físico	120	80	5	Pode envenenar o oponente.	30
+Rajada	Vôo	Especial	40	100	35	Ataca Pokémon usando Fly/Bounce/Sky Drop com poder dobrado.	—
+Bola giroscópica	Aço	Físico	—	100	5	Quanto mais lento o usuário, mais forte o ataque.	—
+Saudação	Gelo	Status	—	—	10	Os tipos que não são de Gelo sofrem dano por 5 turnos.	—
+Braço do martelo	Combate	Físico	100	90	10	Reduz a velocidade do usuário.	100
+Hora Feliz	Normal	Status	—	—	30	Dobra o prêmio em dinheiro das batalhas entre treinadores.	—
+Imprensa Forte	Aço	Físico	—	100	10		—
+Endurecer	Normal	Status	—	—	30	Aumenta a defesa do usuário.	—
+Confusão	Gelo	Status	—	—	30	Redefine todas as alterações de estatísticas.	—
+Encargo principal	Normal	Físico	120	100	15	O usuário sofre dano por recuo.	—
+Esmagamento de cabeça	Pedra	Físico	150	80	5	O usuário sofre dano por recuo.	—
+Cabeçada	Normal	Físico	70	100	15	Pode causar sobressaltos.	30
+Corrida de cabeça	Chão	Físico	120	100	5	Reduz a defesa do usuário.	—
+Sino da Cura	Normal	Status	—	—	5	Cura as condições negativas do grupo do usuário.	—
+Bloqueio de cura	Psíquico	Status	—	100	15	Impede o oponente de recuperar PV por 5 turnos.	—
+Ordem de cura	Erro	Status	—	—	10	O usuário recupera metade de seus pontos de vida máximos.	—
+Pulso de cura	Psíquico	Status	—	—	10	Restaura metade da vida máxima do alvo.	—
+Desejo de Cura	Psíquico	Status	—	—	10	O usuário desmaia e o próximo Pokémon liberado está totalmente curado.	—
+Carimbo de Coração	Psíquico	Físico	60	100	25	Pode causar sobressaltos.	30
+Troca de Corações	Psíquico	Status	—	—	10	As alterações de atributos são trocadas com o oponente.	—
+Colapso térmico	Fogo	Físico	—	100	10	Quanto mais pesado o usuário, mais forte o ataque.	—
+Onda de calor	Fogo	Especial	95	90	10	Pode queimar o oponente.	10
+Golpe pesado	Aço	Físico	—	100	10	Quanto mais pesado o usuário, mais forte o ataque.	—
+Mão amiga	Normal	Status	—	—	20	Em Batalhas em Dupla, aumenta o poder do movimento do parceiro.	—
+Hex	Fantasma	Especial	65	100	10	Causa mais dano se o alvo estiver sob efeito de alguma condição negativa.	—
+Poder Oculto	Normal	Especial	60	100	15	O tipo e a potência dependem dos níveis intravenosos do usuário.	—
+Alta potência	Chão	Físico	95	95	10	O usuário ataca o alvo ferozmente usando todo o seu corpo.	—
+Chute de salto alto	Combate	Físico	130	90	10	Se errar o alvo, o usuário perde metade de seus pontos de vida.	—
+Contenha-se	Normal	Físico	40	100	40	Sempre deixa o oponente com pelo menos 1 PV.	—
+Dar as mãos	Normal	Status	—	—	40	Isso deixa o usuário e um aliado muito felizes.	—
+Afiar Garras	Escuro	Status	—	—	15	Aumenta o Ataque e a Precisão do usuário.	—
+Ataque de Chifre	Normal	Físico	65	100	25		—
+Broca de chifre	Normal	Físico	—	30	5	Nocaute instantâneo, se acertar.	—
+Sanguessuga de chifre	Grama	Físico	75	100	10	O usuário recupera metade dos pontos de vida infligidos ao oponente.	—
+Uivo	Normal	Status	—	—	40	Aumenta o ataque dos aliados.	—
+Furacão	Vôo	Especial	110	70	10	Pode confundir o oponente.	30
+Canhão Hidro	Água	Especial	150	90	5	O usuário deverá recarregar no próximo turno.	—
+Bomba hidráulica	Água	Especial	110	80	5		—
+Hidro Vapor	Água	Especial	80	100	15	A potência aumenta sob luz solar intensa.	—
+Hidrovórtice	Água	—	—	—	1	Movimento Z do tipo Água.	—
+Hiper Raio	Normal	Especial	150	90	5	O usuário deverá recarregar no próximo turno.	—
+Hiperbroca	Normal	Físico	100	100	5	Pode ignorar a proteção/detecção.	—
+Hiper Presa	Normal	Físico	80	90	15	Pode causar sobressaltos.	10
+Hipervoz	Normal	Especial	90	100	10		—
+Fúria do Hiperespaço	Escuro	Físico	100	∞	5	Reduz a Defesa do usuário. Pode atacar mesmo com Proteção/Detecção ativada.	100
+Buraco no Hiperespaço	Psíquico	Especial	80	∞	5	Pode ignorar a proteção/detecção.	—
+Hipnose	Psíquico	Status	—	60	20	Coloca o oponente para dormir.	—
+Bola de gelo	Gelo	Físico	30	90	20	Dobra seu poder a cada turno por 5 turnos.	—
+Raio de Gelo	Gelo	Especial	90	100	10	Pode congelar o oponente.	10
+Queimadura de gelo	Gelo	Especial	140	90	5	Investida no primeiro turno, ataques no segundo. Pode causar queimaduras no oponente.	30
+Presa de Gelo	Gelo	Físico	65	95	15	Pode provocar sobressaltos e/ou paralisar o oponente.	10
+Martelo de Gelo	Gelo	Físico	100	90	10	O usuário desfere um golpe com seu punho forte e pesado. Isso, no entanto, reduz a Velocidade do usuário.	100
+Soco de Gelo	Gelo	Físico	75	100	15	Pode congelar o oponente.	10
+Estilhaço de Gelo	Gelo	Físico	40	100	30	Ataques do usuário primeiro.	—
+Girador de gelo	Gelo	Físico	80	100	15	Remove os efeitos do terreno.	—
+Colisão de gelo	Gelo	Físico	85	90	10	Pode causar sobressaltos.	30
+Lança de Gelo	Gelo	Físico	25	100	30	Acerta de 2 a 5 vezes em um turno.	—
+Vento gelado	Gelo	Especial	55	95	15	Reduz a velocidade do oponente.	100
+Prisão	Psíquico	Status	—	—	10	O oponente não pode usar movimentos que o usuário também conheça.	—
+Incinerar	Fogo	Especial	60	100	15	Destrói a baga que o alvo está segurando.	—
+Desfile Infernal	Fantasma	Especial	60	100	15	Causa dano dobrado se o alvo estiver sob efeito de alguma condição negativa.	—
+Inferno	Fogo	Especial	100	50	5	Queima o oponente.	100
+Inferno Overdrive	Fogo	—	—	—	1	Movimento Z do tipo Fogo.	—
+Infestação	Erro	Especial	20	100	20	Prende o oponente, causando dano por 4 a 5 turnos.	100
+Enraizar	Grama	Status	—	—	20	O usuário recupera HP a cada turno. O usuário não pode escapar/trocar de personagem.	—
+Instruir	Psíquico	Status	—	—	15	Permite que um aliado use um movimento em vez disso.	—
+Dilúvio de íons	Elétrico	Status	—	—	25	Mudanças de tipo Normal para tipo Elétrico.	—
+Defesa de Ferro	Aço	Status	—	—	15	Aumenta drasticamente a Defesa do usuário.	—
+Cabeça de Ferro	Aço	Físico	80	100	15	Pode causar sobressaltos.	30
+Cauda de Ferro	Aço	Físico	100	75	15	Pode diminuir a Defesa do oponente.	30
+Porrete de Hera	Grama	Físico	100	—	—	Alta taxa de acerto crítico. O tipo muda de acordo com a forma.	—
+Trava da mandíbula	Escuro	Físico	80	100	10	Impede que o usuário e o oponente troquem de personagem.	—
+Soco a Jato	Água	Físico	60	100	15	Sempre vai primeiro.	—
+Julgamento	Normal	Especial	100	100	10	O tipo depende da Placa de Arceus que estiver sendo segurada.	—
+Chute com salto	Combate	Físico	100	95	10	Se errar o alvo, o usuário perde metade de seus pontos de vida.	—
+Cura na selva	Grama	Status	—	—	10	Restaura os PV da equipe e cura condições negativas.	—
+Golpe de karatê	Combate	Físico	50	100	25	Alta taxa de acerto crítico.	—
+Cinesis	Psíquico	Status	—	80	15	Reduz a precisão do oponente.	—
+Escudo do Rei	Aço	Status	—	—	10	Protege o usuário e reduz o Ataque do oponente ao contato.	—
+Réplica	Escuro	Físico	65	100	20	Remove o item que o oponente estiver segurando pelo resto da batalha.	—
+Fenda de reverência	Escuro	Físico	85	∞	10	Sempre acerta.	—
+Ira da Terra	Chão	Físico	90	100	10		—
+Foco a laser	Normal	Status	—	—	30	O próximo ataque do usuário resultará em um acerto crítico garantido.	—
+Atacar	Escuro	Físico	75	100	5	Dobra o poder se os atributos forem reduzidos durante o turno.	—
+Último recurso	Normal	Físico	140	100	5	Só pode ser usado depois de todos os outros movimentos terem sido utilizados.	—
+Últimas homenagens	Fantasma	Físico	50	100	10	O dano aumenta quanto mais Pokémon do grupo forem derrotados.	—
+Pluma de lava	Fogo	Especial	80	100	15	Pode queimar o oponente.	30
+Lâmina da folha	Grama	Físico	90	100	15	Alta taxa de acerto crítico.	—
+Tempestade de Folhas	Grama	Especial	130	90	5	Reduz drasticamente o Ataque Especial do usuário.	100
+Tornado de folhas	Grama	Especial	65	90	10	Pode diminuir a precisão do oponente.	50
+Folhagem	Grama	Físico	40	100	40	Ataca o oponente com folhas.	—
+Vida de sanguessuga	Erro	Físico	80	100	10	O usuário recupera metade dos pontos de vida infligidos ao oponente.	—
+Semente de sanguessuga	Grama	Status	—	90	10	Drena os PV do oponente a cada turno.	—
+Olhar malicioso	Normal	Status	—	100	30	Reduz a defesa do oponente.	100
+Vamos nos aconchegar para sempre.	Fada	Físico	190	—	1	Movimento Z exclusivo do Mimikyu.	—
+Lamber	Fantasma	Físico	30	100	30	Pode paralisar o oponente.	30
+Orvalho da Vida	Água	Status	—	—	10	O usuário e seus companheiros de equipe recuperam HP.	—
+Luz da Ruína	Fada	Especial	140	90	5	O usuário sofre dano por recuo.	—
+Tela de luz	Psíquico	Status	—	—	30	Reduz pela metade o dano recebido de ataques especiais por 5 turnos.	—
+Luz que queima o céu	Psíquico	Especial	200	—	1	Movimento Z exclusivo do Ultra Necrozma. Ignora a habilidade do alvo; usa o atributo de Ataque mais alto.	—
+Liquidação	Água	Físico	85	100	10	Pode diminuir a Defesa do oponente.	20
+Bloqueio	Normal	Status	—	—	5	O próximo ataque do usuário tem acerto garantido.	—
+Beijo adorável	Normal	Status	—	75	10	Coloca o oponente para dormir.	—
+Chute baixo	Combate	Físico	—	100	20	Quanto mais pesado o oponente, mais forte o ataque.	—
+Varredura baixa	Combate	Físico	65	100	20	Reduz a velocidade do oponente.	100
+Canto da Sorte	Normal	Status	—	—	30	O oponente não poderá realizar acertos críticos por 5 turnos.	—
+Lumina Crash	Psíquico	Especial	80	100	10	Reduz drasticamente a Defesa Especial do alvo.	—
+Bênção Lunar	Psíquico	Status	—	—	5	Cura as condições negativas do usuário e recupera HP.	—
+Dança Lunar	Psíquico	Status	—	—	10	O usuário desmaia, mas o próximo Pokémon liberado está totalmente curado.	—
+Estocada	Erro	Físico	80	100	15	O usuário desfere um golpe em direção ao alvo, atacando com força total. Isso também reduz o atributo de Ataque do alvo.	100
+Purificação de Brilho	Psíquico	Especial	95	100	5	Pode reduzir a Defesa Especial do oponente.	50
+Mach Punch	Combate	Físico	40	100	30	Ataques do usuário primeiro.	—
+Casaco Mágico	Psíquico	Status	—	—	15	Reflete ações que causam condições de status de volta para o atacante.	—
+Pó Mágico	Psíquico	Status	—	100	20	Altera o tipo do alvo para Psíquico.	—
+Sala Mágica	Psíquico	Status	—	—	10	Suprime os efeitos de itens equipados por cinco turnos.	—
+Folha Mágica	Grama	Especial	60	∞	20	Ignora a precisão e a evasão.	—
+Torque Mágico	Fada	Físico	100	100	10	Pode confundir o oponente.	—
+Tempestade de Magma	Fogo	Especial	100	75	5	Prende o oponente, causando dano por 4 a 5 turnos.	100
+Bomba Magnética	Aço	Físico	60	∞	20	Ignora a precisão e a evasão.	—
+Magnet Rise	Elétrico	Status	—	—	10	O usuário fica imune a golpes do tipo Terrestre por 5 turnos.	—
+Fluxo magnético	Elétrico	Status	—	—	20	Aumenta a Defesa e a Defesa Especial de Pokémon com Plus/Minus.	—
+Magnitude	Chão	Físico	—	100	30	Golpes com poder aleatório.	—
+Faça chover	Aço	Especial	120	100	5	Reduz o Ataque Especial do usuário. O dinheiro é ganho após a batalha.	—
+Salto mortal maligno	Escuro	Físico	180	—	1	Movimento Z exclusivo do Incineroar.	—
+Cadeia maligna	Tóxico	Especial	100	100	5	Pode envenenar o oponente.	—
+Bloco de Mat	Combate	Status	—	—	10	Protege os companheiros de equipe de movimentos prejudiciais.	—
+Matcha te peguei	Grama	Especial	80	90	15	Causa dano, restaura PV e pode causar queimaduras no oponente.	20
+Max Airstream	Vôo	—	—	—	—	Movimento Dynamax do tipo Voador. Aumenta a Velocidade da equipe.	100
+Escuridão máxima	Escuro	—	—	—	—	Movimento Dynamax do tipo Sombrio. Reduz a Defesa Especial do alvo.	100
+Flare máximo	Fogo	—	—	—	—	Movimento Dynamax do tipo Fogo. Invoca a luz solar intensa.	—
+Max Flutterby	Erro	—	—	—	—	Movimento Dynamax do tipo Inseto. Reduz o Ataque Especial do alvo.	100
+Max Geyser	Água	—	—	—	—	Movimento Dynamax do tipo Água. Invoca uma forte chuva.	—
+Max Guard	Normal	—	—	—	—	Categoria de status: Movimento Dynamax. Protege o usuário.	—
+Tempestade de granizo máxima	Gelo	—	—	—	—	Movimento Dynamax do tipo Gelo. Invoca granizo.	—
+Max Knuckle	Combate	—	—	—	—	Movimento Dynamax do tipo Lutador. Aumenta o Ataque da equipe.	100
+Relâmpago Máximo	Elétrico	—	—	—	—	Movimento Dynamax do tipo Elétrico. Invoca o Campo Elétrico.	—
+Max Mindstorm	Psíquico	—	—	—	—	Movimento Dynamax do tipo Psíquico. Invoca o Terreno Psíquico.	—
+Max Ooze	Tóxico	—	—	—	—	Movimento Dynamax do tipo Veneno. Aumenta o Ataque Especial da equipe.	100
+Crescimento excessivo máximo	Grama	—	—	—	—	Movimento Dynamax do tipo Grama. Invoca o Campo Gramado.	—
+Max Phantasm	Fantasma	—	—	—	—	Movimento Dynamax do tipo Fantasma. Reduz a Defesa do alvo.	100
+Quake máximo	Chão	—	—	—	—	Movimento Dynamax do tipo Terrestre. Aumenta a Defesa Especial da equipe.	100
+Max Rockfall	Pedra	—	—	—	—	Movimento Dynamax do tipo Pedra. Invoca uma tempestade de areia.	—
+Max Starfall	Fada	—	—	—	—	Movimento Dynamax do tipo Fada. Invoca o Campo Nebuloso.	—
+Max Steelspike	Aço	—	—	—	—	Movimento Dynamax do tipo Aço. Aumenta a Defesa da equipe.	100
+Golpe máximo	Normal	—	—	—	—	Movimento Dynamax do tipo Normal. Reduz a Velocidade do alvo.	100
+Max Wyrmwind	Dragão	—	—	—	—	Movimento Dynamax do tipo Dragão. Reduz o Ataque do alvo.	100
+Eu primeiro	Normal	Status	—	—	20	O usuário copia o ataque do oponente com 1,5× de potência.	—
+Olhar ameaçador	Normal	Status	—	—	5	O oponente não pode fugir nem trocar de posição.	—
+Meditar	Psíquico	Status	—	—	40	Aumenta o Ataque do usuário.	—
+Mega Dreno	Grama	Especial	40	100	15	O usuário recupera metade dos pontos de vida infligidos ao oponente.	—
+Mega chute	Normal	Físico	120	75	5		—
+Mega Soco	Normal	Físico	80	85	20		—
+Megachifre	Erro	Físico	120	85	10		—
+Lembrança	Escuro	Status	—	100	10	O usuário desmaia, reduzindo drasticamente o Ataque e o Ataque Especial do oponente.	—
+Maelstrom ameaçador de Moonraze	Fantasma	Especial	200	—	1	Movimento Z exclusivo da Lunala.	—
+Explosão Metálica	Aço	Físico	—	100	10	Causa dano igual a 1,5 vezes o ataque do oponente.	—
+Garra de Metal	Aço	Físico	50	95	35	Pode aumentar o risco de ataque do usuário.	10
+Som metálico	Aço	Status	—	85	40	Reduz drasticamente a Defesa Especial do oponente.	—
+Ataque de Meteoros	Combate	Físico	150	100	5	O usuário deverá recarregar no próximo turno.	—
+Raio de Meteoro	Pedra	Especial	120	90	10	O usuário acumula poder espacial e aumenta seu atributo de Ataque Especial, atacando o alvo no próximo turno.	—
+Meteor Mash	Aço	Físico	90	90	10	Pode aumentar o risco de ataque do usuário.	20
+Metrônomo	Normal	Status	—	—	10	O usuário realiza praticamente qualquer movimento no jogo de forma aleatória.	—
+Fenda Poderosa	Pedra	Físico	95	100	5		—
+Bebida láctea	Normal	Status	—	—	5	O usuário recupera metade de seus pontos de vida máximos.	—
+Imitar	Normal	Status	—	—	10	Copia o último movimento do oponente.	—
+Mente explodida	Fogo	Especial	150	100	5	O usuário sofre dano por recuo.	—
+Leitor de Mentes	Normal	Status	—	—	5	O próximo ataque do usuário tem acerto garantido.	—
+Minimizar	Normal	Status	—	—	10	Aumenta drasticamente a capacidade de evasão do usuário.	—
+Olho Milagroso	Psíquico	Status	—	—	40	Redefine a Evasão do oponente e remove a imunidade Psíquica de Dark.	—
+Revestimento Espelhado	Psíquico	Especial	—	100	20	Ao ser atingido por um Ataque Especial, o usuário contra-ataca com o dobro do poder.	—
+Movimento Espelhado	Vôo	Status	—	—	20	O usuário executa o último movimento do oponente.	—
+Foto no espelho	Aço	Especial	65	85	10	Pode diminuir a precisão do oponente.	30
+Névoa	Gelo	Status	—	—	30	As estatísticas do usuário não podem ser alteradas por um determinado período de tempo.	—
+Bola de Névoa	Psíquico	Especial	95	100	5	Pode reduzir o Ataque Especial do oponente.	50
+Explosão Nebulosa	Fada	Especial	100	100	5	A potência aumenta em terrenos nebulosos.	—
+Terreno Nebuloso	Fada	Status	—	—	10	Protege o campo de condições de status por 5 turnos.	—
+Explosão lunar	Fada	Especial	95	100	15	Pode reduzir o Ataque Especial do oponente.	30
+Raio Moongeist	Fantasma	Especial	100	100	5	Ignora a habilidade do alvo.	—
+Luar	Fada	Status	—	—	5	O usuário recupera HP. A quantidade varia de acordo com o clima.	—
+Sol da manhã	Normal	Status	—	—	5	O usuário recupera HP. A quantidade varia de acordo com o clima.	—
+Giro Mortal	Tóxico	Físico	30	100	15	Remove armadilhas de entrada e efeitos de movimentos-armadilha, além de envenenar os Pokémon oponentes.	—
+Vendaval de montanha	Gelo	Físico	100	85	10	Reduz a velocidade do usuário.	—
+Bomba de lama	Chão	Especial	65	85	10	Pode diminuir a precisão do oponente.	30
+Foto de lama	Chão	Especial	55	95	15	Reduz a velocidade do oponente.	100
+Esporte na lama	Chão	Status	—	—	15	Diminui o poder dos golpes do tipo Elétrico.	—
+Tapa de lama	Chão	Especial	20	100	10	Reduz a precisão do oponente.	100
+Água barrenta	Água	Especial	90	85	10	Pode diminuir a precisão do oponente.	30
+Ataque múltiplo	Normal	Físico	120	100	10	O tipo corresponde ao item de memória armazenado.	—
+Fogo Místico	Fogo	Especial	75	100	10	Reduz o Ataque Especial do oponente.	100
+Poder Místico	Psíquico	Especial	70	90	10	Aumenta o Ataque Especial do usuário.	—
+Plano Maligno	Escuro	Status	—	—	20	Aumenta consideravelmente o Ataque Especial do usuário.	—
+Dom Natural	Normal	Físico	—	100	15	A potência e o tipo dependem da fruta que o usuário estiver segurando.	—
+Poder da Natureza	Normal	Status	—	—	20	Utiliza um movimento específico com base no terreno atual.	—
+Loucura da Natureza	Fada	Especial	—	90	10	Reduz pela metade os pontos de vida do inimigo.	—
+Braço da agulha	Grama	Físico	60	100	15	Pode causar sobressaltos.	30
+Pesadelo sem fim	Fantasma	—	—	—	1	Movimento Z do tipo Fantasma.	—
+Noites Divertidas	Escuro	Especial	85	95	10	Pode diminuir a precisão do oponente.	40
+Solanácea	Fantasma	Especial	—	100	15	Causa dano igual ao nível do usuário.	—
+Corte Noturno	Escuro	Físico	70	100	15	Alta taxa de acerto crítico.	—
+Pesadelo	Fantasma	Status	—	100	15	O oponente adormecido perde 25% de seus pontos de vida máximos a cada turno.	—
+Sem Recuo	Combate	Status	—	—	5	Aumenta todos os atributos, mas o usuário não pode trocar de arma.	100
+Rugido Nobre	Normal	Status	—	100	30	Reduz o Ataque e o Ataque Especial do oponente.	100
+Torque Nocivo	Tóxico	Físico	100	100	10	Pode envenenar o oponente.	—
+Aconchego	Elétrico	Físico	20	100	20	Paralisa o oponente.	100
+Asa do Esquecimento	Vôo	Especial	80	100	10	O usuário recupera a maior parte dos pontos de vida infligidos ao oponente.	—
+Obstruir	Escuro	Status	—	100	10	Protege o usuário e reduz drasticamente a Defesa ao contato.	—
+Opereta Oceânica	Água	Especial	195	—	1	Movimento Z exclusivo da Primarina.	—
+Octazooka	Água	Especial	65	85	10	Pode diminuir a precisão do oponente.	50
+Octolock	Combate	Status	—	100	15	Reduz a Defesa e a Defesa Especial do oponente a cada turno, e ele não pode fugir nem ser trocado de Pokémon.	—
+Detetive de Odores	Normal	Status	—	—	40	Redefine a Evasão do oponente e permite que ataques do tipo Normal e Lutador atinjam Fantasmas.	—
+Vento Sombrio	Fantasma	Especial	60	100	5	Pode aumentar as estatísticas de todos os usuários de uma só vez.	10
+Faça seu pedido	Dragão	Físico	80	100	10	Aumenta o Ataque/Defesa/Velocidade dependendo do aliado Tatsugiri.	—
+Pulso de origem	Água	Especial	110	85	10	Atinge todos os oponentes adjacentes.	—
+Ultraje	Dragão	Físico	120	100	10	O usuário ataca por 2 a 3 turnos, mas depois fica confuso.	—
+Sobrecarga	Elétrico	Especial	80	100	10	Atinge todos os oponentes adjacentes.	—
+Superaquecimento	Fogo	Especial	130	90	5	Reduz drasticamente o Ataque Especial do usuário.	100
+Dor Dividida	Normal	Status	—	—	20	A média dos pontos de vida (HP) do usuário e do oponente é obtida a partir desses dois valores.	—
+Carga Parabólica	Elétrico	Especial	65	100	20	O usuário recupera metade dos pontos de vida infligidos ao oponente.	—
+Última foto	Escuro	Status	—	100	20	Reduz o Ataque e o Ataque Especial do oponente e então troca de Pokémon.	100
+Dia de pagamento	Normal	Físico	40	100	20	O dinheiro é ganho após a batalha.	—
+Retribuição	Escuro	Físico	50	100	10	O poder dobra se o usuário for atacado primeiro.	—
+Bicada	Vôo	Físico	35	100	35		—
+Canção da Perdição	Normal	Status	—	—	5	Qualquer Pokémon em jogo no momento em que este ataque for usado desmaiará em 3 turnos.	—
+Nevasca de Pétalas	Grama	Físico	90	100	15	Atinge todos os Pokémon adjacentes.	—
+Dança das Pétalas	Grama	Especial	120	100	10	O usuário ataca por 2 a 3 turnos, mas depois fica confuso.	—
+Força Fantasma	Fantasma	Físico	90	100	10	Desaparece no primeiro turno, ataca no segundo. Pode atacar mesmo com Proteção/Detecção.	—
+Gêiser de fótons	Psíquico	Especial	100	100	5	Utiliza o atributo de Ataque ou Ataque Especial, o que for maior.	—
+Pika Papow	Elétrico	Especial	—	∞	20	O poder aumenta quando o vínculo entre os jogadores é mais forte.	—
+Míssil Pin	Erro	Físico	25	95	20	Acerta de 2 a 5 vezes em um turno.	—
+Punhos de Plasma	Elétrico	Físico	100	100	15	Altera golpes do tipo Normal para golpes do tipo Elétrico.	—
+Sejam gentis	Normal	Status	—	—	20	Reduz o Ataque do oponente. Sempre acerta.	100
+Brinque de forma bruta	Fada	Físico	90	90	10	Pode diminuir o Ataque do oponente.	10
+Arrancar	Vôo	Físico	60	100	20	Se o oponente estiver segurando uma fruta, o efeito dela é roubado pelo usuário.	—
+Presa Venenosa	Tóxico	Físico	50	100	15	Pode envenenar gravemente o oponente.	50
+Gás venenoso	Tóxico	Status	—	90	40	Envenena o oponente.	—
+Injeção de veneno	Tóxico	Físico	80	100	20	Pode envenenar o oponente.	30
+Pó venenoso	Tóxico	Status	—	75	35	Envenena o oponente.	—
+Picada Venenosa	Tóxico	Físico	15	100	35	Pode envenenar o oponente.	30
+Cauda Venenosa	Tóxico	Físico	50	100	25	Alta taxa de acerto crítico. Pode envenenar o oponente.	10
+Puff de pólen	Erro	Especial	90	100	15	Causa dano ao oponente ou restaura os PV de um aliado.	—
+Poltergeist	Fantasma	Físico	110	90	5	Falha se o alvo não possuir nenhum item.	—
+Bomba Populacional	Normal	Físico	20	90	10	Acerta de 1 a 10 vezes seguidas.	—
+Ataque	Erro	Físico	50	100	20	Reduz a velocidade do oponente.	100
+Libra	Normal	Físico	40	100	35		—
+Pó	Erro	Status	—	100	20	Causa dano a Pokémon usando golpes do tipo Fogo.	—
+Neve em pó	Gelo	Especial	40	100	25	Pode congelar o oponente.	10
+Gema do Poder	Pedra	Especial	80	100	20		—
+Mudança de potência	Normal	Status	—	—	10	Altera os atributos de Ataque e Defesa.	—
+Divisão de potência	Psíquico	Status	—	—	10	Médias de Ataque e Ataque Especial com o alvo.	—
+Troca de energia	Psíquico	Status	—	—	10	Usuário e oponente trocam Ataque e Ataque Especial.	—
+Truque de Poder	Psíquico	Status	—	—	10	Interruptor de ataque e defesa personalizado pelo usuário.	—
+Viagem de Poder	Escuro	Físico	20	100	10	O usuário exibe sua força e ataca o alvo. Quanto maiores forem os atributos do usuário, maior será o poder do golpe.	—
+Chicote de potência	Grama	Físico	120	85	10		—
+Soco Potencializado	Combate	Físico	40	100	20	Aumenta o Ataque.	100
+Lâminas do Precipício	Chão	Físico	120	85	10	Atinge todos os oponentes adjacentes.	—
+Presente	Normal	Físico	—	90	15	Causa dano ou cura.	—
+Laser prismático	Psíquico	Especial	160	100	10	O usuário dispara lasers poderosos usando o poder de um prisma. O usuário não pode se mover no próximo turno.	—
+Proteger	Normal	Status	—	—	10	Protege o usuário, mas pode falhar se usado consecutivamente.	—
+Psybeam	Psíquico	Especial	65	100	20	Pode confundir o oponente.	10
+Psyblade	Psíquico	Físico	80	100	15	A potência aumenta no terreno elétrico.	—
+Prepare-se para a ação!	Normal	Status	—	—	10	Copia as alterações de atributos do oponente.	—
+Psíquico	Psíquico	Especial	90	100	10	Pode reduzir a Defesa Especial do oponente.	10
+Presas Psíquicas	Psíquico	Físico	85	100	10	O usuário ataca o alvo com suas habilidades psíquicas. Isso também pode destruir a Tela de Luz e o Reflexo.	—
+Ruído Psíquico	Psíquico	Especial	75	100	10	Causa dano e impede que o alvo se cure.	—
+Terreno Psíquico	Psíquico	Status	—	—	10	Impede que movimentos prioritários sejam usados ​​por 5 turnos.	—
+Impulso Psicológico	Psíquico	Especial	140	90	5	Reduz drasticamente o Ataque Especial do usuário.	100
+Corte Psicopata	Psíquico	Físico	70	100	20	Alta taxa de acerto crítico.	—
+Mudança Psicológica	Psíquico	Status	—	100	10	Transfere o estado do usuário para o oponente.	—
+Golpe de Escudo Psíquico	Psíquico	Físico	70	90	10	Aumenta a Defesa e a Defesa Especial do usuário.	—
+Psyshock	Psíquico	Especial	80	100	10	Causa dano com base na Defesa do alvo, não na Defesa Especial.	—
+Psíquico	Psíquico	Especial	100	100	10	Causa dano com base na Defesa do alvo, não na Defesa Especial.	—
+Onda Psíquica	Psíquico	Especial	—	100	15	Causa dano equivalente a 50-150% do nível do usuário.	—
+Panqueca pulverizadora	Normal	Físico	210	—	1	Movimento Z do tipo Normal exclusivo do Snorlax.	—
+Punição	Escuro	Físico	—	100	5	O poder aumenta quando os atributos do oponente são aumentados.	—
+Purificar	Tóxico	Status	—	—	20	O usuário cura a condição negativa do alvo. Se o movimento for bem-sucedido, ele também restaura o próprio HP do usuário.	—
+Perseguir	Escuro	Físico	40	100	20	Dobre o poder se o oponente estiver trocando de Pokémon.	—
+Bola de fogo	Fogo	Físico	120	90	5	Pode queimar o oponente.	10
+Anular	Escuro	Status	—	100	15	Faz com que a ação alvo dure este turno.	—
+Ataque rápido	Normal	Físico	40	100	30	Ataques do usuário primeiro.	—
+Quick Guard	Combate	Status	—	—	15	Protege a equipe do usuário de movimentações de alta prioridade.	—
+Dança da Aljava	Erro	Status	—	—	20	Aumenta o Ataque Especial, a Defesa Especial e a Velocidade do usuário.	—
+Raiva	Normal	Físico	20	100	20	Aumenta o Ataque do usuário ao ser atingido.	—
+Punho da Fúria	Fantasma	Físico	50	100	10	Quanto mais vezes o usuário for atingido por ataques, maior será o poder do golpe.	—
+Pó da Raiva	Erro	Status	—	—	20	Força os ataques a atingirem o usuário, não os companheiros de equipe.	—
+Touro Enraivecido	Normal	Físico	90	100	10	O tipo depende do formulário do usuário. Ultrapassa as barreiras das telas Reflect e Light.	—
+Fúria Devastada	Fogo	Físico	120	100	10	O usuário ataca por 2 a 3 turnos, mas depois fica confuso.	—
+Dança da Chuva	Água	Status	—	—	5	Faz chover durante 5 turnos.	—
+Giro rápido	Normal	Físico	50	100	40	Aumenta a velocidade do usuário e remove obstáculos de entrada e efeitos de armadilhas.	100
+Folha de navalha	Grama	Físico	55	95	25	Alta taxa de acerto crítico.	—
+Concha de Navalha	Água	Físico	75	95	10	Pode diminuir a Defesa do oponente.	50
+Vento Cortante	Normal	Especial	80	100	10	Investida no primeiro turno, ataques no segundo. Alta taxa de acerto crítico.	—
+Recuperar	Normal	Status	—	—	5	O usuário recupera metade de seus pontos de vida máximos.	—
+Reciclar	Normal	Status	—	—	10	O item reservado pelo usuário foi restaurado.	—
+Refletir	Psíquico	Status	—	—	20	Reduz pela metade o dano recebido de ataques físicos por 5 turnos.	—
+Tipo de reflexão	Normal	Status	—	—	15	O usuário se torna o tipo do alvo.	—
+Atualizar	Normal	Status	—	—	20	Cura paralisia, envenenamento e queimaduras.	—
+Canção da Relíquia	Normal	Especial	75	100	10	Pode fazer com que o alvo adormeça.	10
+Descansar	Psíquico	Status	—	—	5	O usuário dorme por 2 turnos, mas é totalmente curado.	—
+Retaliar	Normal	Físico	70	100	5	Causa dano dobrado se um companheiro de equipe desmaiou no último turno.	—
+Retornar	Normal	Físico	—	100	20	O poder aumenta com níveis mais altos de amizade.	—
+Dança da Revelação	Normal	Especial	90	100	15	O tipo de letra muda de acordo com o formulário de Oricorio.	—
+Vingança	Combate	Físico	60	100	10	O poder aumenta se o usuário for atingido primeiro.	—
+Reversão	Combate	Físico	—	100	15	Quanto menor a potência (HP) do usuário, maior o consumo de energia.	—
+Bênção do Avivamento	Normal	Status	—	—	1	Revive um Pokémon da equipe que tenha desmaiado, restaurando-o à metade da vida.	—
+Tensão crescente	Elétrico	Especial	70	100	20	A potência dobra no Electric Terrain.	—
+Rugido	Normal	Status	—	—	20	Em batalhas, o oponente troca de Pokémon. Na natureza, o Pokémon foge.	—
+Rugido do Tempo	Dragão	Especial	150	90	5	O usuário deverá recarregar no próximo turno.	—
+Explosão de Rocha	Pedra	Físico	25	90	10	Acerta de 2 a 5 vezes em um turno.	—
+Escalada em rocha	Normal	Físico	90	85	20	Pode confundir o oponente.	20
+Polimento de rocha	Pedra	Status	—	—	20	Aumenta drasticamente a velocidade do usuário.	—
+Deslizamento de rochas	Pedra	Físico	75	90	10	Pode causar sobressaltos.	30
+Quebra-rocha	Combate	Físico	40	100	15	Pode diminuir a Defesa do oponente.	50
+Arremesso de pedra	Pedra	Físico	50	90	15		—
+Túmulo de pedra	Pedra	Físico	60	95	15	Reduz a velocidade do oponente.	100
+Quebra-rochas	Pedra	Físico	150	90	5	O usuário deverá recarregar no próximo turno.	—
+Interpretação de papéis	Psíquico	Status	—	—	10	O usuário copia a habilidade do oponente.	—
+Chute Rolante	Combate	Físico	60	85	15	Pode causar sobressaltos.	30
+Sair da cama	Pedra	Físico	30	90	20	Dobra seu poder a cada turno por 5 turnos.	—
+Poleiro	Vôo	Status	—	—	5	O usuário recupera metade de seus pontos de vida máximos e perde temporariamente o tipo Voador.	—
+Rototiller	Chão	Status	—	—	10	Aumenta o Ataque e o Ataque Especial de Pokémon do tipo Grama.	100
+Redondo	Normal	Especial	60	100	15	O poder aumenta se os companheiros de equipe o utilizarem no mesmo turno.	—
+Ruína	Escuro	Especial	—	90	10	Reduz pela metade os pontos de vida do oponente.	—
+Fogo Sagrado	Fogo	Físico	100	95	5	Pode queimar o oponente.	50
+Espada Sagrada	Combate	Físico	90	100	15	Ignora as alterações de atributos do oponente.	—
+Salvaguarda	Normal	Status	—	—	25	A parte do usuário está protegida contra condições de status.	—
+Cura com sal	Pedra	Físico	40	100	15	Causa dano a cada turno; os tipos Aço e Água são mais afetados.	—
+Ataque de areia	Chão	Status	—	100	15	Reduz a precisão do oponente.	—
+Tumba de Areia	Chão	Físico	35	85	15	Prende o oponente, causando dano por 4 a 5 turnos.	100
+Tempestade de areia	Chão	Especial	100	80	10	Pode queimar o alvo.	—
+Tempestade de areia	Pedra	Status	—	—	10	Cria uma tempestade de areia que dura 5 turnos.	—
+Semente suculenta	Grama	Físico	90	100	15	Drena os PV do oponente a cada turno.	100
+Giro Selvagem	Erro	—	—	—	1	Tipo de inseto Z-Move.	—
+Escaldar	Água	Especial	80	100	15	Pode queimar o oponente.	30
+Foto em escala	Dragão	Físico	25	90	20	Ataca de 2 a 5 vezes por turno. Aumenta a Velocidade do usuário, mas diminui sua Defesa.	—
+Cara assustadora	Normal	Status	—	100	10	Reduz drasticamente a velocidade do oponente.	—
+Areias escaldantes	Chão	Especial	70	100	10	Pode queimar o alvo.	—
+Arranhar	Normal	Físico	40	100	35		—
+Guinchada	Normal	Status	—	85	40	Reduz drasticamente a Defesa do oponente.	—
+Tiro Incendiário	Fogo	Especial	100	100	5	Pode queimar o oponente.	30
+Esmagamento do Sol Ardente	Aço	Físico	200	—	1	Movimento Z exclusivo do Solgaleo.	—
+Poder Secreto	Normal	Físico	70	100	20	Os efeitos do ataque variam conforme o local.	30
+Espada Secreta	Combate	Especial	85	100	10	Causa dano com base na Defesa do alvo, não na Defesa Especial.	—
+Bomba de sementes	Grama	Físico	80	100	15		—
+Semente Flamejante	Grama	Especial	120	85	5	Pode reduzir a Defesa Especial do oponente.	40
+Arremesso sísmico	Combate	Físico	—	100	20	Causa dano igual ao nível do usuário.	—
+Autodestruição	Normal	Físico	200	100	5	Usuário desmaia.	—
+Bola de Sombra	Fantasma	Especial	80	100	15	Pode reduzir a Defesa Especial do oponente.	20
+Osso Sombrio	Fantasma	Físico	85	100	10	Pode diminuir a Defesa do oponente.	20
+Garra Sombria	Fantasma	Físico	70	100	15	Alta taxa de acerto crítico.	—
+Força das Sombras	Fantasma	Físico	120	100	5	Desaparece no primeiro turno, ataca no segundo. Pode atacar mesmo com Proteção/Detecção.	—
+Soco Sombrio	Fantasma	Físico	60	∞	20	Ignora a precisão e a evasão.	—
+Ataque furtivo nas sombras	Fantasma	Físico	40	100	30	Ataques do usuário primeiro.	—
+Afiado	Normal	Status	—	—	30	Aumenta o Ataque do usuário.	—
+Psique Fragmentada	Psíquico	—	—	—	1	Movimento Z do tipo Psíquico.	—
+Cauda de Solta	Normal	Status	—	—	10	Cria um substituto e, em seguida, troca de lugar com um Pokémon da equipe que está esperando para ser substituído.	—
+Frio absoluto	Gelo	Especial	—	30	5	Nocaute instantâneo, se acertar.	—
+Arma lateral Shell	Tóxico	Especial	90	100	10	Pode envenenar o oponente. Inflige dano Especial ou Físico, o que for mais vantajoso.	—
+Quebra-concha	Normal	Status	—	—	15	Aumenta consideravelmente o Ataque, o Ataque Especial e a Velocidade do usuário, mas diminui a Defesa e a Defesa Especial.	—
+Armadilha de conchas	Fogo	Especial	150	100	5	Causa mais dano ao oponente se atingido por um golpe físico.	—
+Abrigo	Aço	Status	—	—	10	Aumenta a defesa do usuário.	—
+Mudar de marcha	Aço	Status	—	—	10	Aumenta o Ataque do usuário e aumenta drasticamente a Velocidade.	—
+Onda de choque	Elétrico	Especial	60	∞	20	Ignora a precisão e a evasão.	—
+Reforço	Chão	Status	—	—	5	O usuário recupera até metade de seus pontos de vida máximos. A recuperação de pontos de vida é ainda maior durante uma tempestade de areia.	—
+Feixe de sinal	Erro	Especial	75	100	15	Pode confundir o oponente.	10
+Armadilha de seda	Erro	Status	—	—	10	Protege o usuário e reduz a velocidade do oponente no momento do contato.	—
+Vento Prateado	Erro	Especial	60	100	5	Pode aumentar todas as estatísticas do usuário de uma só vez.	10
+Viga simples	Normal	Status	—	100	15	Altera a capacidade do alvo para Simples.	—
+Cantar	Normal	Status	—	55	15	Coloca o oponente para dormir.	—
+Ataque da Flecha Sinistra	Fantasma	Físico	180	—	1	Z-Move exclusivo para Decidueye.	—
+Tobogã Ardente	Fogo	Físico	90	100	15	Queima o oponente.	100
+Esboço	Normal	Status	—	—	1	Copia permanentemente o último movimento do oponente.	—
+Troca de Habilidades	Psíquico	Status	—	—	10	O usuário troca habilidades com o oponente.	—
+Skitter Smack	Erro	Físico	70	90	10	Reduz o Ataque Especial do oponente.	—
+Quebra de Crânio	Normal	Físico	130	100	10	Aumenta a Defesa no primeiro turno e ataca no segundo.	100
+Ataque Aéreo	Vôo	Físico	140	90	5	Investida no primeiro turno, ataques no segundo. Pode causar recuo. Alta taxa de acerto crítico.	30
+Queda do céu	Vôo	Físico	60	100	10	No primeiro turno, lança o oponente para o ar e, no segundo, o solta.	—
+Sky Uppercut	Combate	Físico	85	90	15	Atinge o oponente, mesmo durante o voo.	—
+Relaxa	Normal	Status	—	—	5	O usuário recupera metade de seus pontos de vida máximos.	—
+Golpe	Normal	Físico	80	75	20		—
+Corte	Normal	Físico	70	100	20	Alta taxa de acerto crítico.	—
+Pó para dormir	Grama	Status	—	75	15	Coloca o oponente para dormir.	—
+Conversa durante o sono	Normal	Status	—	—	10	O usuário realiza um de seus próprios movimentos enquanto dorme.	—
+Lodo	Tóxico	Especial	65	100	20	Pode envenenar o oponente.	30
+Bomba de Lodo	Tóxico	Especial	90	100	10	Pode envenenar o oponente.	30
+Onda de Lodo	Tóxico	Especial	95	100	10	Pode envenenar o oponente.	10
+Esmagar	Pedra	Físico	50	100	15	Torna os Pokémon do tipo Voador vulneráveis ​​a golpes do tipo Terrestre.	100
+Ataque Inteligente	Aço	Físico	70	—	10	O usuário golpeia o alvo com um chifre afiado. Este ataque nunca erra.	—
+Sais de cheiro	Normal	Físico	70	100	10	O poder dobra se o oponente estiver paralisado, mas cura a paralisia.	—
+Poluição atmosférica	Tóxico	Especial	30	70	20	Pode envenenar o oponente.	40
+Cortina de fumaça	Normal	Status	—	100	20	Reduz a precisão do oponente.	—
+Armadilha de pressão	Grama	Físico	35	100	15	Prende o oponente, causando dano por 4 a 5 turnos.	100
+Rosnar	Escuro	Especial	55	95	15	Reduz o Ataque Especial do oponente.	100
+Arrebatar	Escuro	Status	—	—	10	Rouba os efeitos da próxima jogada do oponente.	—
+Tiro de precisão	Água	Especial	80	100	15	Ignora movimentos e habilidades que atraem movimentos. Alta taxa de acerto crítico.	—
+Ronco	Normal	Especial	50	100	15	Só pode ser usado durante o sono. Pode causar sobressaltos.	30
+Paisagem de neve	Gelo	Status	—	—	10	Aumenta a Defesa de Pokémon do tipo Gelo por 5 turnos.	—
+Deixe de molho	Água	Status	—	100	20	Altera o tipo do alvo para água.	—
+Cozido com a gema mole	Normal	Status	—	—	5	O usuário recupera metade de seus pontos de vida máximos.	—
+Raio solar	Grama	Especial	120	100	10	Investidas no primeiro turno, ataques no segundo.	—
+Lâmina Solar	Grama	Físico	125	100	10	Investidas no primeiro turno, ataques no segundo.	—
+Estrondo Sônico	Normal	Especial	—	90	20	Sempre causa 20 de dano.	—
+Golpe de 7 estrelas que rouba almas	Fantasma	Físico	195	—	1	Movimento Z exclusivo do Marshadow.	—
+Ruptura Espacial	Dragão	Especial	100	95	5	Alta taxa de acerto crítico.	—
+Fagulha	Elétrico	Físico	65	100	20	Pode paralisar o oponente.	30
+Ária cintilante	Água	Especial	90	100	10	Cura as queimaduras do alvo.	—
+Espiral Brilhante	Fada	Especial	90	100	15	Cura todos os problemas de status nos Pokémon da equipe.	—
+Ladrão Espectral	Fantasma	Físico	90	100	10	O usuário se esconde na sombra do alvo, rouba os bônus de atributos do alvo e então ataca.	—
+Troca de velocidade	Psíquico	Status	—	—	10	O usuário troca estatísticas de velocidade com o alvo.	—
+Extrato picante	Grama	Status	—	∞	15	Reduz drasticamente a Defesa do oponente e aumenta consideravelmente seu Ataque.	—
+Teia de aranha	Erro	Status	—	—	10	O oponente não pode escapar/trocar de posição.	—
+Canhão de Espinhos	Normal	Físico	20	100	15	Acerta de 2 a 5 vezes em um turno.	—
+Espinhos	Chão	Status	—	—	20	Causa dano aos oponentes que entram em combate.	—
+Escudo Espinhoso	Grama	Status	—	—	10	Protege o usuário e causa danos ao contato.	—
+Spin Out	Aço	Físico	100	100	5	Reduz drasticamente a velocidade do usuário.	—
+Spirit Break	Fada	Físico	75	100	15	Reduz o Ataque Especial do oponente.	100
+Grilhão Espiritual	Fantasma	Físico	80	100	10	Impede que o oponente troque de personagem.	—
+Regurgitar	Normal	Especial	—	100	10	A potência depende de quantas vezes o usuário executou a função Acumular.	—
+Rancor	Fantasma	Status	—	100	10	O último movimento do oponente resulta em uma perda de 2 a 5 PP.	—
+Splash	Normal	Status	—	—	40	Não faz NADA.	—
+Estilhaços da Tempestade	Pedra	Físico	190	—	1	Movimento Z exclusivo do Lycanroc.	—
+Splash	Água	Especial	90	100	15	Pode paralisar o oponente.	30
+Esporo	Grama	Status	—	100	15	Coloca o oponente para dormir.	—
+Destaque	Normal	Status	—	—	15	O usuário direciona um holofote para o alvo, de forma que apenas ele seja atacado durante o turno.	—
+Tempestade de maré de primavera	Fada	Especial	100	80	5	Aumenta os atributos do usuário na Forma Encarnada ou diminui os atributos do oponente na Forma Therian.	—
+Stealth Rock	Pedra	Status	—	—	20	Causa dano aos oponentes que entram em combate.	—
+Erupção de vapor	Água	Especial	110	95	5	Pode queimar o oponente.	30
+Rolo compressor	Erro	Físico	65	100	20	Pode causar sobressaltos.	30
+Viga de aço	Aço	Especial	140	95	5	O usuário perde 50% de seus pontos de vida.	—
+Rolo de aço	Aço	Físico	130	100	5	Falha se não houver terreno em vigor.	—
+Asa de aço	Aço	Físico	70	90	25	Pode aumentar a Defesa do usuário.	10
+Teia pegajosa	Erro	Status	—	—	20	Reduz a Velocidade do oponente ao entrar em batalha.	—
+Estoque	Normal	Status	—	—	20	Armazena energia para uso em casos de regurgitação e deglutição.	—
+Sparksurfer empolgado	Elétrico	Especial	175	—	1	Movimento Z do tipo Elétrico exclusivo do Raichu de Alola.	100
+Pisar	Normal	Físico	65	100	20	Pode causar sobressaltos.	30
+Birra de pisoteio	Chão	Físico	75	100	10	Movido pela frustração, o usuário ataca o alvo. Se o movimento anterior do usuário falhou, o poder deste movimento dobra.	—
+Machado de pedra	Pedra	Físico	65	90	15	Prepara o terreno para o Stealth Rock.	—
+Borda de pedra	Pedra	Físico	100	80	5	Alta taxa de acerto crítico.	—
+Energia armazenada	Psíquico	Especial	20	100	10	O poder aumenta quando os atributos do usuário são elevados.	—
+Lançamento de tempestade	Combate	Físico	60	100	10	Sempre resulta em um acerto crítico.	100
+Vapor Estranho	Fada	Especial	90	95	10	Pode confundir o oponente.	20
+Força	Normal	Físico	80	100	15		—
+Seiva de força	Grama	Status	—	100	10	O usuário restaura seus PV na mesma quantidade que o atributo de Ataque do alvo. Também reduz o atributo de Ataque do alvo.	100
+Tiro de corda	Erro	Status	—	95	40	Reduz drasticamente a velocidade do oponente.	—
+Luta	Normal	Físico	50	—	—	Só pode ser usado quando todos os PP acabarem. Prejudica o usuário.	—
+Inseto de luta	Erro	Especial	50	100	20	Reduz o Ataque Especial do oponente.	100
+Bochechas cheias	Normal	Status	—	—	10	O usuário come a Berry que está segurando e, em seguida, aumenta drasticamente seu atributo de Defesa.	100
+Esporo atordoante	Grama	Status	—	75	30	Paralisa o oponente.	—
+Submissão	Combate	Físico	80	80	20	O usuário sofre dano por recuo.	—
+Substituir	Normal	Status	—	—	10	Usa HP para criar uma isca que absorve os golpes.	—
+Subzero Slammer	Gelo	—	—	—	1	Movimento Z do tipo Gelo.	—
+Golaço	Escuro	Físico	70	100	5	O usuário ataca primeiro, mas só funciona se o oponente estiver preparando um ataque.	—
+Dia ensolarado	Fogo	Status	—	—	5	Faz com que o sol brilhe por 5 turnos.	—
+Golpe Sunsteel	Aço	Físico	100	100	5	Ignora a habilidade do alvo.	—
+Super Presa	Normal	Físico	—	90	10	Sempre tira metade da vida do oponente.	—
+Supercell Slam	Elétrico	Físico	100	95	15		—
+Superpotência	Combate	Físico	120	100	5	Reduz o Ataque e a Defesa do usuário.	100
+Supersônico	Normal	Status	—	55	20	Confunde o oponente.	—
+Ataque aéreo supersônico	Vôo	—	—	—	1	Movimento Z do tipo Voador.	—
+Surf	Água	Especial	90	100	15	Atinge todos os Pokémon adjacentes.	—
+Aumento das greves	Água	Físico	25	100	5	Sempre resulta em um acerto crítico e ignora alterações nos atributos.	—
+Arrogância	Normal	Status	—	85	15	Confunde o oponente, mas aumenta drasticamente seu Ataque.	—
+Engolir	Normal	Status	—	—	10	Quanto mais vezes o usuário executar a ação Acumular Estoque, mais HP será recuperado.	—
+Beijo doce	Fada	Status	—	75	10	Confunde o oponente.	—
+Aroma doce	Normal	Status	—	100	20	Reduz a capacidade de evasão do oponente.	—
+Rápido	Normal	Especial	60	∞	20	Ignora a precisão e a evasão.	—
+Troca de papéis	Escuro	Status	—	100	10	Troca os itens que está segurando com o oponente.	—
+Dança das Espadas	Normal	Status	—	—	20	Aumenta drasticamente o Ataque do usuário.	—
+Sincronizar	Psíquico	Especial	120	100	10	Atinge qualquer Pokémon que compartilhe o mesmo tipo que o usuário.	—
+Síntese	Grama	Status	—	—	5	O usuário recupera HP. A quantidade varia de acordo com o clima.	—
+Bomba de xarope	Grama	Especial	60	85	10	Reduz a Velocidade do oponente a cada turno por 3 turnos.	—
+Cortador de táquions	Aço	Especial	50	∞	10	Garantia de acertar duas vezes seguidas.	—
+Enfrentar	Normal	Físico	40	100	35		—
+Brilho na cauda	Erro	Status	—	—	20	Aumenta drasticamente o Ataque Especial do usuário.	—
+Tapa de cauda	Normal	Físico	25	85	10	Acerta de 2 a 5 vezes em um turno.	—
+Chicote de cauda	Normal	Status	—	100	30	Reduz a defesa do oponente.	—
+Vento favorável	Vôo	Status	—	—	15	Dobra a velocidade por 4 turnos.	—
+Derrubar	Normal	Físico	90	85	20	O usuário sofre dano por recuo.	—
+Tenha coragem.	Psíquico	Status	—	—	10	Cura as condições negativas do usuário e aumenta seus atributos.	—
+Tiro de alcatrão	Pedra	Status	—	100	15	Reduz a Velocidade do oponente e o torna mais vulnerável a golpes do tipo Fogo.	100
+Provocação	Escuro	Status	—	100	20	O oponente só pode usar golpes que atacam.	—
+Olhar lacrimoso	Normal	Status	—	—	20	O usuário fica com os olhos marejados para fazer o alvo perder o espírito combativo. Isso reduz os atributos de Ataque e Ataque Especial do alvo.	100
+Hora do chá	Normal	Status	—	—	10	Obriga todos os Pokémon em campo a comerem suas frutas.	—
+Explosão Techno	Normal	Especial	120	100	5	O tipo depende da unidade que está sendo usada.	—
+Fúria Tectônica	Chão	—	—	—	1	Movimento Z do tipo terrestre.	—
+Dança da gangorra	Normal	Status	—	100	20	Confunde todos os Pokémon.	—
+Telecinese	Psíquico	Status	—	—	15	Ignora a Evasão do oponente por três turnos e concede imunidade a dano Terrestre.	—
+Teletransporte	Psíquico	Status	—	—	20	Permite ao usuário fugir de batalhas selvagens; também teletransporta o jogador para o último Centro Pokémon.	—
+Explosão de temperamento	Fogo	Físico	75	100	10		—
+Tera Blast	Normal	Especial	80	100	10	O tipo muda quando o usuário realiza a Terastallização.	—
+Tera Starstorm	Normal	Especial	120	100	5		—
+Pulso do Terreno	Normal	Especial	50	100	10	O tipo e a potência variam dependendo do terreno em questão.	—
+Ladrão	Escuro	Físico	60	100	25	Também rouba o item que o oponente estiver segurando.	—
+Mil flechas	Chão	Físico	90	100	10	Torna os Pokémon do tipo Voador vulneráveis ​​a golpes do tipo Terrestre.	—
+Mil Ondas	Chão	Físico	90	100	10	O oponente não pode fugir nem trocar de posição.	—
+Thrash	Normal	Físico	120	100	10	O usuário ataca por 2 a 3 turnos, mas depois fica confuso.	—
+Golpe na garganta	Escuro	Físico	80	100	15	Impede o uso de golpes sonoros por dois turnos.	100
+Trovão	Elétrico	Especial	110	70	10	Pode paralisar o oponente.	30
+Gaiola do Trovão	Elétrico	Especial	80	90	15	Causa dano e prende o oponente, causando dano por 4 a 5 turnos.	—
+Presa Trovejante	Elétrico	Físico	65	95	15	Pode provocar sobressaltos e/ou paralisar o oponente.	10
+Soco Trovão	Elétrico	Físico	75	100	15	Pode paralisar o oponente.	10
+Choque do Trovão	Elétrico	Especial	40	100	30	Pode paralisar o oponente.	10
+Onda de trovão	Elétrico	Status	—	90	20	Paralisa o oponente.	—
+Raio	Elétrico	Especial	90	100	15	Pode paralisar o oponente.	10
+Trovão	Elétrico	Especial	70	100	5	Ataca antes do movimento do alvo.	—
+Chute estrondoso	Combate	Físico	90	100	10	Reduz a defesa do oponente.	100
+Cócegas	Normal	Status	—	100	20	Reduz o Ataque e a Defesa do oponente.	—
+Arrumar	Normal	Status	—	—	10	Remove os efeitos de obstáculos de entrada e Substituto, e aumenta o Ataque e a Velocidade do usuário.	—
+De cabeça para baixo	Escuro	Status	—	—	20	Reverte as alterações de atributos do oponente.	—
+Canção da Tocha	Fogo	Especial	80	100	10	Aumenta o Ataque Especial do usuário.	—
+Tormento	Escuro	Status	—	100	15	O oponente não pode usar o mesmo movimento duas vezes seguidas.	—
+Tóxico	Tóxico	Status	—	90	10	Envenena gravemente o oponente.	—
+Espinhos Tóxicos	Tóxico	Status	—	—	20	Envenena os oponentes que entram em combate.	—
+Fio Tóxico	Tóxico	Status	—	100	20	Envenena o oponente e reduz sua Velocidade.	100
+Abrindo caminho	Grama	Físico	50	100	20	Aumenta a velocidade do usuário.	—
+Transformar	Normal	Status	—	—	10	O usuário assume a forma e os ataques do oponente.	—
+Ataque Triplo	Normal	Especial	80	100	10	Pode paralisar, queimar ou congelar o oponente.	20
+Truque	Psíquico	Status	—	100	10	Troca os itens que está segurando com o oponente.	—
+Sala de Truques	Psíquico	Status	—	—	5	Os Pokémon mais lentos atacam primeiro no turno durante 5 turnos.	—
+Doçura ou travessura	Fantasma	Status	—	100	20	Adiciona o tipo Fantasma ao oponente.	—
+Flechas Triplas	Combate	Físico	90	100	10	Alta taxa de acerto crítico. Pode reduzir a Defesa do oponente ou fazê-lo recuar.	—
+Triplo Axel	Gelo	Físico	20	90	10	Ataca três vezes, com poder crescente a cada ataque.	—
+Mergulho Triplo	Água	Físico	30	95	10	Acertou 3 vezes seguidas.	—
+Chute triplo	Combate	Físico	10	90	10	Acerta três vezes em um turno com poder crescente.	—
+Chute Tropical	Grama	Físico	70	100	15	Reduz o ataque do oponente.	100
+Carta Trump	Normal	Especial	—	∞	5	Quanto menor o PP, maior a potência.	—
+Viga dupla	Psíquico	Especial	40	100	10	Acerta duas vezes em um turno.	—
+Twineedle	Erro	Físico	25	100	20	Ataca duas vezes em um turno. Pode envenenar o oponente.	20
+Twinkle Tackle	Fada	—	—	—	1	Movimento Z do tipo Fada.	—
+Twister	Dragão	Especial	40	100	20	Pode causar recuo. Atinge Pokémon que usam Fly/Bounce com o dobro do poder.	20
+Retorno em U	Erro	Físico	70	100	20	O usuário troca de dispositivo imediatamente após o ataque.	—
+Vantagem	Combate	Físico	65	100	15	Ataca antes do movimento prioritário do alvo.	—
+Alvoroço	Normal	Especial	90	100	10	O usuário ataca por 3 turnos e impede o sono.	—
+V-criar	Fogo	Físico	180	95	5	Reduz a Defesa, a Defesa Especial e a Velocidade do usuário.	100
+Onda de vácuo	Combate	Especial	40	100	30	Ataques do usuário primeiro.	—
+Voleibol Veevee	Normal	Físico	—	∞	20	O poder aumenta quando o vínculo entre os jogadores é mais forte.	—
+Enxágue de Veneno	Tóxico	Status	—	100	20	Reduz o Ataque Especial e a Velocidade do oponente envenenado.	100
+Venoshock	Tóxico	Especial	65	100	10	Causa dano dobrado se o alvo estiver envenenado.	—
+Dança da Vitória	Combate	Status	—	—	10	Aumenta o ataque e a defesa.	—
+Chicote de videira	Grama	Físico	45	100	25		—
+Alicate de pressão	Normal	Físico	55	100	30		—
+Arremesso vital	Combate	Físico	70	∞	10	O usuário ataca por último, mas ignora Precisão e Evasão.	—
+Interruptor de voltagem	Elétrico	Especial	70	100	20	O usuário deve trocar de dispositivo após o ataque.	—
+Equipamento Volt	Elétrico	Físico	120	100	15	O usuário sofre dano de recuo. Pode paralisar o oponente.	10
+Tapa para acordar	Combate	Físico	70	100	10	O poder dobra se o oponente estiver dormindo, mas o desperta.	—
+Pistola de água	Água	Especial	40	100	25		—
+Compromisso com a Água	Água	Especial	80	100	10	Efeitos adicionais aparecem se forem precedidos por Promessa de Fogo ou sucedidos por Promessa de Grama.	—
+Pulso de água	Água	Especial	60	100	20	Pode confundir o oponente.	20
+Shuriken de Água	Água	Especial	15	100	20	Acerta de 2 a 5 vezes em um turno.	—
+Esportes aquáticos	Água	Status	—	—	15	Diminui o poder dos golpes do tipo Fogo.	—
+Bica de água	Água	Especial	150	100	5	Quanto maior o HP do usuário, maior o dano causado.	—
+Cachoeira	Água	Físico	80	100	15	Pode causar sobressaltos.	20
+Onda quebra	Água	Físico	120	100	10	O usuário sofre dano por recuo.	—
+Bola do Tempo	Normal	Especial	50	100	10	O poder e o tipo do movimento mudam com o clima.	—
+Hidromassagem	Água	Especial	35	85	15	Prende o oponente, causando dano por 4 a 5 turnos.	100
+Turbilhão	Normal	Status	—	—	20	Em batalhas, o oponente troca de Pokémon. Na natureza, o Pokémon foge.	—
+Golpe Maligno	Escuro	Físico	75	100	5	Sempre resulta em um acerto crítico e ignora alterações nos atributos.	—
+Torque Maligno	Escuro	Físico	80	100	10	Pode fazer o oponente dormir.	—
+Guarda larga	Pedra	Status	—	—	10	Protege a equipe do usuário contra ataques com múltiplos alvos.	—
+Ataque Selvagem	Elétrico	Físico	90	100	15	O usuário sofre dano por recuo.	—
+Tempestade Selvagem	Elétrico	Especial	100	80	10	Pode paralisar o alvo.	—
+Fogo-fátuo	Fogo	Status	—	85	15	Queima o oponente.	—
+Ataque de Asa	Vôo	Físico	60	100	35		—
+Desejar	Normal	Status	—	—	10	O usuário recupera PV no turno seguinte.	—
+Retirar	Água	Status	—	—	40	Aumenta a defesa do usuário.	—
+Sala das Maravilhas	Psíquico	Status	—	—	10	Troca a Defesa e a Defesa Especial de todos os Pokémon por 5 turnos.	—
+Martelo de madeira	Grama	Físico	120	100	15	O usuário sofre dano por recuo.	—
+Comece	Normal	Status	—	—	30	Aumenta o Ataque e o Ataque Especial do usuário.	—
+Semente da Preocupação	Grama	Status	—	100	10	Altera a habilidade do oponente para Insônia.	—
+Enrolar	Normal	Físico	15	90	20	Prende o oponente, causando dano por 4 a 5 turnos.	100
+Esprema bem	Normal	Especial	—	100	5	Quanto maior o HP do oponente, maior o dano.	—
+Tesoura em X	Erro	Físico	80	100	15		—
+Bocejar	Normal	Status	—	—	10	Coloca o oponente para dormir no próximo turno.	—
+Canhão de choque	Elétrico	Especial	120	50	5	Paralisa o oponente.	100
+Cabeçada Zen	Psíquico	Físico	80	90	15	Pode causar sobressaltos.	20
+Zing Zap	Elétrico	Físico	80	100	10	Pode causar sobressaltos.	30
+Zippy Zap	Elétrico	Físico	50	100	15	Sempre resulta em um acerto crítico.	100

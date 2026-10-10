@@ -1,6 +1,6 @@
 import { defaultStages } from './types';
 import type { Attack, Pokemon } from './types';
-import type { CharacterAbility, CharacterSheet, InventoryItem } from './campaign';
+import { getCurrentSessionRole, type CharacterAbility, type CharacterSheet, type GMBoardState, type InventoryItem } from './campaign';
 import { getServerCollection, syncGameState } from './cloudSync';
 import { defaultProvisionalItems } from './constants';
 
@@ -135,6 +135,70 @@ const doubleKick: Attack = {
 
 function hasName(value: { name?: string }, name: string) {
   return value.name?.trim().toLocaleLowerCase() === name.trim().toLocaleLowerCase();
+}
+
+export async function removeSavedCampaignImages(): Promise<void> {
+  const completed = getServerCollection<Record<string, boolean>>('imageUrlMigration', {});
+  const changes: Record<string, unknown> = {};
+  const nextCompleted = { ...completed };
+
+  if (!completed.publicV1) {
+    const characters = getServerCollection<Array<Record<string, unknown>> | undefined>('characters', undefined);
+    if (characters) {
+      changes.characters = characters.map(character => {
+        const inventory = Array.isArray(character.inventory)
+          ? character.inventory.map(item => {
+            if (!item || typeof item !== 'object' || !('image' in item)) return item;
+            const nextItem = { ...(item as Record<string, unknown>) };
+            delete nextItem.image;
+            return nextItem;
+          })
+          : character.inventory;
+        const next: Record<string, unknown> = { ...character, inventory };
+        delete next.image;
+        return next;
+      });
+    }
+
+    const pokemon = getServerCollection<Array<Record<string, unknown>> | undefined>('pokemon', undefined);
+    if (pokemon) changes.pokemon = pokemon.map(item => ({ ...item, image: null }));
+
+    const provisionalItems = getServerCollection<Array<Record<string, unknown>> | undefined>('provisionalItems', undefined);
+    if (provisionalItems) {
+      changes.provisionalItems = provisionalItems.map(item => {
+        if (!item || typeof item !== 'object' || !('image' in item)) return item;
+        const next = { ...item };
+        delete next.image;
+        return next;
+      });
+    }
+    nextCompleted.publicV1 = true;
+  }
+
+  if (getCurrentSessionRole() === 'gm' && !completed.gmV1) {
+    const board = getServerCollection<GMBoardState | undefined>('gmBoard', undefined);
+    if (board && Array.isArray(board.mindMaps)) {
+      changes.gmBoard = {
+        ...board,
+        mindMaps: board.mindMaps.map(map => ({
+          ...map,
+          nodes: map.nodes.map(node => {
+            const next = { ...node };
+            delete next.imageUrl;
+            return next;
+          }),
+        })),
+      };
+    }
+    nextCompleted.gmV1 = true;
+  }
+
+  if (JSON.stringify(nextCompleted) !== JSON.stringify(completed)) {
+    changes.imageUrlMigration = nextCompleted;
+  }
+  if (Object.keys(changes).length > 0) {
+    await syncGameState(changes, { throwOnError: true });
+  }
 }
 
 export async function seedImportedCampaignData() {

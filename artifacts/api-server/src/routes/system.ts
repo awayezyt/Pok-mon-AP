@@ -98,16 +98,21 @@ router.post("/system/editor-session", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const expected = process.env.SYSTEM_EDITOR_PASSWORD;
-  if (!expected) {
+  const expectedPasswords = [process.env.SYSTEM_EDITOR_PASSWORD, process.env.GM_PASSWORD]
+    .filter((value): value is string => Boolean(value));
+  if (expectedPasswords.length === 0) {
     req.log.error("System editor secret is not configured");
     res.status(503).json({ error: "A senha de edição não está configurada no servidor." });
     return;
   }
 
   const actualHash = createHash("sha256").update(parsed.data.password).digest();
-  const expectedHash = createHash("sha256").update(expected).digest();
-  if (!timingSafeEqual(actualHash, expectedHash)) {
+  let authorized = false;
+  for (const expected of expectedPasswords) {
+    const expectedHash = createHash("sha256").update(expected).digest();
+    authorized = timingSafeEqual(actualHash, expectedHash) || authorized;
+  }
+  if (!authorized) {
     res.status(401).json({ error: "Senha incorreta." });
     return;
   }

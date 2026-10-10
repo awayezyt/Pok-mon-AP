@@ -21,6 +21,7 @@ import { getServerCollection } from '../lib/cloudSync';
 import { getCharacterPokemonRoster, getPokemonAssignmentConflict, normalizeTrainerName, syncPokemonTrainerRecord } from '../lib/pokemonOwnership';
 import { toast } from 'sonner';
 import { useAppTheme } from '../lib/theme';
+import { ImageUrlField } from '../components/ImageUrlField';
 
 const tabs = ['Visão geral', 'Perícias', 'Inventário', 'Habilidades', 'Fluxo', 'Pokémon'];
 const itemCategories = ['Consumíveis', 'Itens Chave', 'Especiais', 'Alimentos', 'TM', 'Pokebolas', 'Batalha'];
@@ -42,7 +43,6 @@ export default function Character() {
   const [editingAttributes, setEditingAttributes] = useState(false);
   const [editingSkills, setEditingSkills] = useState(false);
   const [editingLevel, setEditingLevel] = useState(false);
-  const [portraitPreviewOpen, setPortraitPreviewOpen] = useState(false);
   const { theme: siteTheme } = useAppTheme();
 
   if (!character) return <div className="p-8">Nenhuma ficha disponível.</div>;
@@ -52,20 +52,6 @@ export default function Character() {
 
   const isOwner = role === 'gm' || activeCharacterId === character.id;
   const patch = (data: Partial<CharacterSheet>) => updateCharacter(character.id, data);
-  const handleCharacterImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      toast.error('Escolha um arquivo de imagem.');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = loadEvent => {
-      if (typeof loadEvent.target?.result === 'string') patch({ image: loadEvent.target.result });
-    };
-    reader.readAsDataURL(file);
-  };
   const adjust = (field: 'hp' | 'focus', amount: number) => patch({ [field]: Math.max(0, Math.min(field === 'hp' ? character.hpMax : character.focusMax, character[field] + amount)) });
   const characterRoster = getCharacterPokemonRoster(character, pokemon, characters);
   const linkedPokemon = pokemon.find(item => item.id === characterRoster.partyPokemonIds[0]);
@@ -202,38 +188,16 @@ export default function Character() {
                 </div>
                 <div className="space-y-2">
                   <p className="flex items-center gap-1 text-xs font-semibold"><ImagePlus size={14} /> Imagem do personagem</p>
-                  <button
-                    type="button"
-                    onClick={() => character.image && setPortraitPreviewOpen(true)}
-                    disabled={!character.image}
-                    className="flex h-52 w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-secondary/40 text-primary disabled:cursor-default"
-                    aria-label={character.image ? `Ampliar imagem de ${character.name}` : 'Nenhuma imagem anexada'}
-                    data-testid="button-character-image-preview"
-                  >
-                    {character.image
-                       ? <img src={character.image} alt={`Retrato de ${character.name}`} loading="lazy" className="h-full w-full object-contain" />
-                      : <div className="flex flex-col items-center gap-2 text-muted-foreground"><UserRound size={34} /><span className="text-xs">Nenhuma imagem anexada</span></div>}
-                  </button>
-                  {isOwner && <div className="flex flex-wrap items-center gap-2">
-                    <label htmlFor="input-character-image" className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold hover:border-primary">
-                      <ImagePlus size={15} /> {character.image ? 'Trocar imagem' : 'Anexar imagem'}
-                    </label>
-                    <input id="input-character-image" data-testid="input-character-image" type="file" accept="image/*" className="sr-only" onChange={handleCharacterImageUpload} />
-                    {character.image && <Button type="button" size="sm" variant="ghost" onClick={() => patch({ image: '' })}>Remover</Button>}
-                  </div>}
-                  <p className="text-[11px] text-muted-foreground">Selecione um arquivo de imagem. Clique na prévia para ampliar.</p>
+                  <ImageUrlField
+                    value={character.image}
+                    onChange={image => patch({ image })}
+                    label={`Imagem de ${character.name}`}
+                    disabled={!isOwner}
+                    className="h-52 w-full rounded-xl border border-border bg-secondary/40 text-primary transition"
+                    imageClassName="h-full w-full object-contain"
+                  />
                 </div>
               </div>
-              <Dialog open={portraitPreviewOpen} onOpenChange={setPortraitPreviewOpen}>
-                <DialogContent className="max-h-[95vh] max-w-6xl overflow-hidden p-3">
-                  <DialogHeader><DialogTitle>Imagem de {character.name}</DialogTitle><DialogDescription>Prévia ampliada do retrato da ficha.</DialogDescription></DialogHeader>
-                  {character.image && <img src={character.image} alt={`Imagem ampliada de ${character.name}`} className="mx-auto max-h-[78vh] max-w-full rounded-lg object-contain" />}
-                  {isOwner && <label htmlFor="input-character-image-fullscreen" className="mx-auto inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold hover:border-primary">
-                    <ImagePlus size={15} /> Trocar imagem
-                    <input id="input-character-image-fullscreen" type="file" accept="image/*" className="sr-only" onChange={event => { handleCharacterImageUpload(event); setPortraitPreviewOpen(false); }} />
-                  </label>}
-                </DialogContent>
-              </Dialog>
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
                 <p className="text-sm font-semibold">Cor da ficha</p>
                 <select disabled={!isOwner} aria-label="Cor da ficha" value={themeColor} onChange={event => patch({ themeColor: event.target.value as CharacterSheet['themeColor'] })} className="h-9 rounded-md border border-input bg-background px-3 text-sm">{Object.entries(CHARACTER_THEME_COLORS).map(([value, item]) => <option key={value} value={value}>{item.label}</option>)}</select>
@@ -344,22 +308,6 @@ function InventoryEditor({ items, capacity, money, onChange, onMoneyChange, isOw
     setEditing(items.length);
     setDraft(next);
   };
-  const uploadItemImage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file || !draft) return;
-    if (!file.type.startsWith('image/')) {
-      toast.error('Escolha um arquivo de imagem.');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = loadEvent => {
-      if (typeof loadEvent.target?.result === 'string') {
-        setDraft(current => current ? { ...current, image: loadEvent.target!.result as string } : current);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
   const applyMoneyChange = () => {
     const amount = Number(moneyAmount);
     if (!Number.isFinite(amount) || amount <= 0 || !moneyOperation) {
@@ -422,12 +370,16 @@ function InventoryEditor({ items, capacity, money, onChange, onMoneyChange, isOw
         })}
         {isOwner && <Button variant="outline" onClick={add}><Plus size={16} className="mr-2" /> Adicionar item</Button>}
          {draft && <div className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-4"><div className="grid gap-3 sm:grid-cols-2"><Input value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} placeholder="Nome" /><select value={draft.category} onChange={event => setDraft({ ...draft, category: event.target.value })} className="h-9 rounded-md border border-input bg-background px-3 text-sm">{itemCategories.map(category => <option key={category}>{category}</option>)}</select><Input type="number" min={0} value={draft.weight} onChange={event => setDraft({ ...draft, weight: Math.max(0, Number(event.target.value) || 0) })} placeholder="Peso" /><Textarea value={draft.detail} onChange={event => setDraft({ ...draft, detail: event.target.value })} placeholder="Descrição" />
-           <div className="flex items-center gap-3 sm:col-span-2">
-             <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-background/70 text-primary">{draft.image ? <img src={draft.image} alt="" className="h-full w-full object-cover" /> : <PackageOpen size={22} />}</div>
-             <label htmlFor="input-inventory-item-image" className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold hover:border-primary"><ImagePlus size={15} /> {draft.image ? 'Trocar imagem' : 'Anexar imagem'}</label>
-             <input id="input-inventory-item-image" type="file" accept="image/*" className="sr-only" onChange={uploadItemImage} />
-             {draft.image && <Button type="button" size="sm" variant="ghost" onClick={() => setDraft({ ...draft, image: undefined })}>Remover imagem</Button>}
-           </div>
+            <div className="sm:col-span-2">
+              <ImageUrlField
+                value={draft.image}
+                onChange={image => setDraft({ ...draft, image: image || undefined })}
+                label={`Imagem do item ${draft.name}`}
+                className="h-16 w-16 rounded-lg border border-border bg-background/70 text-primary"
+                imageClassName="h-full w-full object-cover"
+                compact
+              />
+            </div>
          </div><div className="flex gap-2"><Button onClick={save}>Salvar item</Button><Button variant="ghost" onClick={() => { setEditing(null); setDraft(null); }}>Cancelar</Button></div></div>}
         <Dialog open={moneyOperation !== null} onOpenChange={open => { if (!open) { setMoneyOperation(null); setMoneyAmount(''); } }}>
           <DialogContent className="sm:max-w-sm">

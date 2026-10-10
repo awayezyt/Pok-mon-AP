@@ -1,11 +1,16 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { getGetSystemCatalogQueryKey, getGetSystemDocumentsQueryKey, getGetSystemEditorSessionQueryKey, useCreateSystemEditorSession, useDeleteSystemEditorSession, useGetSystemCatalog, useGetSystemDocuments, useGetSystemEditorSession, useSaveSystemCatalog, useSaveSystemDocument } from '@workspace/api-client-react';
 import { ArrowLeft, ArrowUpRight, BookMarked, BookOpen, ChevronDown, ChevronRight, ExternalLink, FileText, FolderTree, LockKeyhole, Menu, Moon, Pencil, Plus, Search, ShieldCheck, Sun, X } from 'lucide-react';
 import { useAppTheme } from '../lib/theme';
+import { useFormulaSettings } from '../lib/formulas';
+import { normalizeSystemAttackName } from '../lib/systemTrackAttacks';
+import { useAttackData } from '../lib/hooks';
+import type { Attack } from '../lib/types';
 import { SystemDocumentEditor, type EditableSystemDocument } from '../components/SystemEditor';
 import { SystemIndexEditor, type EditableIndexGroup, type EditableIndexSection } from '../components/SystemIndexEditor';
+import { SystemFormulaGuide } from '../components/SystemFormulaGuide';
 import { RichText as IconRichText } from '../components/RichText';
 import systemData from '../data/pokemonSystem.json';
 
@@ -51,6 +56,12 @@ const sourceData = systemData as {
   documents: Omit<SystemDocument, 'blocks'>[];
   idAliases?: Record<string, string>;
 };
+const hiddenSystemDocumentIds = new Set([
+  '3554bb16-8489-8042-8759-ecab1165fd70', // Ficha do Treinador
+  '38d4bb16-8489-80ff-9479-c1357f0d02c0', // Low Kick
+  '3f14bb16-8489-8091-9449-e9fb4ebccc68', // Smokescreen
+  '3f14bb16-8489-802d-9fb3-c211bca17042', // Flash
+]);
 const blockFiles = import.meta.glob('../data/pokemonSystemBlocks/*.json', {
   eager: true,
   import: 'default',
@@ -59,11 +70,20 @@ const blocksById = new Map(Object.entries(blockFiles).map(([path, blocks]) => [
   path.split('/').pop()?.replace(/\.json$/, '') || '',
   blocks,
 ]));
-const normalizeGroups = (groups: SystemGroup[]): PersistedSystemGroup[] => groups.map(group => ({
+function hideRemovedDocuments(groups: PersistedSystemGroup[]): PersistedSystemGroup[] {
+  return groups
+    .map(group => ({
+      ...group,
+      documentIds: group.documentIds.filter(id => !hiddenSystemDocumentIds.has(id)),
+      groups: hideRemovedDocuments(group.groups || []),
+    }))
+    .filter(group => group.documentIds.length > 0 || group.groups.length > 0);
+}
+const normalizeGroups = (groups: SystemGroup[]): PersistedSystemGroup[] => hideRemovedDocuments(groups.map(group => ({
   title: group.title,
   documentIds: [...(group.documentIds || [])],
   groups: normalizeGroups(group.groups || []),
-}));
+})));
 function cleanSystemBlocks(blocks: SystemBlock[]): SystemBlock[] {
   return blocks
     .filter(block => block.text.trim().toLocaleLowerCase('pt-BR') !== 'mobile clique aqui!')
@@ -130,6 +150,181 @@ function blockSearchText(blocks: SystemBlock[]): string {
   return blocks.map(block => `${block.text || ''} ${blockSearchText(block.children || [])}`).join(' ');
 }
 
+function normalizedSearchText(text: string): string {
+  return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('pt-BR').trim();
+}
+
+function blockText(block: SystemBlock): string {
+  return `${block.text || ''} ${plainRuns(block.properties?.title)}`;
+}
+
+function countBlocks(blocks: SystemBlock[]): number {
+  return blocks.reduce((count, block) => count + 1 + countBlocks(block.children || []), 0);
+}
+
+function isLegacyFormulaSectionHeading(block: SystemBlock, documentId: string): boolean {
+  return documentId === '3554bb16-8489-80a1-b872-efbcaf42027a'
+    && block.id === '3554bb16-8489-8050-937b-f78f7a1324ae';
+}
+
+const SUPERSEDED_FORMULA_BLOCKS: Record<string, Set<string>> = {
+  '3554bb16-8489-80a1-b872-efbcaf42027a': new Set([
+    '35c4bb16-8489-80a7-a6ed-d6bdb19d0dad',
+    '35c4bb16-8489-80e0-b97d-c583baad77bc',
+    '35c4bb16-8489-8065-b648-f156f29f9482',
+    '35c4bb16-8489-809b-ab9a-ee118a6ba945',
+    '35c4bb16-8489-80e3-9427-c9bbcb65c159',
+    '35c4bb16-8489-8010-a31b-e953b381ac52',
+    '35c4bb16-8489-802c-a176-c84fd8d5950a',
+    '35c4bb16-8489-8005-a394-c75d1d7106d0',
+    '35c4bb16-8489-80a7-8dce-fe99ea6d3700',
+    '35c4bb16-8489-80b0-9272-f9851c734ccf',
+    '35c4bb16-8489-800f-8b67-c842388be09b',
+    '35c4bb16-8489-803e-866c-ef13f5ccb904',
+    '35c4bb16-8489-808f-bbad-c1e5442f2677',
+    '35c4bb16-8489-8008-969e-f4087f468c00',
+    '35c4bb16-8489-804c-b06a-e4d9746f10f1',
+    '35c4bb16-8489-8023-ad90-e3b33d39fd29',
+    '35c4bb16-8489-817f-b371-f58e74699b37',
+    '35c4bb16-8489-81da-a789-e923d801f8fa',
+    '35c4bb16-8489-8135-b1d5-ddbaeccf3768',
+    '35c4bb16-8489-81a4-86d3-ef9b7c4a5a4c',
+    '35c4bb16-8489-8025-8e7b-d6e72e4c9aa7',
+    '35c4bb16-8489-80fa-adfc-c5a4f58b15e7',
+    '35c4bb16-8489-80d4-9ef0-f2818bd7bec5',
+    '35c4bb16-8489-809b-bd8f-fa20a7109fe5',
+    '3624bb16-8489-80fe-8b49-fc604a207283',
+    '3624bb16-8489-8093-b2a1-ef8f71587931',
+  ]),
+  '3554bb16-8489-8024-8c0b-c7bb34a95e66': new Set([
+    '3554bb16-8489-80ff-a3de-cb027e4b0852',
+    '3554bb16-8489-804a-b34d-f245a54065d8',
+    '3554bb16-8489-8064-aeae-de7d7cbdb569',
+  ]),
+  '3554bb16-8489-805e-bf10-e4f86983a683': new Set([
+    '35c4bb16-8489-804c-bfde-d8b5fcd86dcc',
+    '35c4bb16-8489-80c0-8809-fe5f3b8a4763',
+    '35c4bb16-8489-8096-a296-d1e600ca664f',
+    '35c4bb16-8489-8059-8cfd-d840fa361212',
+    '35c4bb16-8489-80b2-a3de-e47795a5d028',
+    '35c4bb16-8489-808e-ad0d-e02edbcf691d',
+  ]),
+};
+
+function containsLegacyDamageTable(block: SystemBlock): boolean {
+  if (block.type === 'table' && (block.children || []).some(row =>
+    row.type === 'table_row' && normalizedSearchText(row.text).includes('poder (pdr)'),
+  )) return true;
+  return (block.children || []).some(containsLegacyDamageTable);
+}
+
+function getDisplayBlocks(document: SystemDocument, ppMode: 'individual' | 'pool'): SystemBlock[] {
+  const superseded = SUPERSEDED_FORMULA_BLOCKS[document.id];
+  let replacingStatCalculationSection = false;
+
+  const removeSuperseded = (blocks: SystemBlock[]): SystemBlock[] => {
+    const visible: SystemBlock[] = [];
+    for (const block of blocks) {
+      if (isLegacyFormulaSectionHeading(block, document.id)) {
+        replacingStatCalculationSection = true;
+        continue;
+      }
+      if (replacingStatCalculationSection && block.type.startsWith('heading_3')) {
+        replacingStatCalculationSection = false;
+      }
+      if (replacingStatCalculationSection || superseded?.has(block.id)) continue;
+      if (document.id === '3554bb16-8489-8042-b7fb-dcaa47eb0bfb') {
+        const isLegacyDamageContent = block.id === '3554bb16-8489-8021-93a2-c6411e442fad'
+          || block.id === '3554bb16-8489-80b1-9151-d3bf08a3bc47'
+          || (block.type === 'column_list' && containsLegacyDamageTable(block))
+          || (block.type === 'table' && containsLegacyDamageTable(block));
+        const isLegacyIndividualPpDescription = ppMode === 'pool'
+          && block.id === '3554bb16-8489-80bf-8168-c753670da0e4';
+        if (isLegacyDamageContent || isLegacyIndividualPpDescription) continue;
+      }
+      const children = block.children ? removeSuperseded(block.children) : undefined;
+      visible.push(children ? { ...block, children } : block);
+    }
+    return visible;
+  };
+
+  return removeSuperseded(document.blocks);
+}
+
+function filterBlocksForSearch(blocks: SystemBlock[], query: string, isAbilityIndex: boolean): SystemBlock[] {
+  const normalizedQuery = normalizedSearchText(query);
+  if (!normalizedQuery) return blocks;
+
+  const filterBlock = (block: SystemBlock): SystemBlock | null => {
+    const ownText = blockText(block);
+    const letterHeading = isAbilityIndex && block.type === 'toggle' && /^[a-z]$/i.test(ownText.trim());
+    const matchesSelf = !letterHeading && normalizedSearchText(ownText).includes(normalizedQuery);
+
+    if (block.type === 'table') {
+      const rows = block.children || [];
+      const hasColumnHeader = Boolean(block.format?.table_block_column_header);
+      const header = hasColumnHeader ? rows.find(row => row.type === 'table_row') : undefined;
+      const matchedRows = rows.filter(row => row.type === 'table_row' && row !== header
+        && normalizedSearchText(blockText(row)).includes(normalizedQuery));
+      return matchedRows.length ? { ...block, children: [...(header ? [header] : []), ...matchedRows] } : matchesSelf ? block : null;
+    }
+
+    if (matchesSelf) return block;
+    const children = (block.children || []).map(filterBlock).filter((child): child is SystemBlock => Boolean(child));
+    return children.length ? { ...block, children } : null;
+  };
+
+  return blocks.map(filterBlock).filter((block): block is SystemBlock => Boolean(block));
+}
+
+function countMatchingBlocks(blocks: SystemBlock[], query: string): number {
+  const normalizedQuery = normalizedSearchText(query);
+  if (!normalizedQuery) return 0;
+  return blocks.reduce((count, block) =>
+    count + (normalizedSearchText(blockText(block)).includes(normalizedQuery) ? 1 : 0) + countMatchingBlocks(block.children || [], normalizedQuery), 0);
+}
+
+function countMatchingAbilities(blocks: SystemBlock[], query: string): number {
+  const normalizedQuery = normalizedSearchText(query);
+  let count = 0;
+
+  const includesQuery = (block: SystemBlock): boolean =>
+    normalizedSearchText(blockText(block)).includes(normalizedQuery)
+    || (block.children || []).some(includesQuery);
+
+  const scan = (items: SystemBlock[]) => {
+    for (const block of items) {
+      if (block.type === 'toggle' && /^habilidade\s*:/i.test(block.text.trim())) {
+        if (includesQuery(block)) count += 1;
+        continue;
+      }
+      scan(block.children || []);
+    }
+  };
+
+  scan(blocks);
+  return count;
+}
+
+function getDocumentOutline(blocks: SystemBlock[]): Array<{ id: string; label: string }> {
+  const outline: Array<{ id: string; label: string }> = [];
+  const visit = (items: SystemBlock[]) => {
+    for (const block of items) {
+      const heading = block.type === 'heading_1' || block.type === 'heading_2' || block.type === 'heading_3'
+        || block.type === 'sub_header' || block.type === 'sub_sub_header';
+      const sectionToggle = block.type === 'toggle' && Boolean(block.children?.length);
+      if (heading || sectionToggle) {
+        const label = block.text.replace(/^\/+|\/+$/g, '').replace(/^Habilidade:\s*/i, '').trim();
+        if (label) outline.push({ id: heading ? `heading-${block.id}` : `section-${block.id}`, label });
+        if (sectionToggle) continue;
+      }
+      if (block.children?.length) visit(block.children);
+    }
+  };
+  visit(blocks);
+  return outline;
+}
+
 function richValue(block: SystemBlock): unknown {
   return block.properties?.title ?? block.richText ?? (block.text ? [[block.text]] : []);
 }
@@ -170,7 +365,54 @@ function RichText({ value, onInternal }: { value: unknown; onInternal: (url: str
   })}</>;
 }
 
-function RenderBlocks({ blocks, onInternal }: { blocks: SystemBlock[]; onInternal: (url: string) => string | undefined }) {
+function isSystemMoveBlock(block: SystemBlock): boolean {
+  if (block.type !== 'toggle') return false;
+  const lines = block.children ? block.children.flatMap(child => [
+    child.text || '',
+    ...(child.children || []).map(grandchild => grandchild.text || ''),
+  ]) : [];
+  return lines.some(line => /categoria\s*:/i.test(line))
+    && lines.some(line => /\bPP\s*:/i.test(line));
+}
+
+function LiveSystemTrackAttack({ attack, block, forceOpen = false }: { attack: Attack; block: SystemBlock; forceOpen?: boolean }) {
+  const contactLabel = attack.makesContact ? 'Sim' : 'Não';
+  const priorityLabel = attack.priority > 0 ? `+${attack.priority}` : String(attack.priority);
+  return <details id={`section-${block.id}`} className="system-toggle system-live-attack" open={forceOpen || undefined} data-testid={`system-track-move-${block.id}`}>
+    <summary><span>{attack.name}</span><span className="system-live-attack-source">Movimentos</span><ChevronDown size={16} /></summary>
+    <div className="system-toggle-content">
+      <p className="system-live-attack-note">Dados sincronizados com o banco da aba Movimentos.</p>
+      <dl className="system-live-attack-grid">
+        <div><dt>Tipo</dt><dd>{attack.type}</dd></div>
+        <div><dt>Categoria</dt><dd>{attack.category}</dd></div>
+        <div><dt>PP</dt><dd>{attack.pp}</dd></div>
+        <div><dt>PDR</dt><dd>{attack.power === 0 ? 'Variável' : attack.power ?? '—'}</dd></div>
+        <div><dt>Precisão</dt><dd>{attack.accuracy}</dd></div>
+        <div><dt>Alvo/área</dt><dd>{attack.target}</dd></div>
+        <div><dt>Prioridade</dt><dd>{priorityLabel}</dd></div>
+        <div><dt>Contato</dt><dd>{contactLabel}</dd></div>
+      </dl>
+      {attack.effectSummary && <p className="system-live-attack-summary"><strong>Resumo:</strong> {attack.effectSummary}</p>}
+      {attack.effectFull && attack.effectFull !== attack.effectSummary && <p className="system-live-attack-full">{attack.effectFull}</p>}
+    </div>
+  </details>;
+}
+
+function RenderBlocks({
+  blocks,
+  onInternal,
+  forceOpenToggles = false,
+  documentId,
+  attackByBlockId,
+  attackByName,
+}: {
+  blocks: SystemBlock[];
+  onInternal: (url: string) => string | undefined;
+  forceOpenToggles?: boolean;
+  documentId?: string;
+  attackByBlockId?: Map<string, Attack>;
+  attackByName?: Map<string, Attack>;
+}) {
   const rendered: ReactNode[] = [];
   for (let index = 0; index < blocks.length;) {
     const first = blocks[index];
@@ -183,35 +425,55 @@ function RenderBlocks({ blocks, onInternal }: { blocks: SystemBlock[]; onInterna
       }
       const List = listType === 'numbered_list_item' ? 'ol' : 'ul';
       rendered.push(<List key={`${first.id}-list`} className={`system-list ${listType === 'numbered_list_item' ? 'system-ordered' : ''}`} data-testid={`system-list-${first.id}`}>
-        {items.map(item => <li key={item.id}>
+         {items.map(item => <li key={item.id}>
           <RichText value={richValue(item)} onInternal={onInternal} />
-          {item.children?.length ? <div className="system-list-nested"><RenderBlocks blocks={item.children} onInternal={onInternal} /></div> : null}
+           {item.children?.length ? <div className="system-list-nested"><RenderBlocks blocks={item.children} onInternal={onInternal} forceOpenToggles={forceOpenToggles} documentId={documentId} attackByBlockId={attackByBlockId} attackByName={attackByName} /></div> : null}
         </li>)}
       </List>);
       continue;
     }
-    rendered.push(<BlockRenderer key={first.id} block={first} onInternal={onInternal} />);
+    const title = first.text.replace(/^\/+|\/+$/g, '').trim();
+    const liveAttack = isSystemMoveBlock(first) && documentId
+      ? attackByBlockId?.get(first.id) || attackByName?.get(normalizeSystemAttackName(title))
+      : undefined;
+    rendered.push(liveAttack
+      ? <LiveSystemTrackAttack key={first.id} block={first} attack={liveAttack} forceOpen={forceOpenToggles} />
+      : <BlockRenderer key={first.id} block={first} onInternal={onInternal} forceOpenToggles={forceOpenToggles} documentId={documentId} attackByBlockId={attackByBlockId} attackByName={attackByName} />);
     index += 1;
   }
   return <>{rendered}</>;
 }
 
-function BlockRenderer({ block, onInternal }: { block: SystemBlock; onInternal: (url: string) => string | undefined }) {
+function BlockRenderer({
+  block,
+  onInternal,
+  forceOpenToggles = false,
+  documentId,
+  attackByBlockId,
+  attackByName,
+}: {
+  block: SystemBlock;
+  onInternal: (url: string) => string | undefined;
+  forceOpenToggles?: boolean;
+  documentId?: string;
+  attackByBlockId?: Map<string, Attack>;
+  attackByName?: Map<string, Attack>;
+}) {
   const children = block.children || [];
   const body = <RichText value={richValue(block)} onInternal={onInternal} />;
-  const renderChildren = () => <RenderBlocks blocks={children} onInternal={onInternal} />;
+  const renderChildren = () => <RenderBlocks blocks={children} onInternal={onInternal} forceOpenToggles={forceOpenToggles} documentId={documentId} attackByBlockId={attackByBlockId} attackByName={attackByName} />;
   switch (block.type) {
     case 'text':
     case 'paragraph':
       return <div className={`system-paragraph ${block.text ? '' : 'system-blank-line'}`} data-testid={`system-block-${block.id}`}>{body}{children.length > 0 && renderChildren()}</div>;
     case 'heading_1':
-      return <h2 className="system-heading system-heading-one" id={`heading-${block.id}`} data-testid={`system-heading-${block.id}`}>{body}</h2>;
+      return <><h2 className="system-heading system-heading-one" id={`heading-${block.id}`} data-testid={`system-heading-${block.id}`}>{body}</h2>{children.length > 0 && renderChildren()}</>;
     case 'heading_2':
     case 'sub_header':
-      return <h2 className="system-heading system-heading-two" id={`heading-${block.id}`} data-testid={`system-heading-${block.id}`}>{body}</h2>;
+      return <><h2 className="system-heading system-heading-two" id={`heading-${block.id}`} data-testid={`system-heading-${block.id}`}>{body}</h2>{children.length > 0 && renderChildren()}</>;
     case 'heading_3':
     case 'sub_sub_header':
-      return <h3 className="system-heading system-heading-three" id={`heading-${block.id}`} data-testid={`system-heading-${block.id}`}>{body}</h3>;
+      return <><h3 className="system-heading system-heading-three" id={`heading-${block.id}`} data-testid={`system-heading-${block.id}`}>{body}</h3>{children.length > 0 && renderChildren()}</>;
     case 'bulleted_list':
     case 'numbered_list': {
       const List = block.type === 'numbered_list' ? 'ol' : 'ul';
@@ -230,7 +492,7 @@ function BlockRenderer({ block, onInternal }: { block: SystemBlock; onInternal: 
       </aside>;
     }
     case 'toggle':
-      return <details className="system-toggle" data-testid={`system-toggle-${block.id}`}><summary>{body}<ChevronDown size={16} /></summary><div className="system-toggle-content">{renderChildren()}</div></details>;
+      return <details id={`section-${block.id}`} className="system-toggle" open={forceOpenToggles || undefined} data-testid={`system-toggle-${block.id}`}><summary>{body}<ChevronDown size={16} /></summary><div className="system-toggle-content">{renderChildren()}</div></details>;
     case 'divider':
       return <hr className="system-divider" data-testid={`system-block-${block.id}`} />;
     case 'quote':
@@ -241,15 +503,20 @@ function BlockRenderer({ block, onInternal }: { block: SystemBlock; onInternal: 
       const headers = Boolean(block.format?.table_block_column_header);
       const rowHeaders = Boolean(block.format?.table_block_row_header);
       const columnWidths = block.format?.table_block_column_format as Record<string, { width?: number }> | undefined;
-      return <div className="system-table-wrap" data-testid={`system-table-${block.id}`}><table className="system-table"><tbody>{rows.map((row, rowIndex) => <tr key={row.id}>{order.map((column, colIndex) => {
+      const renderRow = (row: SystemBlock, rowIndex: number) => <tr key={row.id}>{order.map((column, colIndex) => {
         const cell = row.properties?.[column];
         const value = Array.isArray(cell) ? cell : typeof cell === 'string' ? [[cell]] : [];
         const isColumnHeader = headers && rowIndex === 0;
         const isRowHeader = rowHeaders && colIndex === 0 && rowIndex > 0;
+         const header = headers ? plainRuns(rows[0]?.properties?.[column]) : '';
         const Cell = isColumnHeader || isRowHeader ? 'th' : 'td';
         const width = columnWidths?.[column]?.width;
-        return <Cell key={`${row.id}-${column}`} scope={isColumnHeader ? 'col' : isRowHeader ? 'row' : undefined} style={width ? { width: `${width}px` } : undefined} data-label={plainRuns(value) || `Coluna ${colIndex + 1}`}><RichText value={value} onInternal={onInternal} /></Cell>;
-      })}</tr>)}</tbody></table></div>;
+         return <Cell key={`${row.id}-${column}`} scope={isColumnHeader ? 'col' : isRowHeader ? 'row' : undefined} style={width ? { width: `${width}px` } : undefined} data-label={header || `Coluna ${colIndex + 1}`}><RichText value={value} onInternal={onInternal} /></Cell>;
+      })}</tr>;
+      return <div className="system-table-wrap" data-testid={`system-table-${block.id}`}><table className="system-table">
+        {headers && rows.length > 0 && <thead>{renderRow(rows[0], 0)}</thead>}
+        <tbody>{rows.slice(headers ? 1 : 0).map((row, index) => renderRow(row, headers ? index + 1 : index))}</tbody>
+      </table></div>;
     }
     case 'table_row':
     case 'unsupported':
@@ -303,6 +570,7 @@ function BlockRenderer({ block, onInternal }: { block: SystemBlock; onInternal: 
 }
 
 export default function System() {
+  const { attacks, systemTrackAttackLinks } = useAttackData();
   const queryClient = useQueryClient();
   const documentsQuery = useGetSystemDocuments({ query: { queryKey: getGetSystemDocumentsQueryKey() } });
   const catalogQuery = useGetSystemCatalog({ query: { queryKey: getGetSystemCatalogQueryKey() } });
@@ -312,9 +580,12 @@ export default function System() {
   const saveDocument = useSaveSystemDocument();
   const saveCatalog = useSaveSystemCatalog();
   const { theme, toggleTheme } = useAppTheme();
+  const { active: activeFormulaPreset } = useFormulaSettings();
+  const globalSearchRef = useRef<HTMLInputElement>(null);
   const firstDocumentId = initialSections.flatMap(section => documentIdsIn(section.groups))[0];
   const [selectedId, setSelectedId] = useState(firstDocumentId);
   const [search, setSearch] = useState('');
+  const [documentSearch, setDocumentSearch] = useState('');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
   const [passwordOpen, setPasswordOpen] = useState(false);
@@ -331,30 +602,57 @@ export default function System() {
   const [saveMessage, setSaveMessage] = useState('');
   const persistedDocuments = (documentsQuery.data?.documents || {}) as Record<string, SystemDocument>;
   const storedCatalog = catalogQuery.data?.catalog as SystemCatalog | undefined;
-  const indexSections = storedCatalog?.sections?.length ? storedCatalog.sections : initialSections;
+  const sourceIndexSections = storedCatalog?.sections?.length ? storedCatalog.sections : initialSections;
+  const indexSections = useMemo(() => sourceIndexSections
+    .map(section => ({ ...section, groups: hideRemovedDocuments(section.groups) }))
+    .filter(section => section.groups.length > 0), [sourceIndexSections]);
   const deletedIds = storedCatalog?.deletedDocumentIds || [];
   const mergedDocuments = useMemo(() => data.documents.map(document => ({
     ...document,
     ...(persistedDocuments[document.id] || {}),
     id: document.id,
     blocks: cleanSystemBlocks((persistedDocuments[document.id] as SystemDocument | undefined)?.blocks || document.blocks),
-  })).filter(document => !deletedIds.includes(document.id)).concat(
+  })).filter(document => !deletedIds.includes(document.id) && !hiddenSystemDocumentIds.has(document.id)).concat(
     Object.entries(persistedDocuments)
-      .filter(([id]) => !data.documents.some(document => document.id === id) && !deletedIds.includes(id))
+      .filter(([id]) => !data.documents.some(document => document.id === id) && !deletedIds.includes(id) && !hiddenSystemDocumentIds.has(id))
       .map(([, document]) => ({ ...document, blocks: cleanSystemBlocks(document.blocks || []) })),
   ), [persistedDocuments, deletedIds]);
   const activeDocument = mergedDocuments.find(document => document.id === selectedId) || mergedDocuments[0] || data.documents[0];
+  const attackById = useMemo(() => new Map(attacks.map(attack => [attack.id, attack])), [attacks]);
+  const attackByBlockId = useMemo(() => {
+    const linked = new Map<string, Attack>();
+    for (const [blockId, attackId] of Object.entries(systemTrackAttackLinks)) {
+      const attack = attackById.get(attackId);
+      if (attack) linked.set(blockId, attack);
+    }
+    return linked;
+  }, [systemTrackAttackLinks, attackById]);
+  const attackByName = useMemo(() => new Map(attacks.map(attack => [
+    normalizeSystemAttackName(attack.name),
+    attack,
+  ])), [attacks]);
+  const displayBlocks = useMemo(() => getDisplayBlocks(activeDocument, activeFormulaPreset.ppMode), [activeDocument, activeFormulaPreset.ppMode]);
+  const displayBlockCount = useMemo(() => countBlocks(displayBlocks), [displayBlocks]);
+  const searchableDocument = displayBlockCount >= 120 || blockSearchText(displayBlocks).length >= 14000;
+  const isAbilityIndex = activeDocument.id === '3554bb16-8489-80b5-a500-cf5efef8aa4f';
+  const filteredBlocks = useMemo(() => documentSearch.trim()
+    ? filterBlocksForSearch(displayBlocks, documentSearch, isAbilityIndex)
+    : displayBlocks, [displayBlocks, documentSearch, isAbilityIndex]);
+  const pageSearchResultCount = isAbilityIndex
+    ? countMatchingAbilities(displayBlocks, documentSearch)
+    : countMatchingBlocks(displayBlocks, documentSearch);
+  const pageOutline = useMemo(() => getDocumentOutline(displayBlocks), [displayBlocks]);
   const authorized = Boolean(sessionQuery.data?.authorized);
   const editorBusy = saveDocument.isPending || saveCatalog.isPending;
-  const term = search.trim().toLocaleLowerCase('pt-BR');
+  const term = normalizedSearchText(search);
   const matches = useMemo(() => term ? mergedDocuments.filter(document =>
-    `${document.title} ${document.navTitle} ${document.section} ${document.subsection || ''} ${blockSearchText(document.blocks)}`
-      .toLocaleLowerCase('pt-BR').includes(term),
+    normalizedSearchText(`${document.title} ${document.navTitle} ${document.section} ${document.subsection || ''} ${blockSearchText(document.blocks)}`).includes(term),
   ) : [], [term, mergedDocuments]);
 
   const openDocument = (id: string) => {
     if (!mergedDocuments.some(document => document.id === id)) return;
     setSelectedId(id);
+    setDocumentSearch('');
     setMobileNavOpen(false);
     window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   };
@@ -445,6 +743,10 @@ export default function System() {
     setIndexEditorOpen(true);
     setSaveMessage('');
   };
+  const scrollToSection = (sectionId: string) => {
+    const section = window.document.getElementById(sectionId);
+    section?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  };
 
   const navigateInternal = (event: Event) => openDocument((event as CustomEvent<string>).detail);
   const renderGroup = (group: SystemGroup, sectionId: string, key: string, nested = false): ReactNode => (
@@ -464,6 +766,19 @@ export default function System() {
     window.addEventListener('system-open-document', navigateInternal);
     return () => window.removeEventListener('system-open-document', navigateInternal);
   }, [mergedDocuments]);
+  useEffect(() => {
+    const focusGlobalSearch = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTyping = target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName || '');
+      if (event.key === '/' && !isTyping && !passwordOpen && !editorTarget && !indexEditorOpen) {
+        event.preventDefault();
+        globalSearchRef.current?.focus();
+      }
+      if (event.key === 'Escape' && documentSearch) setDocumentSearch('');
+    };
+    window.addEventListener('keydown', focusGlobalSearch);
+    return () => window.removeEventListener('keydown', focusGlobalSearch);
+  }, [documentSearch, passwordOpen, editorTarget, indexEditorOpen]);
 
   return <main className="system-page">
     <header className="system-topbar">
@@ -488,7 +803,7 @@ export default function System() {
         </div>}
         <label className="system-search">
           <Search size={17} />
-          <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Buscar regra ou termo..." aria-label="Buscar no sistema" data-testid="input-system-search" />
+           <input ref={globalSearchRef} value={search} onChange={event => setSearch(event.target.value)} placeholder="Buscar regra ou termo..." aria-label="Buscar no sistema" aria-keyshortcuts="/" data-testid="input-system-search" />
           {search && <button type="button" aria-label="Limpar busca" onClick={() => setSearch('')} data-testid="button-system-clear-search"><X size={15} /></button>}
           <kbd>/</kbd>
         </label>
@@ -534,9 +849,33 @@ export default function System() {
         <article className="system-document" key={activeDocument.id} data-testid={`system-document-${activeDocument.id}`}>
           <div className="system-document-kicker"><span className="system-doc-icon"><FileText size={16} /></span>{activeDocument.section}{activeDocument.subsection && <><span className="system-kicker-slash">/</span>{activeDocument.subsection}</>}</div>
           <h1 data-testid="system-document-title">{activeDocument.title}</h1>
-          <div className="system-document-meta"><span><BookOpen size={14} /> {activeDocument.kind === 'inline' ? 'Conteúdo complementar' : 'Regra do sistema'}</span><span className="system-meta-separator" /><span>{activeDocument.blocks.length} blocos</span></div>
+          <div className="system-document-meta"><span><BookOpen size={14} /> {activeDocument.kind === 'inline' ? 'Conteúdo complementar' : 'Regra do sistema'}</span><span className="system-meta-separator" /><span>{displayBlockCount.toLocaleString('pt-BR')} blocos</span></div>
           {activeDocument.sourceUrl && <a className="system-source-link" href={activeDocument.sourceUrl} target="_blank" rel="noreferrer" data-testid="link-system-source">Fonte original <ArrowUpRight size={14} /></a>}
-          <div className="system-rule-content"><RenderBlocks blocks={activeDocument.blocks} onInternal={resolveInternal} /></div>
+          {pageOutline.length >= 4 && !documentSearch && <details className="system-page-outline">
+            <summary><FolderTree size={15} /> Nesta página <span>{pageOutline.length} seções</span><ChevronDown size={15} /></summary>
+            <nav aria-label={`Seções de ${activeDocument.navTitle}`}>
+              {pageOutline.map((item, index) => <button key={`${item.id}-${index}`} type="button" onClick={() => scrollToSection(item.id)}>{item.label}</button>)}
+            </nav>
+          </details>}
+          {searchableDocument && <div className="system-page-search">
+            <label className="system-search system-page-search-input">
+              <Search size={17} />
+              <input value={documentSearch} onChange={event => setDocumentSearch(event.target.value)} placeholder={`Buscar nesta página: ${activeDocument.navTitle}`} aria-label={`Buscar dentro de ${activeDocument.navTitle}`} data-testid="input-system-page-search" />
+              {documentSearch && <button type="button" aria-label="Limpar busca nesta página" onClick={() => setDocumentSearch('')} data-testid="button-system-page-search-clear"><X size={15} /></button>}
+            </label>
+            {documentSearch && <p className="system-page-search-count" role="status" aria-live="polite">
+              {pageSearchResultCount
+                ? isAbilityIndex
+                  ? `${pageSearchResultCount} ${pageSearchResultCount === 1 ? 'habilidade encontrada' : 'habilidades encontradas'}`
+                  : `${pageSearchResultCount} ${pageSearchResultCount === 1 ? 'trecho encontrado' : 'trechos encontrados'}`
+                : 'Nenhum resultado nesta página. Tente outro termo.'}
+            </p>}
+          </div>}
+          <SystemFormulaGuide documentId={activeDocument.id} preset={activeFormulaPreset} />
+          <div className="system-rule-content">{filteredBlocks.length
+            ? <RenderBlocks blocks={filteredBlocks} onInternal={resolveInternal} forceOpenToggles={Boolean(documentSearch.trim())} documentId={activeDocument.id} attackByBlockId={attackByBlockId} attackByName={attackByName} />
+            : <div className="system-page-search-empty"><Search size={20} /><strong>Nenhum resultado nesta página</strong><span>Tente outro nome ou termo. A busca não altera o conteúdo do manual.</span></div>}
+          </div>
           {activeDocument.references?.length > 0 && <footer className="system-references" data-testid="system-references">
             <h2><BookMarked size={16} /> Referências deste documento</h2>
             <div>{activeDocument.references.map((reference, index) => {
@@ -569,7 +908,7 @@ export default function System() {
       }}>
         <button type="button" className="system-icon-button system-password-close" aria-label="Fechar solicitação de senha" onClick={() => setPasswordOpen(false)}><X size={17} /></button>
         <div className="system-password-mark"><LockKeyhole size={20} /></div>
-        <p className="eyebrow">Área de edição</p><h2>Desbloquear o manual</h2><p>Insira a senha de edição para alterar este documento.</p>
+        <p className="eyebrow">Área de edição</p><h2>Desbloquear o manual</h2><p>Use a senha de edição ou a senha do mestre para alterar este documento.</p>
         <label className="system-editor-field"><span>Senha</span><input autoFocus type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required data-testid="input-system-editor-password" /></label>
         {passwordError && <p className="system-editor-error" role="alert">{passwordError}</p>}
         <button type="submit" className="system-editor-save" disabled={createSession.isPending || !password}>{createSession.isPending ? <span className="system-mini-loader" /> : <LockKeyhole size={15} />}{createSession.isPending ? 'Verificando…' : 'Desbloquear edição'}</button>

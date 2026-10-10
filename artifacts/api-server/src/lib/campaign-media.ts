@@ -15,6 +15,24 @@ export interface CampaignImageData {
   base64: string;
 }
 
+export function hasInvalidCampaignImageLinks(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(hasInvalidCampaignImageLinks);
+  if (!value || typeof value !== "object") return false;
+  return Object.entries(value).some(([key, child]) => {
+    if (imageFieldNames.has(key)) {
+      if (child === null || child === undefined || child === "") return false;
+      if (typeof child !== "string") return true;
+      try {
+        const url = new URL(child);
+        return url.protocol !== "https:" || Boolean(url.username || url.password);
+      } catch {
+        return true;
+      }
+    }
+    return hasInvalidCampaignImageLinks(child);
+  });
+}
+
 const imageCache = new Map<string, string>();
 let imageCacheBytes = 0;
 

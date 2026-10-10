@@ -5,6 +5,7 @@ import { getServerCollection, syncGameState } from './cloudSync';
 import { defaultAttacks, defaultPokemon, defaultPokemonTemplate } from './constants';
 import { computeDerivedStats as computeDerivedStatsStrict, getPpPoolMax } from './calculations';
 import { getActivePreset, ORIGINAL_PRESET, STAT_KEYS } from './formulas';
+import { syncSystemTrackAttacks, SYSTEM_TRACK_ATTACK_SYNC_VERSION } from './systemTrackAttacks';
 
 // Never let a runtime formula error (e.g. division by zero) break data loading.
 const computeDerivedStats: typeof computeDerivedStatsStrict = (stats, nature, stages, level, preset) => {
@@ -143,26 +144,53 @@ export function usePokemonData() {
 export function useAttackData() {
   const [attacks, setAttacksState] = useState<Attack[]>(getAttackCatalog);
   const attacksRef = useRef(attacks);
+  const [systemTrackAttackLinks, setSystemTrackAttackLinks] = useState<Record<string, string>>(
+    () => getServerCollection<Record<string, string>>('systemTrackAttackLinks', {}),
+  );
+  const systemTrackAttackLinksRef = useRef(systemTrackAttackLinks);
 
   useEffect(() => {
     const sync = () => {
       const next = getAttackCatalog();
       attacksRef.current = next;
       setAttacksState(next);
+      const nextLinks = getServerCollection<Record<string, string>>('systemTrackAttackLinks', {});
+      systemTrackAttackLinksRef.current = nextLinks;
+      setSystemTrackAttackLinks(nextLinks);
     };
     window.addEventListener('pokemon-rpg-state-change', sync);
     if (!attackCatalogMigrationStarted) {
       attackCatalogMigrationStarted = true;
       const saved = getServerCollection<Attack[]>('attacks', []);
+      let catalog = getAttackCatalog();
+      const patch: Record<string, unknown> = {};
       if (saved.length) {
-        const catalog = getAttackCatalog();
         const translatedNames = saved.some(attack => normalizeAttack(attack).name !== attack.name);
         if (catalog.length > saved.length || translatedNames) {
-          void syncGameState({ attacks: catalog });
+          patch.attacks = catalog;
         }
       } else {
-        void syncGameState({ attacks: defaultAttacks.map(normalizeAttack) });
+        catalog = defaultAttacks.map(normalizeAttack);
+        patch.attacks = catalog;
       }
+
+      const migrationVersion = getServerCollection<number>('systemTrackAttackSyncVersion', 0);
+      if (migrationVersion < SYSTEM_TRACK_ATTACK_SYNC_VERSION) {
+        const result = syncSystemTrackAttacks(
+          catalog,
+          getServerCollection<Record<string, string>>('systemTrackAttackLinks', {}),
+        );
+        catalog = result.attacks;
+        attacksRef.current = catalog;
+        setAttacksState(catalog);
+        systemTrackAttackLinksRef.current = result.links;
+        setSystemTrackAttackLinks(result.links);
+        patch.attacks = catalog;
+        patch.systemTrackAttackLinks = result.links;
+        patch.systemTrackAttackSyncVersion = SYSTEM_TRACK_ATTACK_SYNC_VERSION;
+      }
+
+      if (Object.keys(patch).length) void syncGameState(patch);
     }
     return () => window.removeEventListener('pokemon-rpg-state-change', sync);
   }, []);
@@ -197,7 +225,7 @@ export function useAttackData() {
     setAttacksState(updated);
   };
 
-  return { attacks, addAttack, updateAttack, deleteAttack, setAttacks };
+  return { attacks, addAttack, updateAttack, deleteAttack, setAttacks, systemTrackAttackLinks };
 }
 
 export function useDiceHistory() {

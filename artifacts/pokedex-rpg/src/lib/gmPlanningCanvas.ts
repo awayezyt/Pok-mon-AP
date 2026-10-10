@@ -1,59 +1,5 @@
 import type { GMPlanningNode } from './campaign';
 
-const IMAGE_NODE_LIMIT = 900_000;
-
-function blobAsDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => typeof reader.result === 'string'
-      ? resolve(reader.result)
-      : reject(new Error('Não foi possível preparar a imagem.'));
-    reader.onerror = () => reject(new Error('Não foi possível ler a imagem.'));
-    reader.readAsDataURL(blob);
-  });
-}
-
-export async function preparePlanningImage(file: Blob): Promise<string> {
-  if (!file.type.startsWith('image/')) {
-    throw new Error('O conteúdo copiado não é uma imagem compatível.');
-  }
-  if (file.size > 20 * 1024 * 1024) {
-    throw new Error('A imagem original passa do limite de 20 MB.');
-  }
-
-  const bitmap = await createImageBitmap(file);
-  try {
-    let width = bitmap.width;
-    let height = bitmap.height;
-    const longestEdge = Math.max(width, height);
-    if (longestEdge > 1440) {
-      const scale = 1440 / longestEdge;
-      width = Math.round(width * scale);
-      height = Math.round(height * scale);
-    }
-
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    if (!context) throw new Error('O navegador não conseguiu preparar a imagem.');
-
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      canvas.width = width;
-      canvas.height = height;
-      context.clearRect(0, 0, width, height);
-      context.drawImage(bitmap, 0, 0, width, height);
-      const quality = Math.max(0.58, 0.84 - attempt * 0.07);
-      const result = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/webp', quality));
-      if (!result) break;
-      if (result.size <= IMAGE_NODE_LIMIT) return blobAsDataUrl(result);
-      width = Math.max(320, Math.round(width * 0.78));
-      height = Math.max(320, Math.round(height * 0.78));
-    }
-    throw new Error('A imagem continua muito grande após a compressão. Tente uma imagem menor.');
-  } finally {
-    bitmap.close();
-  }
-}
-
 export function sanitizePlanningHtml(value: string): string {
   if (!value) return '';
   const parsed = new DOMParser().parseFromString(value, 'text/html');

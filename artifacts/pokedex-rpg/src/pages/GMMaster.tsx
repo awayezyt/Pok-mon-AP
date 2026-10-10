@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   AlertTriangle, Archive, BookOpen, Check, ChevronRight, CircleDot, ClipboardList,
-  Copy, Edit3, Eye, Flag, Headphones, LockKeyhole, Map, Plus, ScrollText,
-  Search, ImagePlus, ClipboardPaste, Filter,
+  Copy, Edit3, Eye, Flag, Headphones, LockKeyhole, Map, Minus, Pencil, Plus, ScrollText,
+  Search, Filter,
   Shield, Trash2, UsersRound, Swords, PackageOpen, ExternalLink, Coins,
   Settings, Download, Upload, FileJson, FunctionSquare,
 } from 'lucide-react';
@@ -17,6 +17,7 @@ import { RichText } from '@/components/RichText';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   useCampaignNotes, useCampaignStory, useCharacterSheets, useGMBoard,
+  useBrigadaKirk,
   calculateCharacterResources, CHARACTER_CLASSES, CHARACTER_ATTRIBUTE_LABELS, SKILL_NAMES, getSkillCap,
   createGMPlanningMap, type CampaignEpisode, type CampaignScene, type CharacterAttribute, type CharacterSheet,
   type GMPlanningMap,
@@ -35,6 +36,7 @@ import {
   normalizeGMTrainers as normalizeTrainers,
 } from '../lib/gmPlanning';
 import GMNotesWorkspace from '../components/GMNotesWorkspace';
+import { ImageUrlField } from '../components/ImageUrlField';
 
 type Panel = 'visao' | 'pokemon' | 'treinadores' | 'itens' | 'episodios' | 'musica' | 'anotacoes' | 'configuracoes';
 const panelLabels: Record<Panel, string> = {
@@ -389,8 +391,38 @@ export default function GMMaster() {
 function SettingsPanel({ pokemon, onExport, onImport, summary }: { pokemon: Pokemon[]; onExport: () => void; onImport: (event: React.ChangeEvent<HTMLInputElement>) => void; summary: { characters: number; pokemon: number; attacks: number; episodes: number; music: number; items: number } }) {
   const [editingFormulas, setEditingFormulas] = useState(() => new URLSearchParams(window.location.search).get('formulas') === '1');
   const { active } = useFormulaSettings();
+  const { league, setCurrentRank } = useBrigadaKirk();
+  const [rankDraft, setRankDraft] = useState(String(league.currentRank));
+  const [rankReason, setRankReason] = useState('');
+  useEffect(() => setRankDraft(String(league.currentRank)), [league.currentRank]);
   if (editingFormulas) return <FormulaEditor pokemon={pokemon} onClose={() => setEditingFormulas(false)} />;
   return <div className="space-y-5">
+    <Card className="paper-panel">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Flag className="text-primary" /> Liga · Brigada Kirk</CardTitle>
+        <p className="text-sm text-muted-foreground">Colocação atual compartilhada: <strong>#{league.currentRank}</strong>. Ajustes manuais também entram no histórico público do Arquivo.</p>
+      </CardHeader>
+      <CardContent className="grid gap-3 sm:grid-cols-[minmax(120px,.45fr)_1fr_auto] sm:items-end">
+        <label className="text-xs font-semibold text-muted-foreground">NOVA COLOCAÇÃO
+          <Input type="number" min={1} max={10000} step={1} value={rankDraft} onChange={event => setRankDraft(event.target.value)} className="mt-1" data-testid="input-brigada-rank" />
+        </label>
+        <label className="text-xs font-semibold text-muted-foreground">MOTIVO (OPCIONAL)
+          <Input value={rankReason} onChange={event => setRankReason(event.target.value)} placeholder="Ex.: atualização oficial da liga" className="mt-1" data-testid="input-brigada-rank-reason" />
+        </label>
+        <Button
+          onClick={() => {
+            void setCurrentRank(Number(rankDraft), rankReason).then(() => {
+              setRankReason('');
+              toast.success('Colocação da Brigada Kirk atualizada.');
+            }).catch(() => toast.error('Não foi possível atualizar a colocação.'));
+          }}
+          disabled={!Number.isInteger(Number(rankDraft)) || Number(rankDraft) < 1 || Number(rankDraft) > 10000 || Number(rankDraft) === league.currentRank}
+          data-testid="button-save-brigada-rank"
+        >
+          <Check className="mr-2 h-4 w-4" /> Atualizar colocação
+        </Button>
+      </CardContent>
+    </Card>
     <Card className="paper-panel">
       <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
         <div className="flex items-center gap-3">
@@ -534,30 +566,8 @@ function CharacterAdminEditor({ character, selected, updateCharacter, pokemon }:
   return <div className="grid gap-4 border-t border-border bg-secondary/15 p-4 md:grid-cols-[1fr_auto]"><div className="grid gap-2 sm:grid-cols-2"><Input value={character.name} onChange={event => patch({ name: event.target.value })} placeholder="Nome da ficha" /><Input value={character.player} onChange={event => patch({ player: event.target.value })} placeholder="Jogador" /><Input type="number" min={1} value={character.level} onChange={event => patch({ level: Math.max(1, Number(event.target.value) || 1) })} placeholder="Nível" /><Input value={character.accessCode} onChange={event => patch({ accessCode: event.target.value })} placeholder="Senha do jogador" /><Input type="number" min={0} value={character.money} onChange={event => patch({ money: Math.max(0, Number(event.target.value) || 0) })} placeholder="Dinheiro" /><Input value={character.className} onChange={event => patch({ className: event.target.value as CharacterSheet['className'] })} placeholder="Classe" /></div><div><Button size="sm" variant="outline" onClick={() => setEditingAttributes(value => !value)}><Edit3 size={14} className="mr-2" />Atributos</Button><div className="mt-2 grid grid-cols-3 gap-1">{attributeKeys.map(key => <label key={key} className="text-[10px] text-muted-foreground">{CHARACTER_ATTRIBUTE_LABELS[key]}<Input disabled={!editingAttributes} type="number" value={character.attributes[key]} onChange={event => patch({ attributes: { ...character.attributes, [key]: Number(event.target.value) || 0 } })} className="h-7 px-1 text-center" /></label>)}</div><div className="mt-3 text-xs text-muted-foreground">PV {character.hp}/{character.hpMax} · Esforço {character.focus}/{character.focusMax} · {pokemon.filter(item => character.partyPokemonIds.includes(item.id)).length} Pokémon na Party</div></div></div>;
 }
 
-function ImagePickerDialog({ open, onOpenChange, value, onChange, title }: { open: boolean; onOpenChange: (open: boolean) => void; value: string; onChange: (value: string) => void; title: string }) {
-  const readFile = (file?: File) => {
-    if (!file || !file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = event => onChange(String(event.target?.result || ''));
-    reader.readAsDataURL(file);
-  };
-  return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent>
-      <DialogHeader><DialogTitle>{title}</DialogTitle><DialogDescription>Cole uma imagem da área de transferência ou escolha um arquivo.</DialogDescription></DialogHeader>
-      <div tabIndex={0} autoFocus onPaste={event => { const image = Array.from(event.clipboardData.items).find(item => item.type.startsWith('image/')); if (image) { event.preventDefault(); readFile(image.getAsFile() || undefined); } }} className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-8 text-center outline-none focus:ring-2 focus:ring-primary">
-        {value ? <img src={value} alt="Prévia" className="mx-auto mb-4 max-h-48 max-w-full rounded-lg object-contain" /> : <ClipboardPaste className="mx-auto mb-3 h-10 w-10 text-primary" />}
-        <p className="font-semibold">Cole sua imagem ou aperte aqui para escolher dos arquivos</p>
-        <p className="mt-1 text-xs text-muted-foreground">Clique nesta área e use Ctrl+V para colar uma imagem.</p>
-        <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold hover:border-primary"><ImagePlus size={16} /> Escolher arquivo<input type="file" accept="image/*" className="hidden" onChange={event => readFile(event.target.files?.[0])} /></label>
-      </div>
-      <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button><Button onClick={() => onOpenChange(false)} disabled={!value}>Usar imagem</Button></DialogFooter>
-    </DialogContent>
-  </Dialog>;
-}
-
 function ItemsPanel({ characters, items, draft, setDraft, addItem, editingItemId, onEdit, onCancelEdit, onSend }: { characters: CharacterSheet[]; items: ProvisionalItem[]; draft: { name: string; category: string; weight: number; detail: string; image: string; holdable: boolean }; setDraft: (value: { name: string; category: string; weight: number; detail: string; image: string; holdable: boolean }) => void; addItem: () => void; editingItemId: string | null; onEdit: (item: ProvisionalItem) => void; onCancelEdit: () => void; onSend: (value: { item: ProvisionalItem; character: CharacterSheet }) => void }) {
   const [recipient, setRecipient] = useState(characters[0]?.id || '');
-  const [imageOpen, setImageOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const visibleItems = items.filter(item => {
@@ -577,7 +587,7 @@ function ItemsPanel({ characters, items, draft, setDraft, addItem, editingItemId
         <Input type="number" min={0} value={draft.weight} onChange={event => setDraft({ ...draft, weight: Math.max(0, Number(event.target.value) || 0) })} placeholder="Peso" />
         <label className="flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm"><input type="checkbox" checked={draft.holdable} onChange={event => setDraft({ ...draft, holdable: event.target.checked })} /> Pokémon pode segurar</label>
         <Textarea value={draft.detail} onChange={event => setDraft({ ...draft, detail: event.target.value })} placeholder="Efeito transformado em mecânica de RPG" className="md:col-span-2" />
-        <Button type="button" variant="outline" onClick={() => setImageOpen(true)} className="md:col-span-2">{draft.image ? <img src={draft.image} alt="" className="mr-2 h-6 w-6 rounded object-cover" /> : <ImagePlus size={16} className="mr-2" />} {draft.image ? 'Trocar imagem' : 'Adicionar imagem'}</Button>
+        <ImageUrlField value={draft.image} onChange={image => setDraft({ ...draft, image })} label={`Imagem do item ${draft.name || ''}`} className="h-12 w-12 rounded-lg border border-border bg-background text-primary md:col-span-2" imageClassName="h-full w-full rounded-lg object-cover" compact />
         <div className="flex gap-2 md:col-span-2">
           <Button onClick={addItem} className="flex-1">{editingItemId ? <><Check size={16} className="mr-2" /> Salvar alterações</> : <><Plus size={16} className="mr-2" /> Criar item provisório</>}</Button>
           {editingItemId && <Button type="button" variant="outline" onClick={onCancelEdit}>Cancelar</Button>}
@@ -606,7 +616,6 @@ function ItemsPanel({ characters, items, draft, setDraft, addItem, editingItemId
         </div>)}
       </div>
       {visibleItems.length === 0 && <p className="mt-4 rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nenhum item encontrado.</p>}
-      <ImagePickerDialog open={imageOpen} onOpenChange={setImageOpen} value={draft.image} onChange={image => setDraft({ ...draft, image })} title="Adicionar imagem ao item" />
     </CardContent>
   </Card>;
 }
@@ -693,8 +702,19 @@ function NpcTrainersPanel({ characters, trainers, setTrainers, pokemon, updatePo
   const [draftName, setDraftName] = useState('');
   const [selectedId, setSelectedId] = useState(focusedTrainerId || trainers[0]?.id || '');
   const [tab, setTab] = useState<'ficha' | 'anotacoes' | 'pokemon'>('ficha');
+  const [editingNpcId, setEditingNpcId] = useState<string | null>(null);
   const selected = trainers.find(item => item.id === selectedId);
-  useEffect(() => { if (focusedTrainerId) setSelectedId(focusedTrainerId); }, [focusedTrainerId]);
+  const isNpc = Boolean(selected && selected.kind !== 'player');
+  const isEditingNpc = Boolean(selected && editingNpcId === selected.id);
+  const linkedPokemon = selected
+    ? pokemon.filter(item => normalizeTrainerName(getPokemonTrainerName(item, characters, trainers)) === normalizeTrainerName(selected.name))
+    : [];
+  useEffect(() => {
+    if (!focusedTrainerId) return;
+    setSelectedId(focusedTrainerId);
+    setTab('ficha');
+    setEditingNpcId(null);
+  }, [focusedTrainerId]);
   const patch = (data: Partial<TrainerRecord>) => {
     if (!selected) return;
     if (typeof data.name === 'string' && data.name.trim() && data.name.trim() !== selected.name.trim()) {
@@ -729,7 +749,102 @@ function NpcTrainersPanel({ characters, trainers, setTrainers, pokemon, updatePo
     const ids = selected.pokemonIds || [];
     patch({ pokemonIds: ids.includes(id) ? ids.filter(item => item !== id) : [...ids, id] });
   };
-  return <div className="space-y-5"><Card className="paper-panel"><CardHeader className="flex flex-row items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2"><UsersRound className="text-primary" /> NPCs e treinadores</CardTitle><p className="text-sm text-muted-foreground">Crie e organize quem aparece na campanha.</p></div><div className="flex gap-2"><Input value={draftName} onChange={event => setDraftName(event.target.value)} placeholder="Nome do NPC" /><Button onClick={addNpc}><Plus size={16} /> Criar</Button></div></CardHeader><CardContent><div className="grid gap-5 lg:grid-cols-[240px_1fr]"><div className="space-y-2">{trainers.map(trainer => <div key={trainer.id} className={`flex items-center gap-1 rounded-lg border ${trainer.id === selectedId ? 'border-primary bg-primary/10' : 'border-border'}`}><button onClick={() => { setSelectedId(trainer.id); setTab('ficha'); }} className="min-w-0 flex-1 p-3 text-left"><p className="truncate font-semibold">{trainer.name}</p><p className="text-xs text-muted-foreground">{trainer.kind === 'player' ? 'Ficha de jogador' : 'NPC'} · Nível {trainer.level || 1}</p></button><Button size="icon" variant="ghost" onClick={() => { setTrainers(prev => prev.filter(item => item.id !== trainer.id)); if (selectedId === trainer.id) setSelectedId(trainers.find(item => item.id !== trainer.id)?.id || ''); }}><Trash2 size={14} /></Button></div>)}{trainers.length === 0 && <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Nenhum NPC criado.</p>}</div>{selected ? <div><div className="mb-4 flex gap-1 border-b border-border">{[['ficha', 'Ficha'], ['anotacoes', 'Anotações'], ['pokemon', 'Pokémon']].map(([value, label]) => <button key={value} onClick={() => setTab(value as typeof tab)} className={`border-b-2 px-3 py-2 text-sm font-semibold ${tab === value ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}>{label}</button>)}</div>{tab === 'ficha' && <NpcSheetEditor npc={selected} patch={patch} />}{tab === 'anotacoes' && <Textarea value={selected.notes || ''} onChange={event => patch({ notes: event.target.value })} className="min-h-64" placeholder="Informações importantes sobre este NPC..." />}{tab === 'pokemon' && <NpcPokemonEditor npc={selected} pokemon={pokemon} updatePokemon={updatePokemon} patch={patch} />}</div> : <p className="p-8 text-center text-sm text-muted-foreground">Selecione ou crie um NPC.</p>}</div></CardContent></Card><Card><CardHeader><CardTitle>Fichas de jogadores</CardTitle></CardHeader><CardContent className="grid gap-2 sm:grid-cols-2">{characters.map(character => <div key={character.id} className="rounded-lg border border-border p-3"><div className="flex items-start justify-between gap-3"><Link href={`/personagem?id=${character.id}`} className="min-w-0 hover:text-primary"><p className="font-semibold">{character.name}</p><p className="text-xs text-muted-foreground">{character.player} · nível {character.level}</p></Link><CharacterAccessControls character={character} updateCharacter={updateCharacter} deleteCharacter={deleteCharacter} /></div></div>)}</CardContent></Card></div>;
+  return (
+    <div className="space-y-5">
+      <Card className="paper-panel">
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2"><UsersRound className="text-primary" /> NPCs e treinadores</CardTitle>
+            <p className="text-sm text-muted-foreground">Crie e organize quem aparece na campanha.</p>
+          </div>
+          <div className="flex min-w-0 gap-2">
+            <Input value={draftName} onChange={event => setDraftName(event.target.value)} placeholder="Nome do NPC" aria-label="Nome do NPC" />
+            <Button onClick={addNpc}><Plus size={16} /> Criar</Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-5 lg:grid-cols-[240px_1fr]">
+            <div className="space-y-2">
+              {trainers.map(trainer => (
+                <div key={trainer.id} className={`flex items-center gap-1 rounded-lg border ${trainer.id === selectedId ? 'border-primary bg-primary/10' : 'border-border'}`}>
+                  <button onClick={() => { setSelectedId(trainer.id); setTab('ficha'); setEditingNpcId(null); }} className="min-w-0 flex-1 p-3 text-left">
+                    <p className="truncate font-semibold">{trainer.name}</p>
+                    <p className="text-xs text-muted-foreground">{trainer.kind === 'player' ? 'Ficha de jogador' : 'NPC'} · Nível {trainer.level || 1}</p>
+                  </button>
+                  <Button size="icon" variant="ghost" aria-label={`Excluir ${trainer.name}`} title={`Excluir ${trainer.name}`} onClick={() => {
+                    setTrainers(prev => prev.filter(item => item.id !== trainer.id));
+                    if (selectedId === trainer.id) {
+                      setSelectedId(trainers.find(item => item.id !== trainer.id)?.id || '');
+                      setEditingNpcId(null);
+                    }
+                  }}><Trash2 size={14} /></Button>
+                </div>
+              ))}
+              {trainers.length === 0 && <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Nenhum NPC criado.</p>}
+            </div>
+
+            {selected ? (
+              <div className="min-w-0">
+                {isNpc ? (
+                  <>
+                    <div className="mb-4 flex items-start justify-between gap-3 border-b border-border pb-3">
+                      <div className="min-w-0">
+                        <p className="eyebrow">Ficha do NPC</p>
+                        <h2 className="truncate font-display text-2xl">{selected.name}</h2>
+                      </div>
+                      {isEditingNpc ? (
+                        <Button size="sm" variant="outline" onClick={() => setEditingNpcId(null)} aria-label="Concluir edição da ficha">
+                          <Check size={15} className="mr-2" /> Concluir
+                        </Button>
+                      ) : (
+                        <Button size="icon" variant="ghost" className="shrink-0" onClick={() => { setEditingNpcId(selected.id); setTab('ficha'); }} aria-label="Editar ficha do NPC" title="Editar ficha">
+                          <Pencil size={16} />
+                        </Button>
+                      )}
+                    </div>
+                    {isEditingNpc ? (
+                      <>
+                        <NpcResourceControls npc={selected} patch={patch} />
+                        <div className="mb-4 flex gap-1 overflow-x-auto border-b border-border">
+                          {([['ficha', 'Ficha'], ['anotacoes', 'Anotações'], ['pokemon', 'Pokémon']] as const).map(([value, label]) => (
+                            <button key={value} onClick={() => setTab(value)} className={`shrink-0 border-b-2 px-3 py-2 text-sm font-semibold ${tab === value ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                        {tab === 'ficha' && <NpcSheetEditor npc={selected} patch={patch} hideResources />}
+                        {tab === 'anotacoes' && <Textarea value={selected.notes || ''} onChange={event => patch({ notes: event.target.value })} className="min-h-64" placeholder="Informações importantes sobre este NPC..." aria-label="Anotações do NPC" />}
+                        {tab === 'pokemon' && <NpcPokemonEditor npc={selected} pokemon={pokemon} updatePokemon={updatePokemon} patch={patch} />}
+                      </>
+                    ) : (
+                      <NpcSheetViewer npc={selected} patch={patch} linkedPokemon={linkedPokemon} />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="mb-4 flex gap-1 border-b border-border">
+                      {([['ficha', 'Ficha'], ['anotacoes', 'Anotações'], ['pokemon', 'Pokémon']] as const).map(([value, label]) => (
+                        <button key={value} onClick={() => setTab(value)} className={`border-b-2 px-3 py-2 text-sm font-semibold ${tab === value ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}>{label}</button>
+                      ))}
+                    </div>
+                    {tab === 'ficha' && <NpcSheetEditor npc={selected} patch={patch} />}
+                    {tab === 'anotacoes' && <Textarea value={selected.notes || ''} onChange={event => patch({ notes: event.target.value })} className="min-h-64" placeholder="Informações importantes sobre este NPC..." />}
+                    {tab === 'pokemon' && <NpcPokemonEditor npc={selected} pokemon={pokemon} updatePokemon={updatePokemon} patch={patch} />}
+                  </>
+                )}
+              </div>
+            ) : <p className="p-8 text-center text-sm text-muted-foreground">Selecione ou crie um NPC.</p>}
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle>Fichas de jogadores</CardTitle></CardHeader>
+        <CardContent className="grid gap-2 sm:grid-cols-2">
+          {characters.map(character => <div key={character.id} className="rounded-lg border border-border p-3"><div className="flex items-start justify-between gap-3"><Link href={`/personagem?id=${character.id}`} className="min-w-0 hover:text-primary"><p className="font-semibold">{character.name}</p><p className="text-xs text-muted-foreground">{character.player} · nível {character.level}</p></Link><CharacterAccessControls character={character} updateCharacter={updateCharacter} deleteCharacter={deleteCharacter} /></div></div>)}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 function NpcPokemonEditor({ npc, pokemon, updatePokemon, patch }: { npc: TrainerRecord; pokemon: ReturnType<typeof usePokemonData>['pokemon']; updatePokemon: ReturnType<typeof usePokemonData>['updatePokemon']; patch: (data: Partial<TrainerRecord>) => void }) {
@@ -763,6 +878,113 @@ function NpcPokemonEditor({ npc, pokemon, updatePokemon, patch }: { npc: Trainer
   </div>;
 }
 
+function NpcResourceControls({ npc, patch }: { npc: TrainerRecord; patch: (data: Partial<TrainerRecord>) => void }) {
+  const resource = (label: string, key: 'hp' | 'focus', currentValue: number | undefined, maxValue: number | undefined, color: string) => {
+    const max = Math.max(0, Math.floor(maxValue || 0));
+    const current = Math.max(0, Math.min(max, Math.floor(currentValue || 0)));
+    const update = (value: number) => patch({ [key]: Math.max(0, Math.min(max, Math.floor(value || 0))) });
+    const percent = max ? Math.round(current / max * 100) : 0;
+
+    return <section key={key} className="rounded-xl border border-border bg-card p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+        <span className={`font-mono text-xs font-semibold ${color}`}>{percent}%</span>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <Button size="icon" variant="outline" className="h-8 w-8" disabled={current <= 0} onClick={() => update(current - 1)} aria-label={`Diminuir ${label}`}>
+          <Minus size={14} />
+        </Button>
+        <label className="flex items-center gap-2">
+          <Input type="number" min={0} max={max} step={1} value={current} onChange={event => update(Number(event.target.value))} className="h-9 w-20 text-center font-mono text-base font-bold" aria-label={`${label} atual`} />
+          <span className="font-mono text-sm text-muted-foreground">/ {max}</span>
+        </label>
+        <Button size="icon" variant="outline" className="h-8 w-8" disabled={current >= max} onClick={() => update(current + 1)} aria-label={`Aumentar ${label}`}>
+          <Plus size={14} />
+        </Button>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
+        <div className={`h-full rounded-full transition-[width] ${key === 'hp' ? 'bg-rose-500' : 'bg-sky-500'}`} style={{ width: `${percent}%` }} />
+      </div>
+    </section>;
+  };
+
+  return <div className="mb-4 grid grid-cols-2 gap-3">
+    {resource('PV atual', 'hp', npc.hp, npc.hpMax, 'text-rose-600')}
+    {resource('PE atual', 'focus', npc.focus, npc.focusMax, 'text-sky-600')}
+  </div>;
+}
+
+function NpcSheetViewer({ npc, patch, linkedPokemon }: { npc: TrainerRecord; patch: (data: Partial<TrainerRecord>) => void; linkedPokemon: Pokemon[] }) {
+  const className = npc.className || 'Treinador';
+  const attributes = { agi: 1, car: 1, for: 1, int: 1, vig: 1, von: 1, ...(npc.attributes || {}) };
+  const skills: NonNullable<TrainerRecord['skills']> = npc.skills || SKILL_NAMES.map(name => ({ name, value: 0, trained: false }));
+  const abilities = npc.abilities || [];
+
+  return <div className="max-h-[72vh] space-y-5 overflow-y-auto overscroll-contain pr-2">
+    <section className="rounded-xl border border-border bg-secondary/15 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline">{className}</Badge>
+        <Badge variant="outline">{npc.path || CHARACTER_CLASSES[className][0]}</Badge>
+        <Badge variant="outline">Nível {npc.level || 1}</Badge>
+      </div>
+    </section>
+
+    <NpcResourceControls npc={npc} patch={patch} />
+
+    <section>
+      <p className="eyebrow mb-2">Atributos</p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        {attributeKeys.map(key => <div key={key} className="rounded-lg border border-border bg-card p-3">
+          <p className="text-xs text-muted-foreground">{CHARACTER_ATTRIBUTE_LABELS[key]}</p>
+          <p className="mt-1 font-mono text-xl font-bold">{attributes[key]}</p>
+        </div>)}
+      </div>
+    </section>
+
+    <section>
+      <p className="eyebrow mb-2">Perícias</p>
+      <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+        {skills.map(skill => {
+          const total = skill.value + (skill.extraPoints || 0);
+          return <div key={skill.name} className={`flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm ${total > 0 ? 'bg-primary/5' : 'bg-card/60'}`}>
+            <span className={total > 0 ? 'font-medium' : 'text-muted-foreground'}>{skill.name}</span>
+            <span className={`shrink-0 font-mono ${total > 0 ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
+              {skill.value}{(skill.extraPoints || 0) > 0 ? ` + ${skill.extraPoints}` : ''}
+            </span>
+          </div>;
+        })}
+      </div>
+    </section>
+
+    <section>
+      <p className="eyebrow mb-2">Habilidades</p>
+      {abilities.length > 0 ? <div className="grid gap-3 sm:grid-cols-2">
+        {abilities.map((ability, index) => <article key={`${ability.name}-${index}`} className="rounded-xl border border-border bg-card p-4">
+          <h3 className="font-semibold">{ability.name || 'Habilidade sem nome'}</h3>
+          {ability.detail ? <div className="mt-1 text-sm text-muted-foreground"><RichText text={ability.detail} /></div> : <p className="mt-1 text-sm text-muted-foreground">Sem descrição.</p>}
+          {ability.uses && <p className="mt-3 text-xs font-semibold text-primary">{ability.uses}</p>}
+        </article>)}
+      </div> : <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Nenhuma habilidade cadastrada.</p>}
+    </section>
+
+    <div className="grid gap-5 border-t border-border pt-4 sm:grid-cols-2">
+      <section>
+        <p className="eyebrow mb-2">Anotações</p>
+        {npc.notes?.trim() ? <div className="text-sm leading-relaxed text-muted-foreground"><RichText text={npc.notes} /></div> : <p className="text-sm text-muted-foreground">Nenhuma anotação cadastrada.</p>}
+      </section>
+      <section>
+        <p className="eyebrow mb-2">Pokémon associados</p>
+        {linkedPokemon.length > 0 ? <div className="flex flex-wrap gap-2">
+          {linkedPokemon.map(item => <div key={item.id} className="rounded-lg border border-border bg-card px-3 py-2">
+            <p className="text-sm font-semibold">{item.name}</p>
+            <p className="text-xs text-muted-foreground">{item.species || 'Espécie não registrada'}</p>
+          </div>)}
+        </div> : <p className="text-sm text-muted-foreground">Nenhum Pokémon associado.</p>}
+      </section>
+    </div>
+  </div>;
+}
+
 function CharacterAccessControls({ character, updateCharacter, deleteCharacter }: { character: CharacterSheet; updateCharacter: (id: string, patch: Partial<CharacterSheet>) => void; deleteCharacter: (id: string) => void }) {
   const [password, setPassword] = useState('');
   const savePassword = () => {
@@ -789,7 +1011,7 @@ function CharacterAccessControls({ character, updateCharacter, deleteCharacter }
   </div>;
 }
 
-function NpcSheetEditor({ npc, patch }: { npc: TrainerRecord; patch: (data: Partial<TrainerRecord>) => void }) {
+function NpcSheetEditor({ npc, patch, hideResources = false }: { npc: TrainerRecord; patch: (data: Partial<TrainerRecord>) => void; hideResources?: boolean }) {
   const className = npc.className || 'Treinador';
   const attributes = { agi: 1, car: 1, for: 1, int: 1, vig: 1, von: 1, ...(npc.attributes || {}) };
   const skills: NonNullable<TrainerRecord['skills']> = npc.skills || SKILL_NAMES.map(name => ({ name, value: 0, trained: false }));
@@ -808,10 +1030,10 @@ function NpcSheetEditor({ npc, patch }: { npc: TrainerRecord; patch: (data: Part
         <select value={npc.path || CHARACTER_CLASSES[className][0]} onChange={event => patch({ path: event.target.value })} className="h-9 rounded-md border border-input bg-background px-3 text-sm">{CHARACTER_CLASSES[className].map(item => <option key={item}>{item}</option>)}</select>
         <Input type="number" min={1} value={npc.level || 1} onChange={event => patch({ level: Math.max(1, Number(event.target.value) || 1) })} placeholder="Nível" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      {!hideResources && <div className="grid grid-cols-2 gap-3">
         <div className="rounded-lg border border-border p-3"><p className="eyebrow">PV</p><p className="font-mono text-xl">{npc.hp || 0} / {npc.hpMax || 0}</p></div>
         <div className="rounded-lg border border-border p-3"><p className="eyebrow">PE</p><p className="font-mono text-xl">{npc.focus || 0} / {npc.focusMax || 0}</p></div>
-      </div>
+      </div>}
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">{attributeKeys.map(key => <label key={key} className="rounded-lg border border-primary/20 bg-secondary/20 p-2 text-center"><span className="font-mono text-xs font-bold text-primary">{key.toUpperCase()}</span><Input type="number" min={1} value={attributes[key]} onChange={event => setAttribute(key, Math.max(1, Number(event.target.value) || 1))} className="mt-1 h-8 px-1 text-center" /></label>)}</div>
       <div>
         <p className="eyebrow mb-2">Perícias</p>

@@ -41,6 +41,23 @@ function stateEtag(revision: number) {
 }
 
 const CAMPAIGN_STATE_MEDIA_QUERY = '?media=refs';
+const imageFieldNames = new Set(['image', 'imageUrl']);
+
+function cleanImageLinks(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(cleanImageLinks);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([key, child]) => {
+    if (imageFieldNames.has(key) && typeof child === 'string') {
+      try {
+        const url = new URL(child);
+        return [key, url.protocol === 'https:' && !url.username && !url.password ? child : ''];
+      } catch {
+        return [key, ''];
+      }
+    }
+    return [key, cleanImageLinks(child)];
+  }));
+}
 
 async function requestState(ifNoneMatch?: string) {
   const response = await fetch(`/api/state${CAMPAIGN_STATE_MEDIA_QUERY}`, {
@@ -123,13 +140,14 @@ async function writePatch(patch: GameState, writeId: number) {
 }
 
 export function syncGameState(patch: GameState, options?: { throwOnError?: boolean }) {
+  const safePatch = cleanImageLinks(patch) as GameState;
   const writeId = ++latestWriteId;
   pendingWrites += 1;
   // Keep subsequent edits based on the newest local snapshot even while an
   // earlier request is in flight.
-  serverState = { ...serverState, ...patch };
+  serverState = { ...serverState, ...safePatch };
   setSyncStatus('saving');
-  const next = writeQueue.then(() => writePatch(patch, writeId), () => writePatch(patch, writeId));
+  const next = writeQueue.then(() => writePatch(safePatch, writeId), () => writePatch(safePatch, writeId));
   writeQueue = next.then(() => undefined, () => undefined);
   return next.then(() => {
     pendingWrites -= 1;

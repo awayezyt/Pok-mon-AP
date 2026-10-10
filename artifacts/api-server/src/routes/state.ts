@@ -5,8 +5,8 @@ import { readSession } from "../lib/session";
 import {
   collectCampaignImages,
   externalizeCampaignImages,
+  hasInvalidCampaignImageLinks,
   rememberCampaignImages,
-  restoreCampaignImageReferences,
 } from "../lib/campaign-media";
 
 const router: IRouter = Router();
@@ -121,8 +121,12 @@ router.put("/state", async (req, res): Promise<void> => {
   }
 
   const requestedPatch = req.body as Record<string, unknown>;
+  if (hasInvalidCampaignImageLinks(requestedPatch)) {
+    res.status(400).json({ error: "Cada imagem deve usar uma URL HTTPS direta; Base64 e referências internas não são aceitos." });
+    return;
+  }
   const session = await readSession(req);
-  if (session?.role !== "gm" && ("gmHistory" in requestedPatch || "gmBoard" in requestedPatch || "formulaSettings" in requestedPatch)) {
+  if (session?.role !== "gm" && ("gmHistory" in requestedPatch || "gmBoard" in requestedPatch || "formulaSettings" in requestedPatch || "brigadaKirk" in requestedPatch)) {
     res.status(403).json({ error: "Somente o mestre pode alterar estes dados." });
     return;
   }
@@ -132,14 +136,7 @@ router.put("/state", async (req, res): Promise<void> => {
     .where(eq(gameStateTable.id, SHARED_STATE_ID))
     .limit(1);
   const currentState = existing?.state as Record<string, unknown> | undefined;
-  const currentImages = collectCampaignImages(currentState);
-  rememberCampaignImages(currentImages);
-  const restored = restoreCampaignImageReferences(requestedPatch, currentImages);
-  if (restored.missingHashes.length > 0) {
-    res.status(409).json({ error: "Uma ou mais imagens mudaram. Atualize a campanha e tente novamente." });
-    return;
-  }
-  const protection = protectLegacyCharacterData(currentState, restored.value);
+  const protection = protectLegacyCharacterData(currentState, requestedPatch);
   const patch = protection.patch;
   const currentRevision = existing?.revision ?? 0;
   const ifMatch = req.get("If-Match")?.match(/^"campaign-state-(\d+)"$/);

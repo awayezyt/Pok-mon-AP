@@ -22,8 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
-  Camera, ChevronDown, Minus, Swords, Trash2, Search, Plus, Dices, Pencil, X,
-  Shield, Heart, Zap, Activity, RefreshCw, Copy, Check, ClipboardPaste, ImagePlus,
+  ChevronDown, Minus, Swords, Trash2, Search, Plus, Dices, Pencil, X,
+  Shield, Heart, Zap, Activity, RefreshCw, Copy, Check,
   Mars, Venus, CircleHelp
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -32,6 +32,7 @@ import { getServerCollection } from '../lib/cloudSync';
 import { characterHasPokemon, getCharacterPokemonRoster, getPokemonAssignmentConflict, getPokemonTrainerName, normalizeTrainerName, syncPokemonTrainerRecord } from '../lib/pokemonOwnership';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { PokemonPPBar } from './PokemonPPBar';
+import { ImageUrlField } from './ImageUrlField';
 
 const POKEMON_STAT_KEYS = ['hp', 'atk', 'def', 'spAtk', 'spDef', 'spe'] as const;
 type PokemonStatKey = typeof POKEMON_STAT_KEYS[number];
@@ -317,23 +318,6 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = ev => handleChange({ image: ev.target?.result as string });
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
-    const imageItem = Array.from(e.clipboardData.items).find(item => item.type.startsWith('image/'));
-    if (!imageItem) return;
-    e.preventDefault();
-    const file = imageItem.getAsFile();
-    if (file) handleImageUpload({ target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>);
-  };
-
   const handleRandomNature = () => {
     if (!canEditMoves) {
       toast.error('Apenas o GM pode alterar a natureza.');
@@ -561,7 +545,6 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
   };
 
   const [isAttackModalOpen, setIsAttackModalOpen] = useState(false);
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [attackSearch, setAttackSearch] = useState('');
   const [copiedPokedex, setCopiedPokedex] = useState(false);
 
@@ -669,14 +652,14 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
       {/* ── HEADER ─────────────────────────────────────────────────────────── */}
       <div className="pokemon-sheet-header grid grid-cols-1 items-start gap-4 rounded-2xl border p-4 shadow-sm sm:gap-6 sm:p-6 md:grid-cols-[180px_minmax(0,1fr)]">
         {/* Avatar */}
-        <div className="group relative mx-auto flex h-28 w-28 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed bg-secondary/30 sm:mx-0 sm:h-36 sm:w-36 md:h-44 md:w-44" style={{ borderColor: 'color-mix(in srgb, var(--pokemon-accent) 60%, transparent)' }} onClick={() => setIsImageModalOpen(true)}>
-          {sheet.image
-            ? <img src={sheet.image} alt={sheet.name} loading="lazy" className="w-full h-full object-cover" />
-            : <div className="text-7xl text-muted-foreground opacity-20 font-bold">?</div>}
-          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-            <Camera className="text-white h-8 w-8" />
-          </div>
-        </div>
+        <ImageUrlField
+          value={sheet.image}
+          onChange={image => handleChange({ image })}
+          label={`Imagem de ${sheet.name || 'Pokémon'}`}
+          disabled={!canEditMoves}
+          className="mx-auto h-28 w-28 shrink-0 rounded-2xl border-2 border-dashed bg-secondary/30 text-muted-foreground sm:mx-0 sm:h-36 sm:w-36 md:h-44 md:w-44"
+          imageClassName="h-full w-full object-cover"
+        />
 
         {/* Info */}
         <div className="min-w-0 w-full space-y-4">
@@ -1418,20 +1401,6 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
               </DialogFooter>
             </>;
           })()}
-        </DialogContent>
-      </Dialog>
-
-      {/* ── ADD ATTACK MODAL ──────────────────────────────────────────────── */}
-      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Adicionar imagem ao Pokémon</DialogTitle><DialogDescription>Cole uma imagem da área de transferência ou escolha um arquivo.</DialogDescription></DialogHeader>
-          <div tabIndex={0} autoFocus onPaste={handleImagePaste} className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-8 text-center outline-none focus:ring-2 focus:ring-primary">
-            {sheet.image ? <img src={sheet.image} alt="Prévia" className="mx-auto mb-4 max-h-48 max-w-full rounded-lg object-contain" /> : <ClipboardPaste className="mx-auto mb-3 h-10 w-10 text-primary" />}
-            <p className="font-semibold">Cole sua imagem ou aperte aqui para escolher dos arquivos</p>
-            <p className="mt-1 text-xs text-muted-foreground">Clique nesta área e use Ctrl+V para colar uma imagem.</p>
-            <label className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold hover:border-primary"><ImagePlus className="h-4 w-4" /> Escolher arquivo<input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} /></label>
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setIsImageModalOpen(false)}>Cancelar</Button><Button onClick={() => setIsImageModalOpen(false)} disabled={!sheet.image}>Usar imagem</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 

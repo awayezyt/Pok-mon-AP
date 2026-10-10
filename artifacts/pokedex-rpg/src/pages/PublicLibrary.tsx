@@ -1,17 +1,18 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'wouter';
-import { ArrowUpRight, BookOpen, Check, CircleDot, Filter, Pencil, Search, Sparkles, Trash2, X } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check, CircleDot, Pencil, Search, Sparkles, Trash2, Trophy, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useCampaignNotes, useSessionRole } from '../lib/campaign';
+import { useBrigadaKirk, useCampaignNotes, useSessionRole } from '../lib/campaign';
 import { usePokemonData } from '../lib/hooks';
 import { RichText } from '@/components/RichText';
 import type { PokemonType } from '../lib/types';
 import { POKEMON_SORT_OPTIONS, sortPokemon, type PokemonSortOrder } from '../lib/pokemonSorting';
+import BrigadaKirkPanel from '../components/BrigadaKirkPanel';
 
 const TYPE_PALETTES: Record<PokemonType, { accent: string; panel: string }> = {
   Normal: { accent: '#b7bec8', panel: '#343d4b' },
@@ -51,11 +52,12 @@ function pokemonPanelBackground(types?: PokemonType[]) {
 export default function PublicLibrary() {
   const { pokemon } = usePokemonData();
   const { notes, saveNote, removeNote } = useCampaignNotes();
+  const brigadaKirk = useBrigadaKirk();
   const { role } = useSessionRole();
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<PokemonSortOrder>('arrival-newest');
   const [selectedPokemonId, setSelectedPokemonId] = useState<string | null>(null);
-  const [showNotes, setShowNotes] = useState(true);
+  const [archiveView, setArchiveView] = useState<'pokedex' | 'notes' | 'brigada'>('pokedex');
   const [noteTitle, setNoteTitle] = useState('');
   const [noteBody, setNoteBody] = useState('');
   const [editingNote, setEditingNote] = useState<{ id: string; title: string; body: string } | null>(null);
@@ -98,7 +100,18 @@ export default function PublicLibrary() {
             </div>
           </div>
         </header>
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+        <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Conteúdo do Arquivo">
+          <Button variant={archiveView === 'pokedex' ? 'default' : 'outline'} onClick={() => setArchiveView('pokedex')} aria-pressed={archiveView === 'pokedex'} data-testid="button-view-public-pokedex">
+            <CircleDot size={16} /> Apenas Pokédex
+          </Button>
+          <Button variant={archiveView === 'notes' ? 'default' : 'outline'} onClick={() => setArchiveView('notes')} aria-pressed={archiveView === 'notes'} data-testid="button-view-public-notes">
+            <BookOpen size={16} /> Anotações <span className="rounded-full bg-background/20 px-2 py-0.5 text-xs">{publicNotes.length}</span>
+          </Button>
+          <Button variant={archiveView === 'brigada' ? 'default' : 'outline'} onClick={() => setArchiveView('brigada')} aria-pressed={archiveView === 'brigada'} data-testid="button-view-brigada-kirk">
+            <Trophy size={16} /> Brigada Kirk
+          </Button>
+        </div>
+        {archiveView === 'pokedex' && <div className="mb-6 flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={17} />
             <Input value={search} onChange={e => setSearch(e.target.value)} className="h-12 rounded-xl border-border/80 bg-card/80 pl-10 shadow-sm" placeholder="Buscar criatura, tipo ou treinador..." data-testid="input-public-search" />
@@ -112,14 +125,10 @@ export default function PublicLibrary() {
           >
             {POKEMON_SORT_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
-          <Button variant={showNotes ? 'default' : 'outline'} className="h-12 rounded-xl px-4 shadow-sm" onClick={() => setShowNotes(!showNotes)} data-testid="button-toggle-public-notes">
-            <Filter size={16} /> {showNotes ? 'Ocultar anotações' : 'Mostrar anotações'}
-            <span className="ml-1 rounded-full bg-background/20 px-2 py-0.5 text-xs">{publicNotes.length}</span>
-          </Button>
-        </div>
-        <div className={`grid items-start gap-6 ${showNotes ? 'lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,.75fr)]' : ''}`}>
-          <section aria-label="Pokédex pública">
-            <div className={`grid gap-5 ${showNotes ? 'sm:grid-cols-2' : 'sm:grid-cols-2 xl:grid-cols-3'}`}>
+        </div>}
+        <div className={`grid items-start gap-6 ${archiveView === 'notes' ? 'mx-auto max-w-3xl' : ''}`}>
+          {archiveView === 'pokedex' && <section aria-label="Pokédex pública">
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {sortedPokemon.map(item => {
                 const primaryType = item.types[0] || 'Normal';
                 const palette = paletteForType(primaryType);
@@ -185,8 +194,8 @@ export default function PublicLibrary() {
                 <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">{search ? 'Tente buscar por outro nome, espécie ou tipo.' : 'Quando o GM compartilhar Pokémon, eles aparecerão aqui.'}</p>
               </div>
             )}
-          </section>
-          {showNotes && (
+          </section>}
+          {archiveView === 'notes' && (
             <aside className="lg:sticky lg:top-24" aria-label="Anotações da mesa">
               <Card className="paper-panel overflow-hidden rounded-2xl border-border/80 shadow-lg shadow-black/10">
                 <CardHeader className="border-b border-border/70 bg-card/70 pb-4">
@@ -236,6 +245,14 @@ export default function PublicLibrary() {
             </aside>
           )}
         </div>
+        {archiveView === 'brigada' && <BrigadaKirkPanel
+          league={brigadaKirk.league}
+          pokemon={pokemon}
+          isGM={role === 'gm'}
+          onAddBattle={brigadaKirk.addBattle}
+          onAddPokemonDiscovery={brigadaKirk.addPokemonDiscovery}
+          onAddContest={brigadaKirk.addContest}
+        />}
       </div>
         <Dialog open={!!selectedPokemon} onOpenChange={open => { if (!open) setSelectedPokemonId(null); }}>
           <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
