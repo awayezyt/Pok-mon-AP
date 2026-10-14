@@ -186,6 +186,8 @@ export interface CampaignScene {
   customMarket: SceneMarketItem[];
   tests: SceneTest[];
   pointsOfInterest: string[];
+  noteIds?: string[];
+  attackIds?: string[];
 }
 
 export interface CampaignEpisode {
@@ -193,6 +195,7 @@ export interface CampaignEpisode {
   title: string;
   description: string;
   scenes: CampaignScene[];
+  noteIds?: string[];
 }
 
 export interface GMReminder {
@@ -254,8 +257,46 @@ export interface GMBoardState {
   reminders: GMReminder[];
   sceneScript: string;
   music: MusicTrack[];
+  notes: GMManagerNote[];
   mindMaps: GMPlanningMap[];
   activeMindMapId: string;
+}
+
+export type GMNoteAttachmentKind =
+  | 'pokemon' | 'trainer' | 'character' | 'item' | 'music' | 'episode' | 'scene' | 'attack';
+
+export interface GMNoteAttachment {
+  kind: GMNoteAttachmentKind;
+  resourceId: string;
+}
+
+export interface GMManagerNote {
+  id: string;
+  kind: 'note' | 'market';
+  title: string;
+  description: string;
+  caption: string;
+  color: string;
+  imageUrls: string[];
+  tags: string[];
+  attachments: GMNoteAttachment[];
+  linkedNoteIds: string[];
+  marketItems?: SceneMarketItem[];
+  sourceSceneId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GMNoteResource {
+  id: string;
+  kind: GMNoteAttachmentKind;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  imageUrl?: string;
+  accentColor?: string;
+  badge?: string;
+  url?: string;
 }
 
 export type BrigadaKirkBattleOutcome = 'win' | 'loss' | 'draw';
@@ -382,6 +423,7 @@ export const DEFAULT_GM_BOARD: GMBoardState = {
   ],
   sceneScript: 'Chuva fina · sino submerso · uma escolha sem resposta.',
   music: [],
+  notes: [],
   mindMaps: [{
     id: 'gm-planning-main',
     title: 'Campanha principal',
@@ -392,6 +434,47 @@ export const DEFAULT_GM_BOARD: GMBoardState = {
   }],
   activeMindMapId: 'gm-planning-main',
 };
+
+const legacyAttachmentKinds = new Set<GMNoteAttachmentKind>([
+  'pokemon', 'trainer', 'character', 'item', 'music', 'episode', 'scene', 'attack',
+]);
+
+function migrateLegacyPlanningNotes(maps: GMPlanningMap[]): GMManagerNote[] {
+  return maps.flatMap(map => {
+    const mapNotes: GMManagerNote[] = map.nodes.map(node => {
+      const attachmentPrefix = node.resourceId?.split(':')[0];
+      const resourceId = node.resourceId?.slice((attachmentPrefix?.length || 0) + 1);
+      const attachments: GMNoteAttachment[] = attachmentPrefix && resourceId && legacyAttachmentKinds.has(attachmentPrefix as GMNoteAttachmentKind)
+        ? [{ kind: attachmentPrefix as GMNoteAttachmentKind, resourceId }]
+        : [];
+      const timestamp = map.updatedAt || map.createdAt || new Date(0).toISOString();
+      return {
+        id: `legacy-${map.id}-${node.id}`,
+        kind: node.kind === 'shop' ? 'market' as const : 'note' as const,
+        title: node.title || 'Anotação migrada',
+        description: node.description || '',
+        caption: map.title,
+        color: node.color || '#fff7df',
+        imageUrls: node.imageUrl ? [node.imageUrl] : [],
+        tags: [node.kind === 'shop' ? 'mercado' : 'migrada'],
+        attachments,
+        linkedNoteIds: [],
+        ...(node.kind === 'shop' ? { marketItems: [] } : {}),
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      } satisfies GMManagerNote;
+    });
+    const notesByNode = new Map(map.nodes.map((node, index) => [node.id, mapNotes[index]]));
+    for (const connection of map.connections) {
+      const from = notesByNode.get(connection.fromNodeId);
+      const to = notesByNode.get(connection.toNodeId);
+      if (!from || !to || from.id === to.id) continue;
+      if (!from.linkedNoteIds.includes(to.id)) from.linkedNoteIds.push(to.id);
+      if (!to.linkedNoteIds.includes(from.id)) to.linkedNoteIds.push(from.id);
+    }
+    return mapNotes;
+  });
+}
 
 const starterCharacter: CharacterSheet = {
   id: 'character-sabine',
@@ -781,37 +864,12 @@ export function useBrigadaKirk() {
 }
 
 export function useGMBoard() {
-  const [board, setBoard] = useState<GMBoardState>(() => {
-    const saved = getServerCollection<Partial<GMBoardState>>('gmBoard', {});
-    const mindMaps = Array.isArray(saved.mindMaps) && saved.mindMaps.length
-      ? saved.mindMaps
-      : DEFAULT_GM_BOARD.mindMaps;
-    return {
-      reminders: saved.reminders || DEFAULT_GM_BOARD.reminders,
-      sceneScript: saved.sceneScript ?? DEFAULT_GM_BOARD.sceneScript,
-      music: saved.music || DEFAULT_GM_BOARD.music,
-      mindMaps,
-      activeMindMapId: mindMaps.some(map => map.id === saved.activeMindMapId)
-        ? saved.activeMindMapId!
-        : mindMaps[0].id,
-    };
-  });
+  const [board, setBoard] = useState<GMBoardState>(() => normalizeGMBoard(getServerCollection<Partial<GMBoardState>>('gmBoard', {})));
   const boardRef = useRef(board);
   useEffect(() => {
     const sync = () => {
       const incoming = getServerCollection<Partial<GMBoardState>>('gmBoard', {});
-      const mindMaps = Array.isArray(incoming.mindMaps) && incoming.mindMaps.length
-        ? incoming.mindMaps
-        : DEFAULT_GM_BOARD.mindMaps;
-      const next = {
-        reminders: incoming.reminders || [],
-        sceneScript: incoming.sceneScript || '',
-        music: incoming.music || [],
-        mindMaps,
-        activeMindMapId: mindMaps.some(map => map.id === incoming.activeMindMapId)
-          ? incoming.activeMindMapId!
-          : mindMaps[0].id,
-      };
+      const next = normalizeGMBoard(incoming, false);
       boardRef.current = next;
       setBoard(next);
     };
@@ -829,6 +887,25 @@ export function useGMBoard() {
   return { board, setBoard: updateBoard };
 }
 
+function normalizeGMBoard(saved: Partial<GMBoardState>, useDefaults = true): GMBoardState {
+  const mindMaps = Array.isArray(saved.mindMaps) && saved.mindMaps.length
+    ? saved.mindMaps
+    : DEFAULT_GM_BOARD.mindMaps;
+  const notes = Array.isArray(saved.notes)
+    ? saved.notes
+    : migrateLegacyPlanningNotes(mindMaps);
+  return {
+    reminders: saved.reminders || (useDefaults ? DEFAULT_GM_BOARD.reminders : []),
+    sceneScript: saved.sceneScript ?? (useDefaults ? DEFAULT_GM_BOARD.sceneScript : ''),
+    music: saved.music || [],
+    notes,
+    mindMaps,
+    activeMindMapId: mindMaps.some(map => map.id === saved.activeMindMapId)
+      ? saved.activeMindMapId!
+      : mindMaps[0].id,
+  };
+}
+
 const emptyScene = (id = generateId()): CampaignScene => ({
   id,
   title: 'Nova cena',
@@ -840,6 +917,8 @@ const emptyScene = (id = generateId()): CampaignScene => ({
   customMarket: [],
   tests: [],
   pointsOfInterest: [],
+  noteIds: [],
+  attackIds: [],
 });
 
 function normalizeScene(item: Partial<CampaignScene>): CampaignScene {
@@ -853,6 +932,8 @@ function normalizeScene(item: Partial<CampaignScene>): CampaignScene {
     customMarket: Array.isArray(item.customMarket) ? item.customMarket : [],
     tests: Array.isArray(item.tests) ? item.tests : [],
     pointsOfInterest: Array.isArray(item.pointsOfInterest) ? item.pointsOfInterest : [],
+    noteIds: Array.isArray(item.noteIds) ? [...new Set(item.noteIds)] : [],
+    attackIds: Array.isArray(item.attackIds) ? [...new Set(item.attackIds)] : [],
   };
 }
 
@@ -864,6 +945,7 @@ function normalizeEpisode(item: Partial<CampaignEpisode>): CampaignEpisode {
     scenes: Array.isArray(item.scenes) && item.scenes.length
       ? item.scenes.map(scene => normalizeScene(scene))
       : [emptyScene()],
+    noteIds: Array.isArray(item.noteIds) ? [...new Set(item.noteIds)] : [],
   };
 }
 

@@ -1,6 +1,7 @@
 import type {
   CampaignEpisode,
   CharacterSheet,
+  GMNoteResource,
   GMPlanningNodeKind,
   MusicTrack,
   ProvisionalItem,
@@ -14,6 +15,7 @@ import {
 import { defaultProvisionalItems } from './constants';
 import { getServerCollection } from './cloudSync';
 import type { Pokemon } from './types';
+import type { Attack } from './types';
 
 export type GMPlanningResource = {
   id: string;
@@ -190,5 +192,110 @@ export function buildGMPlanningResources({
         description: scene.description,
       })),
     ]),
+  ];
+}
+
+const noteResourceTypeColors: Record<string, string> = {
+  Normal: '#a8a77a', Fogo: '#ee8130', Água: '#6390f0', Planta: '#7ac74c',
+  Elétrico: '#f7d02c', Gelo: '#96d9d6', Lutador: '#c22e28', Veneno: '#a33ea1',
+  Terra: '#e2bf65', Voador: '#a98ff3', Psíquico: '#f95587', Inseto: '#a6b91a',
+  Pedra: '#b6a136', Fantasma: '#735797', Dragão: '#6f35fc', Sombrio: '#705746',
+  Metálico: '#b7b7ce', Fada: '#d685ad',
+};
+
+export function buildGMNotesResources({
+  pokemon,
+  trainers,
+  music,
+  items,
+  episodes,
+  characters,
+  attacks,
+}: {
+  pokemon: Pokemon[];
+  trainers: TrainerRecord[];
+  music: MusicTrack[];
+  items: ProvisionalItem[];
+  episodes: CampaignEpisode[];
+  characters: CharacterSheet[];
+  attacks: Attack[];
+}): GMNoteResource[] {
+  return [
+    ...pokemon.map(item => ({
+      id: item.id,
+      kind: 'pokemon' as const,
+      title: item.name || item.species || 'Pokémon sem nome',
+      subtitle: [item.species, `Nv. ${item.level}`, item.trainerName].filter(Boolean).join(' · '),
+      description: item.notes || item.pokedexDescription || '',
+      ...(item.image ? { imageUrl: item.image } : {}),
+      accentColor: noteResourceTypeColors[item.types[0]] || '#6d9775',
+      badge: item.types.join(' / ') || 'Pokémon',
+    })),
+    ...trainers.map(item => ({
+      id: item.id,
+      kind: 'trainer' as const,
+      title: item.name || 'NPC sem nome',
+      subtitle: [item.kind === 'npc' ? 'NPC' : 'Treinador', item.player].filter(Boolean).join(' · '),
+      description: item.notes || '',
+      accentColor: '#6575ad',
+    })),
+    ...characters.map(item => ({
+      id: item.id,
+      kind: 'character' as const,
+      title: item.name || 'Ficha sem nome',
+      subtitle: ['Ficha de jogador', item.player].filter(Boolean).join(' · '),
+      description: item.notes || '',
+      ...(item.image ? { imageUrl: item.image } : {}),
+      accentColor: ({
+        forest: '#287247', pumpkin: '#dc7629', violet: '#8759be',
+        navy: '#2f5f9f', tiffany: '#329a94',
+      } as const)[item.themeColor || 'forest'],
+      badge: 'Ficha',
+    })),
+    ...items.map(item => ({
+      id: item.id,
+      kind: 'item' as const,
+      title: item.name,
+      subtitle: item.category,
+      description: item.detail,
+      ...(item.image ? { imageUrl: item.image } : {}),
+      accentColor: '#cf8c48',
+    })),
+    ...music.map(item => ({
+      id: item.id,
+      kind: 'music' as const,
+      title: item.title,
+      subtitle: item.category,
+      description: item.keywords || '',
+      url: item.url,
+      accentColor: '#4d9da4',
+    })),
+    ...episodes.flatMap(episode => [
+      {
+        id: episode.id,
+        kind: 'episode' as const,
+        title: episode.title,
+        subtitle: 'Episódio',
+        description: episode.description,
+        accentColor: '#5081a6',
+      },
+      ...episode.scenes.map(scene => ({
+        id: scene.id,
+        kind: 'scene' as const,
+        title: scene.title,
+        subtitle: episode.title,
+        description: scene.description,
+        accentColor: '#8a70ad',
+      })),
+    ]),
+    ...attacks.map(attack => ({
+      id: attack.id,
+      kind: 'attack' as const,
+      title: attack.name,
+      subtitle: `${attack.category} · PP ${attack.pp}`,
+      description: attack.effectSummary || attack.effectFull || '',
+      accentColor: noteResourceTypeColors[attack.type] || '#8b6eb2',
+      badge: attack.type,
+    })),
   ];
 }

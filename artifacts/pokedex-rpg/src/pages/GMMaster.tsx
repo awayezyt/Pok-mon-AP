@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import {
   AlertTriangle, Archive, BookOpen, Check, ChevronRight, CircleDot, ClipboardList,
-  Copy, Edit3, Eye, Flag, Headphones, LockKeyhole, Map, Minus, Pencil, Plus, ScrollText,
+  Copy, Edit3, Eye, Flag, Headphones, LockKeyhole, Minus, Pencil, Plus, ScrollText,
   Search, Filter,
   Shield, Trash2, UsersRound, Swords, PackageOpen, ExternalLink, Coins,
   Settings, Download, Upload, FileJson, FunctionSquare,
@@ -19,8 +19,8 @@ import {
   useCampaignNotes, useCampaignStory, useCharacterSheets, useGMBoard,
   useBrigadaKirk,
   calculateCharacterResources, CHARACTER_CLASSES, CHARACTER_ATTRIBUTE_LABELS, SKILL_NAMES, getSkillCap,
-  createGMPlanningMap, type CampaignEpisode, type CampaignScene, type CharacterAttribute, type CharacterSheet,
-  type GMPlanningMap,
+  type CampaignEpisode, type CampaignScene, type CharacterAttribute, type CharacterSheet,
+  type GMManagerNote, type GMNoteAttachmentKind,
   type MusicTrack, type ProvisionalItem, type SceneMarketItem, type SceneTest, type TrainerRecord,
 } from '../lib/campaign';
 import { usePokemonData, useAttackData } from '../lib/hooks';
@@ -28,14 +28,14 @@ import { getServerCollection, syncGameState } from '../lib/cloudSync';
 import FormulaEditor from '../components/FormulaEditor';
 import { useFormulaSettings } from '../lib/formulas';
 import { createGameBackup, importGameState, syncImportedGameState } from '../lib/backup';
-import type { Pokemon, PokemonGrowthRate } from '../lib/types';
+import type { Attack, Pokemon, PokemonGrowthRate } from '../lib/types';
 import { getCharacterPokemonRoster, getPokemonAssignmentConflict, getPokemonTrainerName, normalizeTrainerName } from '../lib/pokemonOwnership';
 import {
-  buildGMPlanningResources,
+  buildGMNotesResources,
   normalizeGMProvisionalItems as normalizeItems,
   normalizeGMTrainers as normalizeTrainers,
 } from '../lib/gmPlanning';
-import GMNotesWorkspace from '../components/GMNotesWorkspace';
+import GMNotesManager from '../components/GMNotesManager';
 import { ImageUrlField } from '../components/ImageUrlField';
 
 type Panel = 'visao' | 'pokemon' | 'treinadores' | 'itens' | 'episodios' | 'musica' | 'anotacoes' | 'configuracoes';
@@ -70,6 +70,26 @@ function affectionLabel(value: number) {
   return 'Inquebrável';
 }
 
+function getNotesForResource(notes: GMManagerNote[], kind: GMNoteAttachmentKind, resourceId: string) {
+  const byId = new Map(notes.map(note => [note.id, note]));
+  const open = notes
+    .filter(note => note.attachments.some(attachment => attachment.kind === kind && attachment.resourceId === resourceId))
+    .map(note => note.id);
+  const visited = new Set<string>();
+  while (open.length) {
+    const id = open.pop()!;
+    if (visited.has(id)) continue;
+    visited.add(id);
+    const note = byId.get(id);
+    if (!note) continue;
+    for (const linkedId of note.linkedNoteIds || []) if (!visited.has(linkedId)) open.push(linkedId);
+    for (const other of notes) {
+      if (other.linkedNoteIds?.includes(id) && !visited.has(other.id)) open.push(other.id);
+    }
+  }
+  return [...visited];
+}
+
 export default function GMMaster() {
   const [, setLocation] = useLocation();
   const { characters, addCharacter, updateCharacter, deleteCharacter } = useCharacterSheets();
@@ -77,7 +97,7 @@ export default function GMMaster() {
   const { attacks, setAttacks } = useAttackData();
   const { notes, saveNote, removeNote } = useCampaignNotes();
   const { board, setBoard } = useGMBoard();
-  const { episodes, addEpisode, updateEpisode, removeEpisode, emptyScene } = useCampaignStory();
+  const { episodes, setEpisodes, addEpisode, updateEpisode, removeEpisode, emptyScene } = useCampaignStory();
   const [panel, setPanelState] = useState<Panel>(() => {
     const requested = new URLSearchParams(window.location.search).get('panel');
     return requested && requested in panelLabels ? requested as Panel : 'visao';
@@ -152,48 +172,121 @@ export default function GMMaster() {
   const selectedPokemon = filteredPokemon.find(item => item.id === selectedPokemonId) || filteredPokemon[0];
   const selectedEpisode = episodes.find(item => item.id === selectedEpisodeId) || episodes[0];
   const selectedScene = selectedEpisode?.scenes.find(item => item.id === selectedSceneId) || selectedEpisode?.scenes[0];
-  const activeMindMap = board.mindMaps.find(map => map.id === board.activeMindMapId) || board.mindMaps[0];
-  const planningResources = useMemo(() => buildGMPlanningResources({
+  const noteResources = useMemo(() => buildGMNotesResources({
     pokemon,
     trainers,
     music: board.music,
     items: provisionalItems,
     episodes,
     characters,
-  }), [pokemon, trainers, board.music, provisionalItems, episodes, characters]);
-  const updateMindMap = (map: GMPlanningMap) => setBoard(current => ({
-    ...current,
-    mindMaps: current.mindMaps.map(item => item.id === map.id
-      ? { ...map, updatedAt: new Date().toISOString() }
-      : item),
-  }));
-  const selectMindMap = (id: string) => setBoard(current => ({ ...current, activeMindMapId: id }));
-  const createMindMap = () => {
-    const map = createGMPlanningMap(`Mapa ${board.mindMaps.length + 1}`);
+    attacks,
+  }), [pokemon, trainers, board.music, provisionalItems, episodes, characters, attacks]);
+
+  const updateEpisodeWithMarketArchive = (id: string, patch: Partial<CampaignEpisode>) => {
+    const existingEpisode = episodes.find(item => item.id === id);
+    updateEpisode(id, patch);
+    if (!existingEpisode) return;
+    const nextEpisode = { ...existingEpisode, ...patch };
+    const now = new Date().toISOString();
+    const archivedMarkets = nextEpisode.scenes
+      .filter(scene => (scene.provisionalMarket?.length || 0) + (scene.customMarket?.length || 0) > 0)
+      .map(scene => {
+        const previous = board.notes.find(note => note.sourceSceneId === scene.id);
+        return {
+          id: previous?.id || `scene-market-${scene.id}`,
+          kind: 'market' as const,
+          title: previous?.title || `Mini mercado · ${scene.title}`,
+          description: previous?.description || `Catálogo criado na cena “${scene.title}”.`,
+          caption: `${nextEpisode.title} · ${scene.title}`,
+          color: previous?.color || '#eaf5e9',
+          imageUrls: previous?.imageUrls || [],
+          tags: [...new Set([...(previous?.tags || []), 'mini mercado', 'cena'])],
+          attachments: [
+            { kind: 'episode' as const, resourceId: nextEpisode.id },
+            { kind: 'scene' as const, resourceId: scene.id },
+          ],
+          linkedNoteIds: previous?.linkedNoteIds || [],
+          marketItems: [...(scene.provisionalMarket || []), ...(scene.customMarket || [])],
+          sourceSceneId: scene.id,
+          createdAt: previous?.createdAt || now,
+          updatedAt: now,
+        } satisfies GMManagerNote;
+      });
+    if (!archivedMarkets.length) return;
+    setBoard(current => {
+      const notes = [...current.notes];
+      for (const market of archivedMarkets) {
+        const index = notes.findIndex(note => note.sourceSceneId === market.sourceSceneId);
+        if (index >= 0) notes[index] = market;
+        else notes.unshift(market);
+      }
+      return { ...current, notes };
+    });
+  };
+
+  const updateCampaignScene = (episodeId: string, sceneId: string, patch: Partial<CampaignScene>) => {
+    const episode = episodes.find(item => item.id === episodeId);
+    if (!episode) return;
+    const scenes = episode.scenes.map(scene => scene.id === sceneId
+      ? {
+        ...scene,
+        ...patch,
+        ...(patch.noteIds ? { noteIds: [...new Set(patch.noteIds)] } : {}),
+        ...(patch.attackIds ? { attackIds: [...new Set(patch.attackIds)] } : {}),
+      }
+      : scene);
+    updateEpisodeWithMarketArchive(episodeId, { scenes });
+  };
+
+  const saveManagerNote = (note: GMManagerNote) => {
+    const saved = { ...note, updatedAt: new Date().toISOString() };
     setBoard(current => ({
       ...current,
-      mindMaps: [...current.mindMaps, map],
-      activeMindMapId: map.id,
+      notes: current.notes.some(item => item.id === saved.id)
+        ? current.notes.map(item => item.id === saved.id ? saved : item)
+        : [saved, ...current.notes],
     }));
   };
-  const renameMindMap = (id: string, title: string) => setBoard(current => ({
-    ...current,
-    mindMaps: current.mindMaps.map(map => map.id === id ? { ...map, title, updatedAt: new Date().toISOString() } : map),
-  }));
-  const deleteMindMap = (id: string) => setBoard(current => {
-    if (current.mindMaps.length <= 1) return current;
-    const mindMaps = current.mindMaps.filter(map => map.id !== id);
-    return {
+
+  const deleteManagerNote = (id: string) => {
+    setBoard(current => ({
       ...current,
-      mindMaps,
-      activeMindMapId: current.activeMindMapId === id ? mindMaps[0].id : current.activeMindMapId,
-    };
-  });
-  const openMindMapEditor = (id: string) => {
-    const targetId = crypto.randomUUID();
-    try { sessionStorage.setItem('pokemon-rpg-planning-origin', targetId); } catch { /* Editing still works without cross-tab sheet navigation. */ }
-    const query = new URLSearchParams({ map: id, returnTab: targetId });
-    window.open(`/mestre/anotacoes/editor?${query.toString()}`, '_blank', 'noopener,noreferrer');
+      notes: current.notes
+        .filter(note => note.id !== id)
+        .map(note => ({ ...note, linkedNoteIds: (note.linkedNoteIds || []).filter(linkedId => linkedId !== id) })),
+    }));
+    setEpisodes(current => current.map(episode => ({
+      ...episode,
+      noteIds: (episode.noteIds || []).filter(noteId => noteId !== id),
+      scenes: episode.scenes.map(scene => ({
+        ...scene,
+        noteIds: (scene.noteIds || []).filter(noteId => noteId !== id),
+      })),
+    })));
+  };
+
+  const updateCampaignNoteScene = (episodeId: string, sceneId: string, patch: Partial<CampaignScene>) => {
+    const episode = episodes.find(item => item.id === episodeId);
+    const scene = episode?.scenes.find(item => item.id === sceneId);
+    if (!episode || !scene) return;
+    const nextScene = { ...scene, ...patch };
+    updateEpisodeWithMarketArchive(episodeId, {
+      scenes: episode.scenes.map(item => item.id === sceneId ? nextScene : item),
+    });
+  };
+
+  const applyMarketToScene = (note: GMManagerNote, episodeId: string, sceneId: string) => {
+    const episode = episodes.find(item => item.id === episodeId);
+    const scene = episode?.scenes.find(item => item.id === sceneId);
+    if (!episode || !scene || note.kind !== 'market') return;
+    const copiedItems = (note.marketItems || []).map(item => ({
+      ...item,
+      id: `market-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+    }));
+    updateCampaignNoteScene(episodeId, sceneId, {
+      customMarket: [...scene.customMarket, ...copiedItems],
+      noteIds: [...new Set([...(scene.noteIds || []), note.id])],
+    });
   };
 
   useEffect(() => {
@@ -353,32 +446,32 @@ export default function GMMaster() {
           {[
              ['visao', 'Visão geral', UsersRound], ['pokemon', 'Pokémon', CircleDot],
             ['treinadores', 'Treinadores e fichas', UsersRound], ['itens', 'Itens provisórios', PackageOpen],
-             ['episodios', 'Episódios', ScrollText], ['musica', 'Música', Headphones], ['anotacoes', 'Anotações', Map], ['configuracoes', 'Configurações', Settings],
+             ['episodios', 'Episódios', ScrollText], ['musica', 'Música', Headphones], ['anotacoes', 'Anotações', ClipboardList], ['configuracoes', 'Configurações', Settings],
           ].map(([value, label, Icon]) => <button key={value as string} onClick={() => setPanel(value as Panel)} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold ${panel === value ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}><Icon size={15} />{label as string}</button>)}
         </div>
 
         {panel === 'pokemon' && <PokemonPanel pokemon={filteredPokemon} selectedPokemon={selectedPokemon} selectedPokemonId={selectedPokemonId} setSelectedPokemonId={setSelectedPokemonId} search={pokemonSearch} setSearch={setPokemonSearch} updatePokemon={updatePokemon} />}
-        {panel === 'treinadores' && <NpcTrainersPanel characters={characters} trainers={trainers} setTrainers={setTrainers} pokemon={pokemon} updatePokemon={updatePokemon} focusedTrainerId={focusedTrainerId} updateCharacter={updateCharacter} deleteCharacter={deleteCharacter} />}
+        {panel === 'treinadores' && <NpcTrainersPanel characters={characters} trainers={trainers} setTrainers={setTrainers} pokemon={pokemon} updatePokemon={updatePokemon} focusedTrainerId={focusedTrainerId} updateCharacter={updateCharacter} deleteCharacter={deleteCharacter} gmNotes={board.notes} />}
         {panel === 'itens' && <ItemsPanel characters={characters} items={provisionalItems} draft={itemDraft} setDraft={setItemDraft} addItem={addProvisionalItem} editingItemId={editingItemId} onEdit={item => { setEditingItemId(item.id); setItemDraft({ name: item.name, category: item.category, weight: item.weight, detail: item.detail, image: item.image || '', holdable: item.holdable }); }} onCancelEdit={() => { setEditingItemId(null); setItemDraft({ name: '', category: 'Especiais', weight: 1, detail: '', image: '', holdable: true }); }} onSend={setPendingDelivery} />}
-        {panel === 'episodios' && <EpisodesPanel episodes={episodes} addEpisode={addEpisode} updateEpisode={updateEpisode} removeEpisode={removeEpisode} pokemon={pokemon} trainers={trainers} music={board.music} provisionalItems={provisionalItems} selectedEpisodeId={selectedEpisode?.id || ''} setSelectedEpisodeId={setSelectedEpisodeId} selectedSceneId={selectedScene?.id || ''} setSelectedSceneId={setSelectedSceneId} emptyScene={emptyScene} />}
+        {panel === 'episodios' && <EpisodesPanel episodes={episodes} addEpisode={addEpisode} updateEpisode={updateEpisodeWithMarketArchive} removeEpisode={removeEpisode} pokemon={pokemon} trainers={trainers} music={board.music} provisionalItems={provisionalItems} attacks={attacks} gmNotes={board.notes} getNotesForResource={(kind, resourceId) => getNotesForResource(board.notes, kind, resourceId)} selectedEpisodeId={selectedEpisode?.id || ''} setSelectedEpisodeId={setSelectedEpisodeId} selectedSceneId={selectedScene?.id || ''} setSelectedSceneId={setSelectedSceneId} emptyScene={emptyScene} />}
         {panel === 'musica' && <MusicPanel tracks={board.music} draft={musicDraft} setDraft={setMusicDraft} addTrack={addMusic} copyTrack={copyMusic} removeTrack={id => setBoard(prev => ({ ...prev, music: prev.music.filter(track => track.id !== id) }))} search={musicSearch} setSearch={setMusicSearch} category={musicCategory} setCategory={setMusicCategory} />}
-        {panel === 'anotacoes' && activeMindMap && <GMNotesWorkspace
-          maps={board.mindMaps}
-          activeMapId={activeMindMap.id}
-          resources={planningResources}
-          readOnly
-          onSelectMap={selectMindMap}
-          onCreateMap={createMindMap}
-          onRenameMap={renameMindMap}
-          onDeleteMap={deleteMindMap}
-          onUpdateMap={updateMindMap}
-          onOpenEditor={openMindMapEditor}
-          onNavigateToSheet={setLocation}
+        {panel === 'anotacoes' && <GMNotesManager
+          notes={board.notes}
+          resources={noteResources}
+          episodes={episodes}
+          onCreateNote={saveManagerNote}
+          onUpdateNote={saveManagerNote}
+          onDeleteNote={deleteManagerNote}
+          onUpdateEpisode={updateEpisodeWithMarketArchive}
+          onUpdateScene={updateCampaignNoteScene}
+          onApplyMarket={applyMarketToScene}
         />}
         {panel === 'configuracoes' && <SettingsPanel pokemon={pokemon} onExport={handleExport} onImport={handleImport} summary={{ characters: characters.length, pokemon: pokemon.length, attacks: attacks.length, episodes: episodes.length, music: board.music.length, items: provisionalItems.length }} />}
 
         {panel === 'visao' && <Overview characters={characters} notes={notes} expandedCharacterId={expandedCharacterId} setExpandedCharacterId={setExpandedCharacterId} board={board} setBoard={setBoard} reminderDraft={reminderDraft} setReminderDraft={setReminderDraft} importantReminder={importantReminder} setImportantReminder={setImportantReminder} addReminder={addReminder} />}
         <ScenePicker episodes={episodes} selectedEpisodeId={selectedEpisode?.id || ''} setSelectedEpisodeId={setSelectedEpisodeId} selectedSceneId={selectedScene?.id || ''} setSelectedSceneId={setSelectedSceneId} scene={selectedScene} pokemon={pokemon} trainers={trainers} music={board.music} onOpenTrainer={id => { setFocusedTrainerId(id); setPanel('treinadores'); }} />
+        <SceneFocusEntitySnapshot scene={selectedScene} pokemon={pokemon} trainers={trainers} attacks={attacks} />
+        <SceneFocusNotes scene={selectedScene} notes={board.notes} />
       </div>
 
       <Dialog open={!!pendingDelivery} onOpenChange={open => !open && setPendingDelivery(null)}>
@@ -698,7 +791,7 @@ function makeNpc(id: string, name: string): TrainerRecord {
   return { ...base, hp: resources.hpMax, hpMax: resources.hpMax, focus: resources.focusMax, focusMax: resources.focusMax };
 }
 
-function NpcTrainersPanel({ characters, trainers, setTrainers, pokemon, updatePokemon, focusedTrainerId, updateCharacter, deleteCharacter }: { characters: CharacterSheet[]; trainers: TrainerRecord[]; setTrainers: React.Dispatch<React.SetStateAction<TrainerRecord[]>>; pokemon: ReturnType<typeof usePokemonData>['pokemon']; updatePokemon: ReturnType<typeof usePokemonData>['updatePokemon']; focusedTrainerId: string; updateCharacter: (id: string, patch: Partial<CharacterSheet>) => void; deleteCharacter: (id: string) => void }) {
+function NpcTrainersPanel({ characters, trainers, setTrainers, pokemon, updatePokemon, focusedTrainerId, updateCharacter, deleteCharacter, gmNotes }: { characters: CharacterSheet[]; trainers: TrainerRecord[]; setTrainers: React.Dispatch<React.SetStateAction<TrainerRecord[]>>; pokemon: ReturnType<typeof usePokemonData>['pokemon']; updatePokemon: ReturnType<typeof usePokemonData>['updatePokemon']; focusedTrainerId: string; updateCharacter: (id: string, patch: Partial<CharacterSheet>) => void; deleteCharacter: (id: string) => void; gmNotes: GMManagerNote[] }) {
   const [draftName, setDraftName] = useState('');
   const [selectedId, setSelectedId] = useState(focusedTrainerId || trainers[0]?.id || '');
   const [tab, setTab] = useState<'ficha' | 'anotacoes' | 'pokemon'>('ficha');
@@ -813,11 +906,11 @@ function NpcTrainersPanel({ characters, trainers, setTrainers, pokemon, updatePo
                           ))}
                         </div>
                         {tab === 'ficha' && <NpcSheetEditor npc={selected} patch={patch} hideResources />}
-                        {tab === 'anotacoes' && <Textarea value={selected.notes || ''} onChange={event => patch({ notes: event.target.value })} className="min-h-64" placeholder="Informações importantes sobre este NPC..." aria-label="Anotações do NPC" />}
+                        {tab === 'anotacoes' && <div className="space-y-4"><Textarea value={selected.notes || ''} onChange={event => patch({ notes: event.target.value })} className="min-h-40" placeholder="Informações importantes sobre este NPC..." aria-label="Anotações do NPC" /><LinkedGMNotes notes={gmNotes} kind="trainer" resourceId={selected.id} /></div>}
                         {tab === 'pokemon' && <NpcPokemonEditor npc={selected} pokemon={pokemon} updatePokemon={updatePokemon} patch={patch} />}
                       </>
                     ) : (
-                      <NpcSheetViewer npc={selected} patch={patch} linkedPokemon={linkedPokemon} />
+                      <NpcSheetViewer npc={selected} patch={patch} linkedPokemon={linkedPokemon} gmNotes={gmNotes} />
                     )}
                   </>
                 ) : (
@@ -828,7 +921,7 @@ function NpcTrainersPanel({ characters, trainers, setTrainers, pokemon, updatePo
                       ))}
                     </div>
                     {tab === 'ficha' && <NpcSheetEditor npc={selected} patch={patch} />}
-                    {tab === 'anotacoes' && <Textarea value={selected.notes || ''} onChange={event => patch({ notes: event.target.value })} className="min-h-64" placeholder="Informações importantes sobre este NPC..." />}
+                    {tab === 'anotacoes' && <div className="space-y-4"><Textarea value={selected.notes || ''} onChange={event => patch({ notes: event.target.value })} className="min-h-40" placeholder="Informações importantes sobre este NPC..." /><LinkedGMNotes notes={gmNotes} kind="trainer" resourceId={selected.id} /></div>}
                     {tab === 'pokemon' && <NpcPokemonEditor npc={selected} pokemon={pokemon} updatePokemon={updatePokemon} patch={patch} />}
                   </>
                 )}
@@ -914,63 +1007,104 @@ function NpcResourceControls({ npc, patch }: { npc: TrainerRecord; patch: (data:
   </div>;
 }
 
-function NpcSheetViewer({ npc, patch, linkedPokemon }: { npc: TrainerRecord; patch: (data: Partial<TrainerRecord>) => void; linkedPokemon: Pokemon[] }) {
+function LinkedGMNotes({ notes, kind, resourceId }: { notes: GMManagerNote[]; kind: GMNoteAttachmentKind; resourceId: string }) {
+  const linkedIds = new Set(getNotesForResource(notes, kind, resourceId));
+  const linkedNotes = notes.filter(note => linkedIds.has(note.id));
+  if (!linkedNotes.length) return null;
+  return <section className="space-y-2" aria-label="Anotações do mestre vinculadas">
+    <p className="eyebrow">Anotações do mestre vinculadas</p>
+    {linkedNotes.map(note => <article key={note.id} className="rounded-xl border border-border bg-card p-3" style={{ borderLeft: `4px solid ${note.color || '#91a58d'}` }}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0"><h3 className="font-semibold">{note.title}</h3>{note.caption && <p className="text-xs text-muted-foreground">{note.caption}</p>}</div>
+        {note.kind === 'market' && <Badge variant="outline">Mini mercado</Badge>}
+      </div>
+      {note.description && <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{note.description}</p>}
+      {note.imageUrls.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{note.imageUrls.map((url, index) => <img key={`${url}-${index}`} src={url} alt="" loading="lazy" className="h-16 w-16 rounded-lg border border-border object-cover" />)}</div>}
+    </article>)}
+  </section>;
+}
+
+function NpcSheetViewer({ npc, patch, linkedPokemon, gmNotes }: { npc: TrainerRecord; patch: (data: Partial<TrainerRecord>) => void; linkedPokemon: Pokemon[]; gmNotes: GMManagerNote[] }) {
   const className = npc.className || 'Treinador';
   const attributes = { agi: 1, car: 1, for: 1, int: 1, vig: 1, von: 1, ...(npc.attributes || {}) };
   const skills: NonNullable<TrainerRecord['skills']> = npc.skills || SKILL_NAMES.map(name => ({ name, value: 0, trained: false }));
+  const bonusSkills = skills.filter(skill => skill.value > 0 || (skill.extraPoints || 0) > 0);
   const abilities = npc.abilities || [];
 
   return <div className="max-h-[72vh] space-y-5 overflow-y-auto overscroll-contain pr-2">
-    <section className="rounded-xl border border-border bg-secondary/15 p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline">{className}</Badge>
-        <Badge variant="outline">{npc.path || CHARACTER_CLASSES[className][0]}</Badge>
-        <Badge variant="outline">Nível {npc.level || 1}</Badge>
+    <section className="overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-secondary/25 shadow-sm">
+      <div className="flex flex-wrap items-center gap-4 p-5">
+        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+          <UsersRound size={26} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="eyebrow mb-1">Ficha de personagem</p>
+          <h2 className="truncate font-display text-2xl leading-tight">{npc.name}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{className} · {npc.path || CHARACTER_CLASSES[className][0]}</p>
+        </div>
+        <Badge className="border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">Nível {npc.level || 1}</Badge>
+      </div>
+      <div className="grid grid-cols-2 gap-px border-t border-primary/10 bg-primary/10">
+        <div className="bg-card/75 px-4 py-3">
+          <p className="eyebrow">Pontos de vida</p>
+          <p className="mt-1 font-mono text-lg font-bold">{npc.hp ?? 0}<span className="text-sm font-medium text-muted-foreground"> / {npc.hpMax ?? 0} PV</span></p>
+        </div>
+        <div className="bg-card/75 px-4 py-3">
+          <p className="eyebrow">Pontos de energia</p>
+          <p className="mt-1 font-mono text-lg font-bold">{npc.focus ?? 0}<span className="text-sm font-medium text-muted-foreground"> / {npc.focusMax ?? 0} PE</span></p>
+        </div>
       </div>
     </section>
 
     <NpcResourceControls npc={npc} patch={patch} />
 
-    <section>
-      <p className="eyebrow mb-2">Atributos</p>
+    <section className="rounded-2xl border border-border bg-card/60 p-4">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div><p className="eyebrow">Atributos</p><h3 className="font-display text-lg">Características</h3></div>
+        <span className="text-xs text-muted-foreground">Valores atuais</span>
+      </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-        {attributeKeys.map(key => <div key={key} className="rounded-lg border border-border bg-card p-3">
+        {attributeKeys.map(key => <div key={key} className="rounded-xl border border-border/80 bg-background/70 p-3 transition-colors hover:border-primary/30">
           <p className="text-xs text-muted-foreground">{CHARACTER_ATTRIBUTE_LABELS[key]}</p>
-          <p className="mt-1 font-mono text-xl font-bold">{attributes[key]}</p>
+          <p className="mt-1 font-mono text-2xl font-bold text-primary">{attributes[key]}</p>
         </div>)}
       </div>
     </section>
 
-    <section>
-      <p className="eyebrow mb-2">Perícias</p>
-      <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
-        {skills.map(skill => {
+    <section className="rounded-2xl border border-border bg-card/60 p-4">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div><p className="eyebrow">Perícias</p><h3 className="font-display text-lg">Bônus registrados</h3></div>
+        <Badge variant="outline">{bonusSkills.length}</Badge>
+      </div>
+      {bonusSkills.length > 0 ? <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {bonusSkills.map(skill => {
           const total = skill.value + (skill.extraPoints || 0);
-          return <div key={skill.name} className={`flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm ${total > 0 ? 'bg-primary/5' : 'bg-card/60'}`}>
-            <span className={total > 0 ? 'font-medium' : 'text-muted-foreground'}>{skill.name}</span>
-            <span className={`shrink-0 font-mono ${total > 0 ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
+          return <div key={skill.name} className="flex items-center justify-between gap-3 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 text-sm">
+            <span className="font-medium">{skill.name}</span>
+            <span className="shrink-0 rounded-md bg-primary/10 px-2 py-1 font-mono font-bold text-primary">
               {skill.value}{(skill.extraPoints || 0) > 0 ? ` + ${skill.extraPoints}` : ''}
             </span>
           </div>;
         })}
-      </div>
+      </div> : <p className="rounded-xl border border-dashed border-border px-4 py-5 text-center text-sm text-muted-foreground">Nenhuma perícia tem bônus registrado.</p>}
     </section>
 
-    <section>
-      <p className="eyebrow mb-2">Habilidades</p>
+    <section className="rounded-2xl border border-border bg-card/60 p-4">
+      <div className="mb-3"><p className="eyebrow">Habilidades</p><h3 className="font-display text-lg">Recursos especiais</h3></div>
       {abilities.length > 0 ? <div className="grid gap-3 sm:grid-cols-2">
-        {abilities.map((ability, index) => <article key={`${ability.name}-${index}`} className="rounded-xl border border-border bg-card p-4">
+        {abilities.map((ability, index) => <article key={`${ability.name}-${index}`} className="rounded-xl border border-border bg-background/70 p-4 shadow-sm">
           <h3 className="font-semibold">{ability.name || 'Habilidade sem nome'}</h3>
           {ability.detail ? <div className="mt-1 text-sm text-muted-foreground"><RichText text={ability.detail} /></div> : <p className="mt-1 text-sm text-muted-foreground">Sem descrição.</p>}
-          {ability.uses && <p className="mt-3 text-xs font-semibold text-primary">{ability.uses}</p>}
+          {ability.uses && <p className="mt-3 inline-flex rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">{ability.uses}</p>}
         </article>)}
-      </div> : <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Nenhuma habilidade cadastrada.</p>}
+      </div> : <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">Nenhuma habilidade cadastrada.</p>}
     </section>
 
     <div className="grid gap-5 border-t border-border pt-4 sm:grid-cols-2">
       <section>
         <p className="eyebrow mb-2">Anotações</p>
         {npc.notes?.trim() ? <div className="text-sm leading-relaxed text-muted-foreground"><RichText text={npc.notes} /></div> : <p className="text-sm text-muted-foreground">Nenhuma anotação cadastrada.</p>}
+        <LinkedGMNotes notes={gmNotes} kind="trainer" resourceId={npc.id} />
       </section>
       <section>
         <p className="eyebrow mb-2">Pokémon associados</p>
@@ -1089,7 +1223,7 @@ function NpcSheetEditor({ npc, patch, hideResources = false }: { npc: TrainerRec
   );
 }
 
-function EpisodesPanel({ episodes, addEpisode, updateEpisode, removeEpisode, pokemon, trainers, music, provisionalItems, selectedEpisodeId, setSelectedEpisodeId, selectedSceneId, setSelectedSceneId, emptyScene }: { episodes: CampaignEpisode[]; addEpisode: () => CampaignEpisode; updateEpisode: (id: string, patch: Partial<CampaignEpisode>) => void; removeEpisode: (id: string) => void; pokemon: ReturnType<typeof usePokemonData>['pokemon']; trainers: TrainerRecord[]; music: MusicTrack[]; provisionalItems: ProvisionalItem[]; selectedEpisodeId: string; setSelectedEpisodeId: (id: string) => void; selectedSceneId: string; setSelectedSceneId: (id: string) => void; emptyScene: (id?: string) => CampaignScene }) {
+function EpisodesPanel({ episodes, addEpisode, updateEpisode, removeEpisode, pokemon, trainers, music, provisionalItems, attacks, gmNotes, getNotesForResource, selectedEpisodeId, setSelectedEpisodeId, selectedSceneId, setSelectedSceneId, emptyScene }: { episodes: CampaignEpisode[]; addEpisode: () => CampaignEpisode; updateEpisode: (id: string, patch: Partial<CampaignEpisode>) => void; removeEpisode: (id: string) => void; pokemon: ReturnType<typeof usePokemonData>['pokemon']; trainers: TrainerRecord[]; music: MusicTrack[]; provisionalItems: ProvisionalItem[]; attacks: Attack[]; gmNotes: GMManagerNote[]; getNotesForResource: (kind: GMNoteAttachmentKind, resourceId: string) => string[]; selectedEpisodeId: string; setSelectedEpisodeId: (id: string) => void; selectedSceneId: string; setSelectedSceneId: (id: string) => void; emptyScene: (id?: string) => CampaignScene }) {
   const episode = episodes.find(item => item.id === selectedEpisodeId) || episodes[0];
   const scene = episode?.scenes.find(item => item.id === selectedSceneId) || episode?.scenes[0];
   const updateScene = (patch: Partial<CampaignScene>) => {
@@ -1106,10 +1240,50 @@ function EpisodesPanel({ episodes, addEpisode, updateEpisode, removeEpisode, pok
     updateEpisode(episode.id, { scenes: [...episode.scenes, next] });
     setSelectedSceneId(next.id);
   };
-  return <Card className="paper-panel"><CardHeader className="flex flex-wrap flex-row items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2"><ScrollText className="text-primary" /> Episódios da campanha</CardTitle><p className="text-sm text-muted-foreground">Organize episódios, cenas e tudo que pode aparecer durante a sessão.</p></div><Button onClick={createEpisode}><Plus size={16} /> Novo episódio</Button></CardHeader><CardContent><div className="grid gap-5 lg:grid-cols-[220px_1fr]"><div className="space-y-2">{episodes.map(item => <div key={item.id} className={`flex items-center rounded-lg border ${item.id === episode?.id ? 'border-primary bg-primary/10' : 'border-border'}`}><button onClick={() => setSelectedEpisodeId(item.id)} className="min-w-0 flex-1 p-3 text-left"><p className="truncate font-semibold">{item.title}</p><p className="text-xs text-muted-foreground">{item.scenes.length} cenas</p></button><Button size="icon" variant="ghost" onClick={() => { removeEpisode(item.id); if (item.id === episode?.id) setSelectedEpisodeId(episodes.find(other => other.id !== item.id)?.id || ''); }}><Trash2 size={14} /></Button></div>)}{episodes.length === 0 && <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Crie o primeiro episódio.</p>}</div>{episode && scene ? <div><div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto]"><div><Input value={episode.title} onChange={event => updateEpisode(episode.id, { title: event.target.value })} placeholder="Título do episódio" /><Textarea value={episode.description} onChange={event => updateEpisode(episode.id, { description: event.target.value })} className="mt-2" placeholder="Resumo do episódio" /></div><div className="flex items-start gap-2"><select value={scene.id} onChange={event => setSelectedSceneId(event.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm">{episode.scenes.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select><Button variant="outline" onClick={createScene}><Plus size={15} /> Cena</Button></div></div><SceneEditor scene={scene} updateScene={updateScene} pokemon={pokemon} trainers={trainers} music={music} provisionalItems={provisionalItems} /></div> : <p className="p-8 text-center text-sm text-muted-foreground">Selecione um episódio para editar.</p>}</div></CardContent></Card>;
+  return <Card className="paper-panel"><CardHeader className="flex flex-wrap flex-row items-center justify-between gap-3"><div><CardTitle className="flex items-center gap-2"><ScrollText className="text-primary" /> Episódios da campanha</CardTitle><p className="text-sm text-muted-foreground">Organize episódios, cenas e tudo que pode aparecer durante a sessão.</p></div><Button onClick={createEpisode}><Plus size={16} /> Novo episódio</Button></CardHeader><CardContent><div className="grid gap-5 lg:grid-cols-[220px_1fr]"><div className="space-y-2">{episodes.map(item => <div key={item.id} className={`flex items-center rounded-lg border ${item.id === episode?.id ? 'border-primary bg-primary/10' : 'border-border'}`}><button onClick={() => setSelectedEpisodeId(item.id)} className="min-w-0 flex-1 p-3 text-left"><p className="truncate font-semibold">{item.title}</p><p className="text-xs text-muted-foreground">{item.scenes.length} cenas</p></button><Button size="icon" variant="ghost" onClick={() => { removeEpisode(item.id); if (item.id === episode?.id) setSelectedEpisodeId(episodes.find(other => other.id !== item.id)?.id || ''); }}><Trash2 size={14} /></Button></div>)}{episodes.length === 0 && <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Crie o primeiro episódio.</p>}</div>{episode && scene ? <div><div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto]"><div><Input value={episode.title} onChange={event => updateEpisode(episode.id, { title: event.target.value })} placeholder="Título do episódio" /><Textarea value={episode.description} onChange={event => updateEpisode(episode.id, { description: event.target.value })} className="mt-2" placeholder="Resumo do episódio" /></div><div className="flex items-start gap-2"><select value={scene.id} onChange={event => setSelectedSceneId(event.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm">{episode.scenes.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select><Button variant="outline" onClick={createScene}><Plus size={15} /> Cena</Button></div></div><SceneEditor scene={scene} updateScene={updateScene} pokemon={pokemon} trainers={trainers} music={music} provisionalItems={provisionalItems} attacks={attacks} gmNotes={gmNotes} getNotesForResource={getNotesForResource} /></div> : <p className="p-8 text-center text-sm text-muted-foreground">Selecione um episódio para editar.</p>}</div></CardContent></Card>;
 }
 
-function SceneEditor({ scene, updateScene, pokemon, trainers, music, provisionalItems }: { scene: CampaignScene; updateScene: (patch: Partial<CampaignScene>) => void; pokemon: ReturnType<typeof usePokemonData>['pokemon']; trainers: TrainerRecord[]; music: MusicTrack[]; provisionalItems: ProvisionalItem[] }) {
+function SceneNotesControls({ scene, gmNotes, attacks, matchesSceneSearch, updateScene, getNotesForResource }: { scene: CampaignScene; gmNotes: GMManagerNote[]; attacks: Attack[]; matchesSceneSearch: (value: string) => boolean; updateScene: (patch: Partial<CampaignScene>) => void; getNotesForResource: (kind: GMNoteAttachmentKind, resourceId: string) => string[] }) {
+  const noteIds = scene.noteIds || [];
+  const attackIds = scene.attackIds || [];
+  const visibleAttacks = attacks.filter(attack => matchesSceneSearch(`${attack.name} ${attack.type} ${attack.category} ${attack.effectSummary}`));
+  const visibleNotes = gmNotes.filter(note => matchesSceneSearch(`${note.title} ${note.caption} ${note.description} ${(note.tags || []).join(' ')}`));
+  const toggleNote = (id: string) => updateScene({
+    noteIds: noteIds.includes(id) ? noteIds.filter(noteId => noteId !== id) : [...new Set([...noteIds, id])],
+  });
+  const toggleAttack = (id: string) => {
+    const removing = attackIds.includes(id);
+    updateScene({
+      attackIds: removing ? attackIds.filter(attackId => attackId !== id) : [...attackIds, id],
+      ...(!removing ? { noteIds: [...new Set([...noteIds, ...getNotesForResource('attack', id)])] } : {}),
+    });
+  };
+  return <div className="grid gap-4 xl:grid-cols-2">
+    <Card>
+      <CardHeader><CardTitle className="text-base">Ataques nesta cena</CardTitle><p className="text-xs text-muted-foreground">Ao incluir um ataque, as notas vinculadas a ele também entram na cena.</p></CardHeader>
+      <CardContent><div className="max-h-48 space-y-1 overflow-y-auto">
+        {visibleAttacks.map(attack => <label key={attack.id} className="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-secondary/30">
+          <input type="checkbox" checked={attackIds.includes(attack.id)} onChange={() => toggleAttack(attack.id)} />
+          <span className="min-w-0 flex-1 truncate font-medium">{attack.name}</span><Badge variant="outline">{attack.type}</Badge>
+        </label>)}
+        {!visibleAttacks.length && <p className="text-sm text-muted-foreground">{attacks.length ? 'Nenhum ataque corresponde à busca.' : 'Nenhum ataque cadastrado.'}</p>}
+      </div></CardContent>
+    </Card>
+    <Card>
+      <CardHeader><CardTitle className="text-base">Anotações desta cena</CardTitle><p className="text-xs text-muted-foreground">Inclua ou retire notas sem alterar o caderno original. Notas de recursos selecionados são adicionadas automaticamente.</p></CardHeader>
+      <CardContent><div className="max-h-64 space-y-2 overflow-y-auto">
+        {visibleNotes.map(note => <label key={note.id} className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border bg-card p-2.5 hover:bg-secondary/20" style={{ borderLeftWidth: 4, borderLeftColor: note.color || '#728b70' }}>
+          <input type="checkbox" checked={noteIds.includes(note.id)} onChange={() => toggleNote(note.id)} className="mt-1" />
+          <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{note.title || 'Sem título'}</span>{note.caption && <span className="block truncate text-xs text-muted-foreground">{note.caption}</span>}{noteIds.includes(note.id) && note.description && <span className="mt-1 line-clamp-2 block whitespace-pre-wrap text-xs text-muted-foreground">{note.description}</span>}</span>
+          {note.imageUrls[0] && <img src={note.imageUrls[0]} alt="" loading="lazy" className="h-10 w-10 shrink-0 rounded-md object-cover" />}
+        </label>)}
+        {!visibleNotes.length && <p className="text-sm text-muted-foreground">{gmNotes.length ? 'Nenhuma nota corresponde à busca.' : 'O caderno ainda não tem notas para esta cena.'}</p>}
+      </div></CardContent>
+    </Card>
+  </div>;
+}
+
+function SceneEditor({ scene, updateScene, pokemon, trainers, music, provisionalItems, attacks, gmNotes, getNotesForResource }: { scene: CampaignScene; updateScene: (patch: Partial<CampaignScene>) => void; pokemon: ReturnType<typeof usePokemonData>['pokemon']; trainers: TrainerRecord[]; music: MusicTrack[]; provisionalItems: ProvisionalItem[]; attacks: Attack[]; gmNotes: GMManagerNote[]; getNotesForResource: (kind: GMNoteAttachmentKind, resourceId: string) => string[] }) {
   const [provisionalId, setProvisionalId] = useState(provisionalItems[0]?.id || '');
   const [provisionalPrice, setProvisionalPrice] = useState('0');
   const [marketDraft, setMarketDraft] = useState({ name: '', price: '0', description: '' });
@@ -1118,14 +1292,25 @@ function SceneEditor({ scene, updateScene, pokemon, trainers, music, provisional
   const [sceneSearch, setSceneSearch] = useState('');
   const toggle = (field: 'pokemonIds' | 'trainerIds' | 'musicIds', id: string) => {
     const ids = scene[field] || [];
-    updateScene({ [field]: ids.includes(id) ? ids.filter(item => item !== id) : [...ids, id] });
+    const removing = ids.includes(id);
+    const kind: GMNoteAttachmentKind = field === 'pokemonIds'
+      ? 'pokemon'
+      : field === 'trainerIds' ? 'trainer' : 'music';
+    const patch: Partial<CampaignScene> = {
+      [field]: removing ? ids.filter(item => item !== id) : [...ids, id],
+    };
+    if (!removing) patch.noteIds = [...new Set([...(scene.noteIds || []), ...getNotesForResource(kind, id)])];
+    updateScene(patch);
   };
   const matchesSceneSearch = (value: string) => !sceneSearch.trim() || value.toLocaleLowerCase().includes(sceneSearch.toLocaleLowerCase());
   const addProvisional = () => {
     const item = provisionalItems.find(entry => entry.id === provisionalId);
     if (!item) return;
     const market: SceneMarketItem = { id: `market-${Date.now()}`, name: item.name, price: Number(provisionalPrice) || 0, provisionalItemId: item.id, description: item.detail };
-    updateScene({ provisionalMarket: [...scene.provisionalMarket, market] });
+    updateScene({
+      provisionalMarket: [...scene.provisionalMarket, market],
+      noteIds: [...new Set([...(scene.noteIds || []), ...getNotesForResource('item', item.id)])],
+    });
   };
   const addMarket = () => {
     if (!marketDraft.name.trim()) return;
@@ -1146,10 +1331,24 @@ function SceneEditor({ scene, updateScene, pokemon, trainers, music, provisional
   const visibleMusic = music.filter(item => matchesSceneSearch(`${item.title} ${item.keywords} ${item.url}`));
   return <div className="space-y-5">
     <div><p className="eyebrow mb-2">Cena selecionada</p><Input value={scene.title} onChange={event => updateScene({ title: event.target.value })} className="text-lg font-semibold" /><Textarea value={scene.description} onChange={event => updateScene({ description: event.target.value })} className="mt-2 min-h-24" placeholder="Descrição da cena" /></div>
-    <Card><CardHeader><CardTitle className="text-base">Adicionar à cena</CardTitle><p className="text-sm text-muted-foreground">Pesquise por Pokémon, treinador ou música e clique no resultado para anexar ou remover.</p></CardHeader><CardContent><div className="relative mb-4"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} /><Input value={sceneSearch} onChange={event => setSceneSearch(event.target.value)} className="pl-9" placeholder="Pesquisar na cena..." /></div><div className="grid gap-4 lg:grid-cols-3"><div><p className="mb-2 text-sm font-semibold">Pokémon</p><div className="max-h-52 space-y-2 overflow-y-auto">{visiblePokemon.map(item => <button key={item.id} onClick={() => toggle('pokemonIds', item.id)} className={`flex w-full items-center gap-2 rounded-lg border p-2 text-left ${selectedPokemonIds.includes(item.id) ? 'border-primary bg-primary/10' : 'border-border'}`}><CircleDot size={18} className="shrink-0 text-primary" /><span className="truncate text-sm">{item.name}</span><span className="ml-auto text-xs text-muted-foreground">{selectedPokemonIds.includes(item.id) ? 'Anexado' : 'Adicionar'}</span></button>)}</div></div><div><p className="mb-2 text-sm font-semibold">Treinadores</p><div className="max-h-52 space-y-2 overflow-y-auto">{visibleTrainers.map(item => <button key={item.id} onClick={() => toggle('trainerIds', item.id)} className={`flex w-full items-center justify-between rounded-lg border p-2 text-left ${selectedTrainerIds.includes(item.id) ? 'border-primary bg-primary/10' : 'border-border'}`}><span className="truncate text-sm font-semibold">{item.name}</span><span className="text-xs text-muted-foreground">{selectedTrainerIds.includes(item.id) ? 'Anexado' : 'Adicionar'}</span></button>)}</div>{!trainers.length && <p className="text-sm text-muted-foreground">Nenhum treinador cadastrado.</p>}</div><div><p className="mb-2 text-sm font-semibold">Música</p><div className="max-h-52 space-y-2 overflow-y-auto">{visibleMusic.map(item => <button key={item.id} onClick={() => toggle('musicIds', item.id)} className={`flex w-full items-center justify-between rounded-lg border p-2 text-left ${selectedMusicIds.includes(item.id) ? 'border-primary bg-primary/10' : 'border-border'}`}><span className="truncate text-sm font-semibold">{item.title}</span><span className="text-xs text-muted-foreground">{selectedMusicIds.includes(item.id) ? 'Anexada' : 'Adicionar'}</span></button>)}</div>{!music.length && <p className="text-sm text-muted-foreground">Adicione músicas na aba Música.</p>}</div></div></CardContent></Card>
+    <label className="relative block"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} /><Input value={sceneSearch} onChange={event => setSceneSearch(event.target.value)} className="pl-9" placeholder="Buscar Pokémon, ataques, notas, treinadores..." aria-label="Buscar recursos e anotações para a cena" /></label>
+    <SceneNotesControls scene={scene} gmNotes={gmNotes} attacks={attacks} matchesSceneSearch={matchesSceneSearch} updateScene={updateScene} getNotesForResource={getNotesForResource} />
+    <Card><CardHeader><CardTitle className="text-base">Adicionar à cena</CardTitle><p className="text-sm text-muted-foreground">Os resultados de Pokémon, treinadores e músicas acompanham a busca acima.</p></CardHeader><CardContent><div className="grid gap-4 lg:grid-cols-3"><div><p className="mb-2 text-sm font-semibold">Pokémon</p><div className="max-h-52 space-y-2 overflow-y-auto">{visiblePokemon.map(item => <button key={item.id} onClick={() => toggle('pokemonIds', item.id)} className={`flex w-full items-center gap-2 rounded-lg border p-2 text-left ${selectedPokemonIds.includes(item.id) ? 'border-primary bg-primary/10' : 'border-border'}`}><CircleDot size={18} className="shrink-0 text-primary" /><span className="truncate text-sm">{item.name}</span><span className="ml-auto text-xs text-muted-foreground">{selectedPokemonIds.includes(item.id) ? 'Anexado' : 'Adicionar'}</span></button>)}{!visiblePokemon.length && <p className="text-xs text-muted-foreground">{pokemon.length ? 'Nenhum Pokémon corresponde à busca.' : 'Nenhum Pokémon cadastrado.'}</p>}</div></div><div><p className="mb-2 text-sm font-semibold">Treinadores</p><div className="max-h-52 space-y-2 overflow-y-auto">{visibleTrainers.map(item => <button key={item.id} onClick={() => toggle('trainerIds', item.id)} className={`flex w-full items-center justify-between rounded-lg border p-2 text-left ${selectedTrainerIds.includes(item.id) ? 'border-primary bg-primary/10' : 'border-border'}`}><span className="truncate text-sm font-semibold">{item.name}</span><span className="text-xs text-muted-foreground">{selectedTrainerIds.includes(item.id) ? 'Anexado' : 'Adicionar'}</span></button>)}{!visibleTrainers.length && <p className="text-xs text-muted-foreground">{trainers.length ? 'Nenhum treinador corresponde à busca.' : 'Nenhum treinador cadastrado.'}</p>}</div></div><div><p className="mb-2 text-sm font-semibold">Música</p><div className="max-h-52 space-y-2 overflow-y-auto">{visibleMusic.map(item => <button key={item.id} onClick={() => toggle('musicIds', item.id)} className={`flex w-full items-center justify-between rounded-lg border p-2 text-left ${selectedMusicIds.includes(item.id) ? 'border-primary bg-primary/10' : 'border-border'}`}><span className="truncate text-sm font-semibold">{item.title}</span><span className="text-xs text-muted-foreground">{selectedMusicIds.includes(item.id) ? 'Anexada' : 'Adicionar'}</span></button>)}{!visibleMusic.length && <p className="text-xs text-muted-foreground">{music.length ? 'Nenhuma música corresponde à busca.' : 'Adicione músicas na aba Música.'}</p>}</div></div></div></CardContent></Card>
     <Card><CardHeader><CardTitle className="text-base">Mini mercado</CardTitle></CardHeader><CardContent className="space-y-4"><div className="grid gap-2 sm:grid-cols-[1fr_120px_auto]"><select value={provisionalId} onChange={event => setProvisionalId(event.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm">{provisionalItems.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><Input type="number" value={provisionalPrice} onChange={event => setProvisionalPrice(event.target.value)} placeholder="Preço" /><Button onClick={addProvisional}>Adicionar provisório</Button></div><div className="grid gap-2 sm:grid-cols-[1fr_120px_1.5fr_auto]"><Input value={marketDraft.name} onChange={event => setMarketDraft({ ...marketDraft, name: event.target.value })} placeholder="Item de consumo" /><Input type="number" value={marketDraft.price} onChange={event => setMarketDraft({ ...marketDraft, price: event.target.value })} placeholder="Preço" /><Input value={marketDraft.description} onChange={event => setMarketDraft({ ...marketDraft, description: event.target.value })} placeholder="Descrição" /><Button onClick={addMarket}>Adicionar</Button></div><div className="grid gap-2 sm:grid-cols-2">{[...scene.provisionalMarket, ...scene.customMarket].map(item => <div key={item.id} className="flex items-center justify-between rounded-lg border border-border p-3"><div><p className="font-semibold">{item.name}</p><p className="text-xs text-muted-foreground">{item.description || 'Sem descrição'}</p></div><div className="flex items-center gap-2"><span className="font-mono text-primary">{item.price}</span><Button size="icon" variant="ghost" onClick={() => updateScene({ provisionalMarket: scene.provisionalMarket.filter(entry => entry.id !== item.id), customMarket: scene.customMarket.filter(entry => entry.id !== item.id) })}><Trash2 size={14} /></Button></div></div>)}</div></CardContent></Card>
     <Card><CardHeader><CardTitle className="text-base">Anotações de testes</CardTitle></CardHeader><CardContent><div className="grid gap-2 sm:grid-cols-[180px_1fr_auto]"><select value={testDraft.skill} onChange={event => setTestDraft({ ...testDraft, skill: event.target.value })} className="h-9 rounded-md border border-input bg-background px-3 text-sm">{SKILL_NAMES.map(skill => <option key={skill}>{skill}</option>)}</select><Input value={testDraft.description} onChange={event => setTestDraft({ ...testDraft, description: event.target.value })} placeholder="Ex.: DT - Descrição do sucesso" /><Button onClick={addTest}><Plus size={15} /> DT</Button></div><div className="mt-3 space-y-3">{scene.tests.map(test => <div key={test.id} className="rounded-lg border border-border p-3"><div className="flex items-center justify-between gap-2"><p className="font-semibold">{test.skill} · {test.description}</p><Button size="icon" variant="ghost" onClick={() => updateScene({ tests: scene.tests.filter(item => item.id !== test.id) })}><Trash2 size={14} /></Button></div><div className="mt-2 flex flex-wrap gap-2">{test.difficulties.map((difficulty, index) => <Input key={`${test.id}-${index}`} value={difficulty} onChange={event => updateScene({ tests: scene.tests.map(item => item.id === test.id ? { ...item, difficulties: item.difficulties.map((value, valueIndex) => valueIndex === index ? event.target.value : value) } : item) })} placeholder={`DT ${index + 1} - descrição do sucesso`} className="h-8 min-w-[260px] flex-1 sm:w-72 sm:flex-none" />)}<Button size="sm" variant="outline" onClick={() => updateScene({ tests: scene.tests.map(item => item.id === test.id ? { ...item, difficulties: [...item.difficulties, ''] } : item) })}><Plus size={14} /> DT</Button></div></div>)}</div></CardContent></Card><Card><CardHeader><CardTitle className="text-base">Pontos de interesse</CardTitle></CardHeader><CardContent><div className="flex gap-2"><Input value={pointDraft} onChange={event => setPointDraft(event.target.value)} placeholder="Novo ponto de interesse" /><Button onClick={() => { if (pointDraft.trim()) { updateScene({ pointsOfInterest: [...scene.pointsOfInterest, pointDraft.trim()] }); setPointDraft(''); } }}><Plus size={15} /></Button></div><div className="mt-3 flex flex-wrap gap-2">{scene.pointsOfInterest.map((point, index) => <Badge key={`${point}-${index}`} variant="outline">{point}<button className="ml-2 text-muted-foreground hover:text-destructive" onClick={() => updateScene({ pointsOfInterest: scene.pointsOfInterest.filter((_, itemIndex) => itemIndex !== index) })}>×</button></Badge>)}</div></CardContent></Card>
   </div>;
+}
+
+function SceneFocusNotes({ scene, notes }: { scene?: CampaignScene; notes: GMManagerNote[] }) {
+  const sceneNotes = notes.filter(note => scene?.noteIds?.includes(note.id));
+  if (!scene || !sceneNotes.length) return null;
+  return <Card className="paper-panel mt-3 border-primary/20">
+    <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-lg"><ClipboardList className="text-primary" /> Anotações da cena em foco <Badge variant="secondary">{sceneNotes.length}</Badge></CardTitle><p className="text-sm text-muted-foreground">Notas anexadas à cena selecionada, incluindo as encontradas pelos recursos vinculados.</p></CardHeader>
+    <CardContent><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{sceneNotes.map(note => <article key={note.id} className="min-w-0 overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm" style={{ borderTopWidth: 3, borderTopColor: note.color || '#728b70' }}>
+      <div className="flex items-start gap-3">{note.imageUrls?.[0] && <img src={note.imageUrls[0]} alt="" loading="lazy" className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover" />}<div className="min-w-0"><h3 className="truncate font-semibold text-foreground">{note.title}</h3>{note.caption && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{note.caption}</p>}</div></div>
+      {note.description && <p className="mt-3 line-clamp-4 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{note.description}</p>}
+    </article>)}</div></CardContent>
+  </Card>;
 }
 
 function ScenePicker({ episodes, selectedEpisodeId, setSelectedEpisodeId, selectedSceneId, setSelectedSceneId, scene, pokemon, trainers, music, onOpenTrainer }: { episodes: CampaignEpisode[]; selectedEpisodeId: string; setSelectedEpisodeId: (id: string) => void; selectedSceneId: string; setSelectedSceneId: (id: string) => void; scene?: CampaignScene; pokemon: ReturnType<typeof usePokemonData>['pokemon']; trainers: TrainerRecord[]; music: MusicTrack[]; onOpenTrainer: (id: string) => void }) {
@@ -1167,4 +1366,122 @@ function ScenePicker({ episodes, selectedEpisodeId, setSelectedEpisodeId, select
     }
   };
   return <Card className="paper-panel mt-6 border-primary/25"><CardHeader><CardTitle className="flex items-center gap-2"><Flag className="text-primary" /> Cena em foco</CardTitle></CardHeader><CardContent><div className="grid gap-3 md:grid-cols-2"><select value={selectedEpisodeId} onChange={event => { setSelectedEpisodeId(event.target.value); const next = episodes.find(item => item.id === event.target.value); setSelectedSceneId(next?.scenes[0]?.id || ''); }} className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="">Selecione um episódio</option>{episodes.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select><select value={selectedSceneId} onChange={event => setSelectedSceneId(event.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm" disabled={!episode}><option value="">Selecione uma cena</option>{episode?.scenes.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></div>{scene ? <div className="mt-5 space-y-4"><div><p className="eyebrow">{episode?.title}</p><h3 className="font-display text-3xl">{scene.title}</h3><p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{scene.description || 'Sem descrição.'}</p></div><div className="grid gap-4 md:grid-cols-3">{scenePokemon.length > 0 && <div><p className="eyebrow mb-2">Pokémon</p><div className="flex flex-wrap gap-2">{scenePokemon.map(item => <Link key={item.id} href={`/sheet?id=${item.id}`} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 px-2 py-1.5 text-sm hover:border-primary">{item.image && <img src={item.image} alt="" loading="lazy" className="h-7 w-7 rounded object-contain" />}{item.name}</Link>)}</div></div>}{sceneTrainers.length > 0 && <div><p className="eyebrow mb-2">NPCs e treinadores</p><div className="flex flex-wrap gap-2">{sceneTrainers.map(item => <button key={item.id} onClick={() => onOpenTrainer(item.id)} className="rounded-lg border border-border bg-secondary/30 px-3 py-2 text-sm hover:border-primary">{item.name}</button>)}</div></div>}{sceneMusic.length > 0 && <div><p className="eyebrow mb-2">Música</p><div className="flex flex-wrap gap-2">{sceneMusic.map(item => <button key={item.id} onClick={() => copySceneMusic(item.url)} title={`Copiar m!p ${item.url}`} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/30 px-3 py-1.5 text-sm transition-colors hover:border-primary active:scale-[.98]" data-testid={`button-copy-scene-music-${item.id}`}><Copy size={13} className="text-primary" />{item.title}</button>)}</div></div>}</div>{(scene.provisionalMarket.length + scene.customMarket.length) > 0 && <div><p className="eyebrow mb-2">Mini mercado</p><div className="grid gap-2 sm:grid-cols-2">{[...scene.provisionalMarket, ...scene.customMarket].map(item => <div key={item.id} className="flex justify-between rounded-lg border border-border p-3 text-sm"><span>{item.name}</span><span className="font-mono text-primary">{item.price}</span></div>)}</div></div>}{scene.tests.length > 0 && <div><p className="eyebrow mb-2">Testes</p><div className="space-y-2">{scene.tests.map(test => <div key={test.id} className="rounded-lg border border-border p-3 text-sm"><strong>{test.skill}</strong> · {test.description}<div className="mt-2 flex flex-wrap gap-2">{test.difficulties.filter(Boolean).map((difficulty, index) => <Badge key={index} variant="outline">DT {difficulty}</Badge>)}</div></div>)}</div></div>}{scene.pointsOfInterest.length > 0 && <div><p className="eyebrow mb-2">Pontos de interesse</p><div className="flex flex-wrap gap-2">{scene.pointsOfInterest.map((point, index) => <Badge key={`${point}-${index}`} variant="outline">{point}</Badge>)}</div></div>}</div> : <p className="mt-5 text-sm text-muted-foreground">Crie um episódio para escolher uma cena.</p>}</CardContent></Card>;
+}
+
+function SceneFocusEntitySnapshot({ scene, pokemon, trainers, attacks }: { scene?: CampaignScene; pokemon: Pokemon[]; trainers: TrainerRecord[]; attacks: Attack[] }) {
+  const [selectedKey, setSelectedKey] = useState('');
+  const scenePokemon = pokemon.filter(item => scene?.pokemonIds?.includes(item.id));
+  const sceneTrainers = trainers.filter(item => scene?.trainerIds?.includes(item.id));
+  const options = [
+    ...scenePokemon.map(item => ({ key: `pokemon:${item.id}`, label: item.name, kind: 'pokemon' as const, item })),
+    ...sceneTrainers.map(item => ({ key: `trainer:${item.id}`, label: item.name, kind: 'trainer' as const, item })),
+  ];
+  useEffect(() => {
+    setSelectedKey(options[0]?.key || '');
+  }, [scene?.id]);
+  const selected = options.find(option => option.key === selectedKey) || options[0];
+  if (!scene || !selected) return null;
+  const metric = (label: string, value: string | number) => <div key={label} className="min-w-0 rounded-lg border border-border bg-background/70 px-2.5 py-2">
+    <p className="eyebrow truncate">{label}</p>
+    <p className="break-words font-mono text-sm font-bold">{value}</p>
+  </div>;
+  const attackName = (id: string) => attacks.find(attack => attack.id === id || attack.name === id)?.name || id;
+
+  return <Card className="paper-panel mt-4 border-primary/20">
+    <CardHeader className="space-y-3 pb-3">
+      <CardTitle className="flex flex-wrap items-center justify-between gap-3 text-base">
+        <span>Ficha rápida da cena</span>
+        <span className="text-xs font-normal text-muted-foreground">Resumo do participante selecionado</span>
+      </CardTitle>
+      <div className="flex min-w-0 flex-wrap gap-2">
+        {options.map(option => <button key={option.key} type="button" onClick={() => setSelectedKey(option.key)} aria-pressed={option.key === selected.key} className={`inline-flex max-w-full min-w-0 items-center gap-2 rounded-full border px-3 py-1.5 text-left text-sm transition-colors ${option.key === selected.key ? 'border-primary bg-primary/10 font-semibold text-primary' : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'}`}>
+          {option.kind === 'pokemon' && option.item.image && <img src={option.item.image} alt="" loading="lazy" className="h-5 w-5 rounded-full object-contain" />}
+          <span className="break-words">{option.label}</span>
+        </button>)}
+      </div>
+    </CardHeader>
+    <CardContent>
+      {selected.kind === 'pokemon' ? <div className="min-w-0 space-y-3 rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-secondary/25 p-3 sm:p-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
+          {selected.item.image ? <img src={selected.item.image} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-xl border border-border bg-background/70 object-contain p-1.5" /> : <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl border border-border bg-primary/10 text-xl font-bold text-primary">{selected.item.name.slice(0, 1)}</div>}
+          <div className="min-w-0 flex-1">
+            <p className="eyebrow">{selected.item.species || 'Pokémon'}</p>
+            <h3 className="break-words font-display text-xl leading-tight">{selected.item.name}</h3>
+            <div className="mt-2 flex flex-wrap gap-1.5">{(selected.item.types || []).map(type => <Badge key={type} variant="outline">{type}</Badge>)}</div>
+          </div>
+        </div>
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
+          {metric('Nível', selected.item.level)}
+          {metric('PV', `${selected.item.hp} / ${selected.item.hpMax}`)}
+          {metric('PP', selected.item.ppCurrent == null ? '—' : `${selected.item.ppCurrent} / ${selected.item.ppMax ?? '—'}`)}
+          {metric('Experiência', `${selected.item.xp} · ${selected.item.growthRate}`)}
+        </div>
+        <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+          <div className="min-w-0 rounded-lg border border-border bg-background/70 px-3 py-2">
+            <p className="eyebrow">Habilidade</p>
+            <p className="break-words text-sm font-semibold">{selected.item.ability || 'Não definida'}</p>
+            {selected.item.abilityDescription && <p className="mt-1 break-words text-xs text-muted-foreground">{selected.item.abilityDescription}</p>}
+          </div>
+          <div className="min-w-0 rounded-lg border border-border bg-background/70 px-3 py-2">
+            <p className="eyebrow">Item equipado</p>
+            <p className="break-words text-sm font-semibold">{selected.item.item || 'Nenhum'}</p>
+            {selected.item.itemDescription && <p className="mt-1 break-words text-xs text-muted-foreground">{selected.item.itemDescription}</p>}
+          </div>
+        </div>
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+          <div>
+            <p className="eyebrow mb-1.5">Atributos base</p>
+            <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">{([
+              ['HP', selected.item.stats.hp.base], ['ATQ', selected.item.stats.atk.base],
+              ['DEF', selected.item.stats.def.base], ['SAT', selected.item.stats.spAtk.base],
+              ['SDF', selected.item.stats.spDef.base], ['VEL', selected.item.stats.spe.base],
+            ] as const).map(([label, value]) => <div key={label} className="min-w-0 rounded-md border border-border bg-background/70 px-1.5 py-1 text-center">
+              <p className="text-[10px] font-semibold text-muted-foreground">{label}</p><p className="font-mono text-xs font-bold">{value}</p>
+            </div>)}</div>
+          </div>
+          <div>
+            <p className="eyebrow mb-1.5">Treinador</p>
+            <p className="break-words rounded-lg border border-border bg-background/70 px-3 py-2 text-sm">{selected.item.trainerName || 'Sem vínculo'}</p>
+          </div>
+        </div>
+        <div>
+          <p className="eyebrow mb-1.5">Ataques</p>
+          {selected.item.attacks.length > 0 ? <div className="flex min-w-0 flex-wrap gap-1.5">{selected.item.attacks.map(id => <Badge key={id} variant="outline" className="max-w-full whitespace-normal break-words">{attackName(id)}</Badge>)}</div> : <p className="text-sm text-muted-foreground">Nenhum ataque cadastrado.</p>}
+        </div>
+      </div> : <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-gradient-to-r from-primary/5 via-card to-secondary/25 p-4">
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-lg font-bold text-primary">{selected.item.name.split(/\s+/).map(part => part[0]).slice(0, 2).join('').toLocaleUpperCase()}</div>
+            <div className="min-w-0 flex-1">
+              <p className="break-words text-xs font-semibold text-muted-foreground">{selected.item.className || 'Treinador'}{selected.item.path ? ` · ${selected.item.path}` : ''}</p>
+              <h3 className="break-words font-display text-xl leading-tight">{selected.item.name}</h3>
+            </div>
+          </div>
+          <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3">
+            {metric('Nível', selected.item.level || 1)}
+            {metric('PV', `${selected.item.hp ?? 0} / ${selected.item.hpMax ?? 0}`)}
+            {metric('PE', `${selected.item.focus ?? 0} / ${selected.item.focusMax ?? 0}`)}
+          </div>
+          <div>
+            <p className="eyebrow mb-1.5">Atributos</p>
+            <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">{attributeKeys.map(key => <div key={key} className="min-w-0 rounded-md border border-border bg-background/70 px-1.5 py-1 text-center">
+              <p className="truncate text-[10px] font-semibold text-muted-foreground" title={CHARACTER_ATTRIBUTE_LABELS[key]}>{key.toUpperCase()}</p><p className="font-mono text-xs font-bold">{selected.item.attributes?.[key] ?? 1}</p>
+            </div>)}</div>
+          </div>
+          <div>
+            <p className="eyebrow mb-1.5">Perícias com bônus</p>
+            {selected.item.skills?.some(skill => skill.value > 0 || (skill.extraPoints || 0) > 0)
+              ? <div className="flex min-w-0 flex-wrap gap-1.5">{selected.item.skills.filter(skill => skill.value > 0 || (skill.extraPoints || 0) > 0).map(skill => <Badge key={skill.name} variant="outline" className="max-w-full whitespace-normal break-words">{skill.name} {skill.value}{(skill.extraPoints || 0) > 0 ? ` + ${skill.extraPoints}` : ''}</Badge>)}</div>
+              : <p className="text-sm text-muted-foreground">Nenhuma registrada.</p>}
+          </div>
+          <div>
+            <p className="eyebrow mb-1.5">Habilidades</p>
+            {selected.item.abilities?.length
+              ? <div className="flex min-w-0 flex-wrap gap-1.5">{selected.item.abilities.map((ability, index) => <Badge key={`${ability.name}-${index}`} variant="outline" className="max-w-full whitespace-normal break-words" title={ability.detail || undefined}>{ability.name || 'Sem nome'}</Badge>)}</div>
+              : <p className="text-sm text-muted-foreground">Nenhuma habilidade cadastrada.</p>}
+          </div>
+        </div>
+      </div>}
+    </CardContent>
+  </Card>;
 }

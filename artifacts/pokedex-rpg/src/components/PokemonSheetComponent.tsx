@@ -27,7 +27,7 @@ import {
   Mars, Venus, CircleHelp
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCharacterSheets, useSessionRole, type TrainerRecord } from '../lib/campaign';
+import { useCharacterSheets, useGMBoard, useSessionRole, type TrainerRecord } from '../lib/campaign';
 import { getServerCollection } from '../lib/cloudSync';
 import { characterHasPokemon, getCharacterPokemonRoster, getPokemonAssignmentConflict, getPokemonTrainerName, normalizeTrainerName, syncPokemonTrainerRecord } from '../lib/pokemonOwnership';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -179,10 +179,14 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
   const { attacks } = useAttackData();
   const { addRoll } = useDiceHistory();
   const { role } = useSessionRole();
+  const { board: gmBoard } = useGMBoard();
   const { characters, updateCharacter } = useCharacterSheets();
   const trainerRecords = getServerCollection<TrainerRecord[]>('trainers', []);
   const canEditMoves = role === 'gm' && !readOnly;
   const canEdit = !readOnly;
+  const gmNotesForSheet = role === 'gm'
+    ? gmBoard.notes.filter(note => note.attachments.some(attachment => attachment.kind === 'pokemon' && attachment.resourceId === pokemonId))
+    : [];
 
   const [sheet, setSheet] = useState<Pokemon | null>(null);
   const { active: activePreset } = useFormulaSettings();
@@ -1283,6 +1287,15 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
             <div>
               <label className="text-xs text-muted-foreground block mb-1" htmlFor="pokemon-notes">Anotações</label>
               <Textarea id="pokemon-notes" value={sheet.notes || ''} disabled={!canEdit} onChange={e => handleChange({ notes: e.target.value })} placeholder="Observações, condições, lembretes de combate..." className="min-h-[100px] resize-y" data-testid="textarea-pokemon-notes" />
+              {role === 'gm' && gmNotesForSheet.length > 0 && <div className="mt-3 space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3" data-testid="pokemon-gm-linked-notes">
+                <p className="text-xs font-bold uppercase tracking-wide text-primary">Anotações do mestre vinculadas</p>
+                {gmNotesForSheet.map(note => <article key={note.id} className="rounded-md border border-border bg-background/80 p-3" style={{ borderLeft: `4px solid ${note.color || '#728b70'}` }}>
+                  <p className="font-semibold">{note.title}</p>
+                  {note.caption && <p className="text-xs text-muted-foreground">{note.caption}</p>}
+                  {note.description && <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{note.description}</p>}
+                  {note.imageUrls.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{note.imageUrls.map((url, index) => <img key={`${url}-${index}`} src={url} alt="" loading="lazy" className="h-16 w-16 rounded-md border border-border object-cover" />)}</div>}
+                </article>)}
+              </div>}
             </div>
           </CardContent>
         </Card>

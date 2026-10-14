@@ -897,3 +897,62 @@ html:not(.dark) .system-page {
 }
 .system-editor-block.is-nested { margin-left: 14px; border-left: 2px solid color-mix(in srgb, var(--system-teal) 45%, var(--system-line)); }
 .system-editor-children { margin-top: 9px; }
+
+@layer components {
+  .gm-notes-manager {
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border)) !important;
+    background-color: hsl(var(--background)) !important;
+    background-image:
+      radial-gradient(ellipse at 100% 0%, color-mix(in srgb, hsl(var(--primary)) 8%, transparent), transparent 38%),
+      linear-gradient(145deg, hsl(var(--background)), color-mix(in srgb, hsl(var(--card)) 88%, hsl(var(--secondary)))) !important;
+  }
+
+  .gm-notes-manager header {
+    background-color: color-mix(in srgb, hsl(var(--card)) 92%, transparent);
+    border-color: hsl(var(--border));
+    backdrop-filter: blur(14px);
+  }
+
+  .gm-notes-manager aside { background-color: color-mix(in srgb, hsl(var(--secondary)) 62%, hsl(var(--background))); }
+  .gm-notes-manager button { transition-duration: 180ms; }
+  .gm-notes-manager button:focus-visible,
+  .gm-notes-manager input:focus-visible,
+  .gm-notes-manager select:focus-visible,
+  .gm-notes-manager textarea:focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.7);
+    outline-offset: 2px;
+  }
+
+  .gm-notes-manager [class*="bg-[#"] { background-color: hsl(var(--card)) !important; }
+  .gm-notes-manager [class*="text-[#"] { color: hsl(var(--muted-foreground)) !important; }
+  .gm-notes-manager [class*="border-[#"] { border-color: hsl(var(--border)) !important; }
+  .gm-notes-manager [class*="bg-[#304845]"],
+  .gm-notes-manager [class*="bg-[#405c55]"] {
+    background-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+  }
+  .gm-notes-manager [class*="bg-[#eef2e9]"],
+  .gm-notes-manager [class*="bg-[#edf0e7]"] {
+    background-color: hsl(var(--primary) / 0.12) !important;
+  }
+  .gm-notes-manager [class*="bg-[#f2f5ee]"] {
+    background-color: hsl(var(--secondary)) !important;
+  }
+  .gm-notes-manager [class*="hover:bg-[#"]:hover {
+    background-color: hsl(var(--accent) / 0.18) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+  .gm-notes-manager [class*="hover:border-[#"]:hover { border-color: hsl(var(--primary) / 0.55) !important; }
+  .gm-notes-manager .font-display { color: hsl(var(--foreground)); }
+  .gm-notes-manager input:not([type="checkbox"]),
+  .gm-notes-manager textarea,
+  .gm-notes-manager select {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--background));
+    border-color: hsl(var(--input));
+  }
+  .gm-notes-manager input::placeholder,
+  .gm-notes-manager textarea::placeholder { color: hsl(var(--muted-foreground)); }
+  .gm-notes-manager .bg-white { background-color: hsl(var(--card)) !important; }
+}
