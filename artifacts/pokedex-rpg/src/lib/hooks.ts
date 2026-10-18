@@ -5,7 +5,7 @@ import { getServerCollection, syncGameState } from './cloudSync';
 import { defaultAttacks, defaultPokemon, defaultPokemonTemplate } from './constants';
 import { computeDerivedStats as computeDerivedStatsStrict, getPpPoolMax } from './calculations';
 import { getActivePreset, ORIGINAL_PRESET, STAT_KEYS } from './formulas';
-import { syncSystemTrackAttacks, SYSTEM_TRACK_ATTACK_SYNC_VERSION } from './systemTrackAttacks';
+import { migrateLegacyMoveConditions, syncSystemTrackAttacks, SYSTEM_TRACK_ATTACK_SYNC_VERSION } from './systemTrackAttacks';
 
 // Never let a runtime formula error (e.g. division by zero) break data loading.
 const computeDerivedStats: typeof computeDerivedStatsStrict = (stats, nature, stages, level, preset) => {
@@ -180,7 +180,7 @@ export function useAttackData() {
           catalog,
           getServerCollection<Record<string, string>>('systemTrackAttackLinks', {}),
         );
-        catalog = result.attacks;
+        catalog = migrateLegacyMoveConditions(result.attacks);
         attacksRef.current = catalog;
         setAttacksState(catalog);
         systemTrackAttackLinksRef.current = result.links;

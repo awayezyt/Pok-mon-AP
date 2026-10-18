@@ -35,6 +35,7 @@ export default function Character() {
   const { characters, updateCharacter } = useCharacterSheets();
   const { pokemon, updatePokemon } = usePokemonData();
   const { role, activeCharacterId } = useSessionRole();
+  const [sheetSearch, setSheetSearch] = useState('');
   const id = requestedId || (role === 'player' ? activeCharacterId : null) || 'character-lyra';
   const trainerRecords = getServerCollection<TrainerRecord[]>('trainers', []);
   const character = characters.find(item => item.id === id) || characters[0];
@@ -44,6 +45,65 @@ export default function Character() {
   const [editingSkills, setEditingSkills] = useState(false);
   const [editingLevel, setEditingLevel] = useState(false);
   const { theme: siteTheme } = useAppTheme();
+
+  const needsGmSheetSelection = role === 'gm'
+    && (!requestedId || !characters.some(item => item.id === requestedId));
+  if (needsGmSheetSelection) {
+    const searchTerm = sheetSearch.trim().toLocaleLowerCase('pt-BR');
+    const filteredCharacters = characters.filter(item =>
+      `${item.name} ${item.player || ''}`.toLocaleLowerCase('pt-BR').includes(searchTerm),
+    );
+    return (
+      <div className="rpg-shell min-h-[calc(100dvh-72px)] p-4 md:p-8">
+        <div className="mx-auto max-w-4xl">
+          <div className="mb-6">
+            <p className="eyebrow">Acesso do Mestre</p>
+            <h1 className="font-display text-3xl">Selecionar ficha</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Escolha a ficha de um jogador para abrir e consultar.</p>
+          </div>
+          <div className="relative mb-5">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={sheetSearch}
+              onChange={event => setSheetSearch(event.target.value)}
+              placeholder="Buscar por personagem ou jogador"
+              aria-label="Buscar ficha por personagem ou jogador"
+              className="pl-9"
+            />
+          </div>
+          {filteredCharacters.length ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {filteredCharacters.map(item => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="text-left"
+                  onClick={() => setLocation(`/personagem?id=${encodeURIComponent(item.id)}`)}
+                  data-testid={`button-select-character-${item.id}`}
+                >
+                  <Card className="h-full transition-colors hover:border-primary">
+                    <CardContent className="flex items-center gap-3 p-4">
+                      <UserRound className="h-5 w-5 shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{item.name}</p>
+                        <p className="truncate text-sm text-muted-foreground">Jogador: {item.player || 'Não definido'}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center text-sm text-muted-foreground">
+                {characters.length ? 'Nenhuma ficha corresponde à busca.' : 'Nenhuma ficha de jogador disponível.'}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (!character) return <div className="p-8">Nenhuma ficha disponível.</div>;
   if (role === 'player' && activeCharacterId !== character.id) {

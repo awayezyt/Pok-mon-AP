@@ -3,6 +3,7 @@ import trainerBlocks from '../data/pokemonSystemBlocks/3554bb16-8489-8084-8dfe-f
 import researcherBlocks from '../data/pokemonSystemBlocks/3554bb16-8489-807e-873d-c7009a24b536.json';
 import contestantBlocks from '../data/pokemonSystemBlocks/3554bb16-8489-802a-92ab-de4c6de1735a.json';
 import adventurerBlocks from '../data/pokemonSystemBlocks/3554bb16-8489-80ae-9981-cf8d8a204586.json';
+import { SYSTEM_ADDITIONAL_ATTACKS } from './systemAdditionalAttacks';
 
 type SourceBlock = {
   id: string;
@@ -12,7 +13,7 @@ type SourceBlock = {
 };
 
 type SystemAttackSource = Omit<Attack, 'id'> & { sourceBlockId: string };
-export const SYSTEM_TRACK_ATTACK_SYNC_VERSION = 2;
+export const SYSTEM_TRACK_ATTACK_SYNC_VERSION = 4;
 
 const classPages = [
   trainerBlocks as SourceBlock[],
@@ -46,6 +47,50 @@ export function normalizeSystemAttackName(name: string): string {
     .replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase('pt-BR')
     .replace(/[^a-z0-9]/g, '');
+}
+
+const legacyMoveConditionRules: Record<string, Pick<Attack, 'effectSummary' | 'effectFull' | 'statusChances'>> = {
+  confusion: {
+    effectSummary: 'Poder psíquico com 10% de chance de causar Confusão.',
+    effectFull: 'Utiliza poder psíquico e, após acertar, tem 10% de chance de causar Confusão por 1d4 turnos.',
+    statusChances: [{ effect: 'Confusão', chance: 10 }],
+  },
+  rest: {
+    effectSummary: 'Recupera 1d10 PV e causa Sono.',
+    effectFull: 'O usuário recupera 1d10 PV e fica Dormindo por 2 turnos.',
+    statusChances: [{ effect: 'Sono', chance: 100 }],
+  },
+  poisongas: {
+    effectSummary: 'Envenena o alvo.',
+    effectFull: 'O alvo fica Envenenado. Não afeta Pokémon dos tipos Venenoso ou Metálico, os que tenham a habilidade Imunidade ou estejam protegidos por Substitute.',
+    statusChances: [{ effect: 'Envenenamento', chance: 100 }],
+  },
+  powdersnow: {
+    effectSummary: 'Causa dano de Gelo e pode Congelar.',
+    effectFull: 'Em Batalha Dupla, atinge ambos os oponentes; em Batalha Tripla, atinge apenas oponentes adjacentes.',
+    statusChances: [{ effect: 'Congelamento', chance: 10 }],
+  },
+  headbutt: {
+    effectSummary: 'Uma cabeçada com 30% de chance de Atordoar o alvo.',
+    effectFull: 'Após acertar, role 1d10. Resultados 1 a 3: o alvo fica Atordoado.',
+    statusChances: [{ effect: 'Atordoamento', chance: 30 }],
+  },
+};
+
+export function migrateLegacyMoveConditions(attacks: Attack[]): Attack[] {
+  return attacks.map(attack => {
+    const rule = legacyMoveConditionRules[normalizeSystemAttackName(attack.name)];
+    const statusChances = (attack.statusChances || []).map(condition =>
+      normalizeSystemAttackName(condition.effect) === 'flinch'
+        ? { ...condition, effect: 'Atordoamento' }
+        : condition,
+    );
+    const normalizedAttack = statusChances.some((condition, index) => condition !== attack.statusChances?.[index])
+      ? { ...attack, statusChances }
+      : attack;
+    if (!rule || statusChances.length) return normalizedAttack;
+    return { ...normalizedAttack, ...rule };
+  });
 }
 
 function titleFromBlock(block: SourceBlock): string {
@@ -200,7 +245,7 @@ const movedSystemAttacks: SystemAttackSource[] = [
 
 export const SYSTEM_TRACK_ATTACKS = classPages
   .flatMap(page => collectTrackMoves(page))
-  .concat(movedSystemAttacks);
+  .concat(movedSystemAttacks, SYSTEM_ADDITIONAL_ATTACKS);
 
 export function syncSystemTrackAttacks(
   current: Attack[],

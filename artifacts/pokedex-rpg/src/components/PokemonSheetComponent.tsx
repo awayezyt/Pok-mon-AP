@@ -512,8 +512,9 @@ export default function PokemonSheetComponent({ pokemonId, readOnly = false }: {
       damageResults  = rollDamage(dmgEntry.dice, dmgEntry.sides);
       const dmgSum   = damageResults.reduce((s, v) => s + v, 0);
       const stabBonus = isStab ? baseDmgBonus : 0;
-      damageTotal    = dmgSum + dmgEntry.bonus + baseDmgBonus + stabBonus;
-      damageNotation = `${dmgEntry.notation} +${baseDmgBonus}(dano)${isStab ? ` +${stabBonus}(STAB)` : ''}`;
+      const rolledDamageBonus = isPhysical && isCrit ? baseDmgBonus * 2 : baseDmgBonus;
+      damageTotal    = dmgSum + dmgEntry.bonus + rolledDamageBonus + stabBonus;
+      damageNotation = `${dmgEntry.notation} +${rolledDamageBonus}(dano${isPhysical && isCrit ? ' crítico x2' : ''})${isStab ? ` +${stabBonus}(STAB)` : ''}`;
     }
 
     // Status chances

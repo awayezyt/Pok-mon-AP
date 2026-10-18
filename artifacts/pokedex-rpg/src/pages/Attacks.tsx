@@ -46,12 +46,21 @@ export default function Attacks() {
   });
 
   const handleOpenCreate = () => { setFormData(defaultAttack); setEditingId(null); setIsModalOpen(true); };
-  const handleOpenEdit   = (attack: Attack) => { setFormData({ ...attack }); setEditingId(attack.id); setIsModalOpen(true); };
+  const handleOpenEdit   = (attack: Attack) => { setFormData({ ...attack, statusChances: attack.statusChances || [] }); setEditingId(attack.id); setIsModalOpen(true); };
 
   const handleSave = () => {
     if (!formData.name) { toast.error('O ataque precisa de um nome.'); return; }
-    if (editingId) { updateAttack(editingId, formData); toast.success('Ataque atualizado.'); }
-    else           { addAttack(formData);               toast.success('Ataque criado.'); }
+    const normalizedData = {
+      ...formData,
+      statusChances: (formData.statusChances || [])
+        .map(condition => ({
+          effect: condition.effect.trim(),
+          chance: Math.max(0, Math.min(100, Math.round(Number(condition.chance) / 10) * 10)),
+        }))
+        .filter(condition => condition.effect),
+    };
+    if (editingId) { updateAttack(editingId, normalizedData); toast.success('Ataque atualizado.'); }
+    else           { addAttack(normalizedData);               toast.success('Ataque criado.'); }
     setIsModalOpen(false);
   };
 
@@ -250,6 +259,77 @@ export default function Attacks() {
             <div className="space-y-2 md:col-span-2">
               <Label>Descrição Completa</Label>
               <Textarea value={formData.effectFull} onChange={e => setFormData({...formData, effectFull: e.target.value})} rows={3} />
+            </div>
+            <div className="space-y-3 md:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <Label>Condições ao acertar</Label>
+                  <p className="text-xs text-muted-foreground">Defina a condição e a chance no d10. Ex.: 30% = resultado 1–3.</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormData(current => ({
+                    ...current,
+                    statusChances: [...(current.statusChances || []), { effect: '', chance: 10 }],
+                  }))}
+                >
+                  <Plus className="mr-1 h-4 w-4" /> Adicionar condição
+                </Button>
+              </div>
+              {(formData.statusChances || []).length ? (
+                <div className="space-y-2">
+                  {(formData.statusChances || []).map((condition, index) => (
+                    <div key={`${index}-${condition.effect}`} className="grid grid-cols-[minmax(0,1fr)_110px_auto] items-end gap-2 rounded-lg border border-border p-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`condition-effect-${index}`}>Condição</Label>
+                        <Input
+                          id={`condition-effect-${index}`}
+                          value={condition.effect}
+                          onChange={event => setFormData(current => ({
+                            ...current,
+                            statusChances: (current.statusChances || []).map((item, i) => i === index ? { ...item, effect: event.target.value } : item),
+                          }))}
+                          placeholder="Ex.: Paralisia"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`condition-chance-${index}`}>Chance (%)</Label>
+                        <Input
+                          id={`condition-chance-${index}`}
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={10}
+                          value={condition.chance}
+                          onChange={event => setFormData(current => ({
+                            ...current,
+                            statusChances: (current.statusChances || []).map((item, i) => i === index
+                              ? { ...item, chance: Math.max(0, Math.min(100, Number(event.target.value) || 0)) }
+                              : item),
+                          }))}
+                        />
+                        <p className="text-[11px] text-muted-foreground">{formatStatusChance(condition.chance)}</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Remover condição ${condition.effect || index + 1}`}
+                        onClick={() => setFormData(current => ({
+                          ...current,
+                          statusChances: (current.statusChances || []).filter((_item, i) => i !== index),
+                        }))}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">Nenhuma condição cadastrada.</p>
+              )}
             </div>
             <div className="space-y-3 md:col-span-2">
               <div className="flex items-center space-x-2 bg-secondary/30 p-3 rounded-lg border border-border">

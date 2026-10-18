@@ -229,7 +229,7 @@ export const ORIGINAL_PRESET: FormulaPreset = {
   id: 'original',
   name: 'Original',
   builtin: true,
-  schemaVersion: 2,
+  schemaVersion: 3,
   diceMode: 'iv',
   ppMode: 'individual',
   ppFreeThreshold: 40,
@@ -249,18 +249,18 @@ export const ORIGINAL_PRESET: FormulaPreset = {
     stageSpAtk: STAGE_MULT,
     stageDef: STAGE_MULT,
     stageSpDef: STAGE_MULT,
-    stageSpe: 'X + 10 * E',
+    stageSpe: 'X * (1.5 ^ E)',
     stageAccuracy: 'X + 2 * E',
-    stageEvasion: 'X + 2 * E',
+    stageEvasion: 'X + 5 * E',
     stageCrit: 'X - E',
     physOverflow: 'Bt + 2 * (P - Pt)',
     specOverflow: 'Bt + 2 * (P - Pt)',
-    evCapHp: 'max(1, ceil(N * 1.25))',
-    evCapAtk: 'max(1, ceil(N * 1.25))',
-    evCapDef: 'max(1, ceil(N * 1.25))',
-    evCapSpAtk: 'max(1, ceil(N * 1.25))',
-    evCapSpDef: 'max(1, ceil(N * 1.25))',
-    evCapSpe: 'max(1, ceil(N * 1.25))',
+    evCapHp: '2 * N',
+    evCapAtk: '2 * N',
+    evCapDef: '2 * N',
+    evCapSpAtk: '2 * N',
+    evCapSpDef: '2 * N',
+    evCapSpe: '2 * N',
     ppPool: 'N * 3',
   },
   physTable: [
@@ -295,18 +295,18 @@ export const FORMULA_META: Record<FormulaKey, { label: string; group: 'stat' | '
     stageSpAtk: { label: 'Estágio SP.ATK → dano especial', group: 'stage', help: 'X = bônus de dano especial, E = estágio.', vars: stage },
     stageDef: { label: 'Estágio DEF → RD física', group: 'stage', help: 'X = RD física, E = estágio.', vars: stage },
     stageSpDef: { label: 'Estágio SP.DEF → RD especial', group: 'stage', help: 'X = RD especial, E = estágio.', vars: stage },
-    stageSpe: { label: 'Estágio SPE → iniciativa', group: 'stage', help: 'X = iniciativa, E = estágio.', vars: stage },
+    stageSpe: { label: 'Estágio SPE → iniciativa', group: 'stage', help: 'X = iniciativa, E = estágio (-6 a +6); cada estágio multiplica ou divide por 1,5.', vars: stage },
     stageAccuracy: { label: 'Estágio Precisão → teste', group: 'stage', help: 'X = 0 (modificador base do teste), E = estágio. Resultado somado ao teste de ataque.', vars: stage },
-    stageEvasion: { label: 'Estágio Evasiva → esquiva', group: 'stage', help: 'X = esquiva, E = estágio.', vars: stage },
+    stageEvasion: { label: 'Estágio Evasiva → esquiva', group: 'stage', help: 'X = esquiva; cada estágio altera a Esquiva em 5 pontos.', vars: stage },
     stageCrit: { label: 'Estágio Crítico → margem', group: 'stage', help: 'X = margem de crítico do golpe, E = estágio (-6 a +6). Limitado a 1–20.', vars: stage },
     physOverflow: { label: 'Bônus acima da tabela física', group: 'table', help: 'P = poder, Pt = poder da última linha, Bt = bônus da última linha.', vars: ['P', 'Pt', 'Bt'] },
     specOverflow: { label: 'Bônus acima da tabela especial', group: 'table', help: 'P = poder, Pt = poder da última linha, Bt = bônus da última linha.', vars: ['P', 'Pt', 'Bt'] },
-    evCapHp: { label: 'Cap de EV — HP', group: 'allocation', help: 'Máximo de EV que pode ser investido em HP. O valor é limitado a um inteiro não negativo.', vars: perStat },
-    evCapAtk: { label: 'Cap de EV — ATK', group: 'allocation', help: 'Máximo de EV que pode ser investido em ATK. O valor é limitado a um inteiro não negativo.', vars: perStat },
-    evCapDef: { label: 'Cap de EV — DEF', group: 'allocation', help: 'Máximo de EV que pode ser investido em DEF. O valor é limitado a um inteiro não negativo.', vars: perStat },
-    evCapSpAtk: { label: 'Cap de EV — SP.ATK', group: 'allocation', help: 'Máximo de EV que pode ser investido em SP.ATK. O valor é limitado a um inteiro não negativo.', vars: perStat },
-    evCapSpDef: { label: 'Cap de EV — SP.DEF', group: 'allocation', help: 'Máximo de EV que pode ser investido em SP.DEF. O valor é limitado a um inteiro não negativo.', vars: perStat },
-    evCapSpe: { label: 'Cap de EV — SPEED', group: 'allocation', help: 'Máximo de EV que pode ser investido em SPEED. O valor é limitado a um inteiro não negativo.', vars: perStat },
+    evCapHp: { label: 'Cap de EV — HP', group: 'allocation', help: 'Limite de EV em HP: 2 × nível atual.', vars: perStat },
+    evCapAtk: { label: 'Cap de EV — ATK', group: 'allocation', help: 'Limite de EV em ATK: 2 × nível atual.', vars: perStat },
+    evCapDef: { label: 'Cap de EV — DEF', group: 'allocation', help: 'Limite de EV em DEF: 2 × nível atual.', vars: perStat },
+    evCapSpAtk: { label: 'Cap de EV — SP.ATK', group: 'allocation', help: 'Limite de EV em SP.ATK: 2 × nível atual.', vars: perStat },
+    evCapSpDef: { label: 'Cap de EV — SP.DEF', group: 'allocation', help: 'Limite de EV em SP.DEF: 2 × nível atual.', vars: perStat },
+    evCapSpe: { label: 'Cap de EV — SPEED', group: 'allocation', help: 'Limite de EV em SPEED: 2 × nível atual.', vars: perStat },
     ppPool: { label: 'Tamanho da barra de PP', group: 'pp', help: 'Define o máximo de Pontos de Poder disponíveis para o Pokémon.', vars: all },
   };
 })();
@@ -327,13 +327,28 @@ function normalizePreset(raw: Partial<FormulaPreset>): FormulaPreset {
         .replace(restoreAllocatedEv, (_match, suffix: string) => `EV${suffix}`);
     });
   }
+  if (schemaVersion < 3 && raw.formulas) {
+    const migrations: Partial<Record<FormulaKey, [string, string]>> = {
+      stageSpe: ['X + 10 * E', 'X * (1.5 ^ E)'],
+      stageEvasion: ['X + 2 * E', 'X + 5 * E'],
+      evCapHp: ['max(1, ceil(N * 1.25))', '2 * N'],
+      evCapAtk: ['max(1, ceil(N * 1.25))', '2 * N'],
+      evCapDef: ['max(1, ceil(N * 1.25))', '2 * N'],
+      evCapSpAtk: ['max(1, ceil(N * 1.25))', '2 * N'],
+      evCapSpDef: ['max(1, ceil(N * 1.25))', '2 * N'],
+      evCapSpe: ['max(1, ceil(N * 1.25))', '2 * N'],
+    };
+    (Object.entries(migrations) as [FormulaKey, [string, string]][]).forEach(([key, [legacy, current]]) => {
+      if (raw.formulas?.[key] === legacy) formulas[key] = current;
+    });
+  }
   return {
     ...ORIGINAL_PRESET,
     ...raw,
     id: raw.id || `preset-${Date.now()}`,
     name: raw.name || 'Preset',
     builtin: raw.id === ORIGINAL_PRESET.id,
-    schemaVersion: 2,
+    schemaVersion: 3,
     ppMode: raw.ppMode === 'pool' ? 'pool' : 'individual',
     ppFreeThreshold: Number.isInteger(raw.ppFreeThreshold) && raw.ppFreeThreshold! >= 0 ? raw.ppFreeThreshold! : ORIGINAL_PRESET.ppFreeThreshold,
     ppStep: Number.isInteger(raw.ppStep) && raw.ppStep! > 0 ? raw.ppStep! : ORIGINAL_PRESET.ppStep,

@@ -77,7 +77,6 @@ function Router() {
   }, [location, search]);
   useEffect(() => {
     if (role === 'public' && location !== '/' && location !== '/publico' && location !== '/sheet' && location !== '/sistema') setLocation('/');
-    if (role === 'gm' && location === '/personagem') setLocation('/mestre');
     if (role !== 'gm' && (location === '/mestre' || location === '/mestre/anotacoes/editor' || location === '/attacks' || location === '/pokemon' || location === '/fichas')) setLocation(role === 'player' ? '/personagem' : '/');
   }, [location, role, setLocation]);
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Link, useLocation } from 'wouter';
-import { AlertTriangle, BookMarked, BookOpen, CircleCheck, CircleDot, CloudOff, LoaderCircle, LogOut, Orbit, Shield, Swords, Users, WandSparkles } from 'lucide-react';
+import { AlertTriangle, BookMarked, BookOpen, CircleCheck, CloudOff, LoaderCircle, LogOut, Orbit, Shield, Swords, Users, WandSparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSessionRole } from '../lib/campaign';
 import { getSyncStatus, type SyncStatusSnapshot } from '../lib/cloudSync';
@@ -82,10 +82,10 @@ export function Navigation() {
             <Users size={16} />
             Fichas
           </Link>}
+          {role === 'gm' && <Link href="/personagem" className={`transition-colors hover:text-foreground flex items-center gap-2 ${location.startsWith('/personagem') ? 'text-foreground' : 'text-foreground/60'}`} data-testid="link-nav-character"><WandSparkles size={16} /> Personagem</Link>}
           {role === 'player' && <Link href={characterHref} className={`transition-colors hover:text-foreground flex items-center gap-2 ${location.startsWith('/personagem') ? 'text-foreground' : 'text-foreground/60'}`} data-testid="link-nav-character"><WandSparkles size={16} /> Personagem</Link>}
           <Link href="/publico" className={`transition-colors hover:text-foreground flex items-center gap-2 ${location === '/publico' ? 'text-foreground' : 'text-foreground/60'}`} data-testid="link-nav-public"><BookOpen size={16} /> Arquivo</Link>
           <Link href="/sistema" className={`transition-colors hover:text-foreground flex items-center gap-2 ${location === '/sistema' ? 'text-foreground' : 'text-foreground/60'}`} data-testid="link-nav-system"><BookMarked size={16} /> Sistema</Link>
-          {role === 'gm' && <Link href="/pokemon" className={`transition-colors hover:text-foreground flex items-center gap-2 ${location === '/pokemon' ? 'text-foreground' : 'text-foreground/60'}`} data-testid="link-nav-pokemon"><CircleDot size={16} /> Pokédex</Link>}
           {role === 'gm' && <Link
             href="/attacks" 
             className={`transition-colors hover:text-foreground flex items-center gap-2 ${location === '/attacks' ? 'text-foreground' : 'text-foreground/60'}`}

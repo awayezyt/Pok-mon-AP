@@ -13,6 +13,14 @@ import { SystemIndexEditor, type EditableIndexGroup, type EditableIndexSection }
 import { SystemFormulaGuide } from '../components/SystemFormulaGuide';
 import { RichText as IconRichText } from '../components/RichText';
 import systemData from '../data/pokemonSystem.json';
+import {
+  applySystemBlockTextOverrides,
+  HIDDEN_SYSTEM_RULE_DOCUMENT_IDS,
+  SYSTEM_DOCUMENT_BLOCK_OVERRIDES,
+  SYSTEM_DOCUMENT_METADATA_OVERRIDES,
+  SYSTEM_EXTRA_BLOCKS_BY_DOCUMENT,
+  SYSTEM_RULE_DOCUMENTS,
+} from '../data/systemRuleUpdates';
 
 type RichRun = [string, unknown[]?];
 type SystemBlock = {
@@ -61,6 +69,7 @@ const hiddenSystemDocumentIds = new Set([
   '38d4bb16-8489-80ff-9479-c1357f0d02c0', // Low Kick
   '3f14bb16-8489-8091-9449-e9fb4ebccc68', // Smokescreen
   '3f14bb16-8489-802d-9fb3-c211bca17042', // Flash
+  ...HIDDEN_SYSTEM_RULE_DOCUMENT_IDS,
 ]);
 const blockFiles = import.meta.glob('../data/pokemonSystemBlocks/*.json', {
   eager: true,
@@ -93,12 +102,17 @@ const initialSections: SystemIndexSection[] = sourceData.sections.map(section =>
   ...section,
   groups: normalizeGroups(section.groups),
 }));
+const initialSectionsWithRules = addSystemRuleDocuments(initialSections);
 const data = {
   ...sourceData,
-  documents: sourceData.documents.map(document => ({
-    ...document,
-    blocks: cleanSystemBlocks(blocksById.get(document.id) || []),
-  })),
+  documents: [...sourceData.documents, ...SYSTEM_RULE_DOCUMENTS].map(document => {
+    const baseBlocks = SYSTEM_DOCUMENT_BLOCK_OVERRIDES[document.id] || blocksById.get(document.id) || [];
+    return {
+      ...document,
+      ...SYSTEM_DOCUMENT_METADATA_OVERRIDES[document.id],
+      blocks: cleanSystemBlocks(applySystemBlockTextOverrides(baseBlocks)),
+    };
+  }),
 };
 
 function insertDocumentIntoGroup(
@@ -131,6 +145,15 @@ function insertDocumentIntoGroup(
     };
     return { ...section, groups: addToGroup(section.groups, groupPath) };
   });
+}
+
+function addSystemRuleDocuments(sections: SystemIndexSection[]) {
+  return insertDocumentIntoGroup(
+    insertDocumentIntoGroup(sections, 'system', [1], 'system-rule-pokemon-human'),
+    'pokemon',
+    [3],
+    'system-rule-updated-statistics',
+  );
 }
 
 function groupAtPath(groups: PersistedSystemGroup[], path: number[]): PersistedSystemGroup | undefined {
@@ -582,7 +605,7 @@ export default function System() {
   const { theme, toggleTheme } = useAppTheme();
   const { active: activeFormulaPreset } = useFormulaSettings();
   const globalSearchRef = useRef<HTMLInputElement>(null);
-  const firstDocumentId = initialSections.flatMap(section => documentIdsIn(section.groups))[0];
+  const firstDocumentId = initialSectionsWithRules.flatMap(section => documentIdsIn(section.groups))[0];
   const [selectedId, setSelectedId] = useState(firstDocumentId);
   const [search, setSearch] = useState('');
   const [documentSearch, setDocumentSearch] = useState('');
@@ -602,17 +625,26 @@ export default function System() {
   const [saveMessage, setSaveMessage] = useState('');
   const persistedDocuments = (documentsQuery.data?.documents || {}) as Record<string, SystemDocument>;
   const storedCatalog = catalogQuery.data?.catalog as SystemCatalog | undefined;
-  const sourceIndexSections = storedCatalog?.sections?.length ? storedCatalog.sections : initialSections;
+  const sourceIndexSections = storedCatalog?.sections?.length
+    ? addSystemRuleDocuments(storedCatalog.sections)
+    : initialSectionsWithRules;
   const indexSections = useMemo(() => sourceIndexSections
     .map(section => ({ ...section, groups: hideRemovedDocuments(section.groups) }))
     .filter(section => section.groups.length > 0), [sourceIndexSections]);
   const deletedIds = storedCatalog?.deletedDocumentIds || [];
-  const mergedDocuments = useMemo(() => data.documents.map(document => ({
-    ...document,
-    ...(persistedDocuments[document.id] || {}),
-    id: document.id,
-    blocks: cleanSystemBlocks((persistedDocuments[document.id] as SystemDocument | undefined)?.blocks || document.blocks),
-  })).filter(document => !deletedIds.includes(document.id) && !hiddenSystemDocumentIds.has(document.id)).concat(
+  const mergedDocuments = useMemo(() => data.documents.map(document => {
+    const saved = persistedDocuments[document.id] as SystemDocument | undefined;
+    const replaceWholePage = Boolean(SYSTEM_DOCUMENT_BLOCK_OVERRIDES[document.id]);
+    const rawBlocks = replaceWholePage ? document.blocks : saved?.blocks || document.blocks;
+    const blocks = applySystemBlockTextOverrides(cleanSystemBlocks(rawBlocks));
+    return {
+      ...document,
+      ...(saved || {}),
+      ...SYSTEM_DOCUMENT_METADATA_OVERRIDES[document.id],
+      id: document.id,
+      blocks: cleanSystemBlocks([...blocks, ...(SYSTEM_EXTRA_BLOCKS_BY_DOCUMENT[document.id] || [])]),
+    };
+  }).filter(document => !deletedIds.includes(document.id) && !hiddenSystemDocumentIds.has(document.id)).concat(
     Object.entries(persistedDocuments)
       .filter(([id]) => !data.documents.some(document => document.id === id) && !deletedIds.includes(id) && !hiddenSystemDocumentIds.has(id))
       .map(([, document]) => ({ ...document, blocks: cleanSystemBlocks(document.blocks || []) })),
